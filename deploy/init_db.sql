@@ -4,6 +4,10 @@ CREATE ROLE :migrator_user LOGIN PASSWORD :'migrator_password';
 -- Create app role
 CREATE ROLE :app_user LOGIN PASSWORD :'app_password';
 
+-- Create the dedicated Open WebUI role and database
+CREATE ROLE :openwebui_user LOGIN PASSWORD :'openwebui_password';
+CREATE DATABASE :"openwebui_db" OWNER :"openwebui_user";
+
 -- Migrator: owns the schema, has full DDL
 GRANT CONNECT ON DATABASE :app_db TO :migrator_user;
 ALTER SCHEMA public OWNER TO :migrator_user;

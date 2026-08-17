@@ -23,7 +23,7 @@ COPY --chown=appuser:appuser pyproject.toml uv.lock ./
 
 USER appuser
 
-RUN uv sync --frozen --no-dev --no-install-project
+RUN uv sync --frozen --no-dev --extra cpu --no-install-project
 
 COPY --chown=appuser:appuser . .
 

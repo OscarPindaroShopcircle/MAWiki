@@ -13,6 +13,9 @@ services:
       MIGRATOR_DB_PASSWORD: ${MIGRATOR__PASSWORD:?MIGRATOR__PASSWORD required}
       APP_DB_USER: ${DATABASE__USER:?DATABASE__USER required}
       APP_DB_PASSWORD: ${DATABASE__PASSWORD:?DATABASE__PASSWORD required}
+      OPENWEBUI_DB_USER: ${OPENWEBUI__USER:?OPENWEBUI__USER required}
+      OPENWEBUI_DB_PASSWORD: ${OPENWEBUI__PASSWORD:?OPENWEBUI__PASSWORD required}
+      OPENWEBUI_DB: ${OPENWEBUI__DB:?OPENWEBUI__DB required}
     ports:
       - "5434:5432"
     volumes:
@@ -87,8 +90,83 @@ services:
     networks:
       - app_network
 
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: unless-stopped
+    ports:
+      - "3000:8080"
+    depends_on:
+      - db
+    environment:
+      # all env var here https://docs.openwebui.com/reference/env-configuration/
+      ENV: dev
+      DOCKER: True
+      DATABASE_URL: postgresql://${OPENWEBUI__USER}:${OPENWEBUI__PASSWORD}@db:5432/${OPENWEBUI__DB}
+      CORS_ALLOW_ORIGIN: http://localhost:3000;http://127.0.0.1:3000
+      # if ENABLE_PERSISTENT_CONFIGENABLE_PERSISTENT_CONFIG False, it does not persing in the db the config,
+      # but reads everytime the env vars. using it so that it's easier to configure stuff as a developer.
+      ENABLE_PERSISTENT_CONFIG: False
+      WEBUI_URL: http://localhost:3000
+      WEBUI_SECRET_KEY: 355ab01e7b7f581167410a04289e434582e21c767ef6d02caf6bdf8de2f8ca97
+      # use to create automatically the first user
+      WEBUI_ADMIN_EMAIL: admin@admin.com
+      WEBUI_ADMIN_PASSWORD: admin
+      # shows trhe email so people can send an email to the admin
+      ADMIN_EMAIL: admin@admin.com
+      # for productrion with Google SSO use also this
+      # - ENABLE_SIGNUP: False
+      # - ENABLE_LOGIN_FORM: False
+      # - ENABLE_OAUTH_SIGNUP: True
+      # - ENABLE_PASSWORD_AUTH: False   # only if SSO fully replaces password login
+      # - WEBUI_URL: https://your-real-domain.com   # required, OAuth redirects break without it
+      # - GOOGLE_CLIENT_ID: your-client-id
+      # - GOOGLE_CLIENT_SECRET: your-client-secret
+      DEFAULT_USER_ROLE: user
+      WEBUI_NAME: Menelao
+      DEFAULT_MODELS: claude-haiku-4-5-20251001
+      ENABLE_OLLAMA_API: False
+      ENABLE_OPENAI_API: True
+      ENABLE_IMAGE_GENERATION: False
+      ENABLE_CODE_INTERPRETER: False
+      ENABLE_CODE_EXECUTION: False
+      ENABLE_AUTOCOMPLETE_GENERATION: False
+      ENABLE_FOLLOW_UP_GENERATION: False
+      ENABLE_TITLE_GENERATION: True
+      ENABLE_RAG_WEB_SEARCH: False
+      BYPASS_EMBEDDING_AND_RETRIEVAL: True
+      RAG_EMBEDDING_MODEL: ""
+      AUDIO_STT_ENGINE: webapi
+      ENABLE_SIGNUP: False
+      DEFAULT_LOCALE: en
+      # feature that help models and user collaborate
+      ENABLE_CHANNELS: true
+      # default value, in production raise it drammatically to 2K, they say
+      THREAD_POOL_SIZE: 0
+      ENABLE_PUBLIC_ACTIVE_USERS_COUNT: False
+      ENABLE_USER_STATUS: False
+      # Specifies the timeout duration in seconds for the AIOHTTP client. This impacts things such as connections to Ollama and OpenAI endpoints.
+      AIOHTTP_CLIENT_TIMEOUT: 300
+      # Timeout in seconds for the MCP session.initialize() handshake, which performs a list-tools round-trip.
+      # Raise it if your MCP server cold-starts slowly or exposes many tools and connections fail with a timeout during initialization;
+      # a server advertising dozens of tools can need 30 to 60 seconds.
+      MCP_INITIALIZE_TIMEOUT: 10
+      GLOBAL_LOG_LEVEL: INFO
+      # LOG_FORMAT: json # if json, does json logging, useful on railway
+      # TOOL_SERVER_CONNECTIONS <-- need to understand how it works
+      OPENAI_API_BASE_URLS: https://api.anthropic.com/v1
+      OPENAI_API_KEYS: ${ANTHROPIC_API_KEY}
+
+    volumes:
+      - open_webui_data:/app/backend/data
+    networks:
+      - app_network
+    env_file:
+      - .env
+
 volumes:
   postgres_data:
+  open_webui_data:
 
 networks:
   app_network:

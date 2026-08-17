@@ -1,3 +1,5 @@
+open-webui/
+
 # Virtual environments
 .venv/
 venv/
