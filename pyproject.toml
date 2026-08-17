@@ -1,7 +1,7 @@
 [project]
-name = "backend"
+name = "menelao"
 version = "0.1.0"
-description = "A repo where I try fronted + backend integration"
+description = "Menelao is a mcp + fe + be for managing knowledge bases"
 authors = [
     { name = "Oscar Pindaro", email = "oscar@shopcircle.co" }
 ]
@@ -84,7 +84,7 @@ explicit = true
 
 [[tool.uv.index]]
 name = "pytorch-gpu"
-url = "https://download.pytorch.org/whl/cu128"
+url = "https://download.pytorch.org/whl/cu130"
 explicit = true
 
 
@@ -92,6 +92,9 @@ explicit = true
 packages = [
   { include = "backend", from = "src" },
 ]
+
+[tool.uv.build-backend]
+module-name = "backend"
 
 [tool.ruff.lint]
 select = ["E402", "PLC0415"]
