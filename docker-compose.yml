@@ -1,0 +1,95 @@
+services:
+  db:
+    image: postgres:18
+    container_name: backend-db
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB required}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      MIGRATOR_DB_USER: ${MIGRATOR__USER:?MIGRATOR__USER required}
+      MIGRATOR_DB_PASSWORD: ${MIGRATOR__PASSWORD:?MIGRATOR__PASSWORD required}
+      APP_DB_USER: ${DATABASE__USER:?DATABASE__USER required}
+      APP_DB_PASSWORD: ${DATABASE__PASSWORD:?DATABASE__PASSWORD required}
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./deploy/init_db.sh:/docker-entrypoint-initdb.d/init_db.sh:z
+      - ./deploy/init_db.sql:/opt/init_db.sql:z
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - app_network
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend-migrate
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src
+      - ./alembic:/app/alembic
+      - ./config.docker.yaml:/app/config.yaml:ro
+    command: ["uv", "run", "alembic", "upgrade", "head"]
+    restart: "no"
+    networks:
+      - app_network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend-app
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    env_file:
+      - .env
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./src:/app/src
+      - ./templates:/app/templates
+      - ./alembic:/app/alembic
+      - ./docs:/app/docs
+      - ./config.docker.yaml:/app/config.yaml:ro
+    command: >
+      sh -c "uv run uvicorn src.backend.server:app --host 0.0.0.0 --port 8000 --reload"
+    networks:
+      - app_network
+
+  uv:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: backend-uv
+    working_dir: /app
+    volumes:
+      - ./src:/app/src
+      - ./templates:/app/templates
+      - ./alembic:/app/alembic
+      - ./docs:/app/docs
+      - ./pyproject.toml:/app/pyproject.toml:ro
+      - ./uv.lock:/app/uv.lock:ro
+    entrypoint: ["uv", "run"]
+    networks:
+      - app_network
+
+volumes:
+  postgres_data:
+
+networks:
+  app_network:
+    driver: bridge

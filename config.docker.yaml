@@ -1,0 +1,16 @@
+database:
+  user: app_user
+  host: db
+  port: 5432
+  db: backend
+
+migrator:
+  user: migrator_user
+  host: db
+  port: 5432
+  db: backend
+
+frontend:
+  enabled: true
+  components_dir: src/frontend/components
+  static_dir: src/frontend/static

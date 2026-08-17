@@ -1,0 +1,21 @@
+/* ---------- Avatar ---------- */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  color: #fff;
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.cat-0 { background: var(--cat-0); }
+.cat-1 { background: var(--cat-1); }
+.cat-2 { background: var(--cat-2); }
+.cat-3 { background: var(--cat-3); }
+.cat-4 { background: var(--cat-4); }
+.cat-5 { background: var(--cat-5); }
+.cat-6 { background: var(--cat-6); }
+.cat-7 { background: var(--cat-7); }

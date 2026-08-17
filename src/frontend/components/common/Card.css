@@ -1,0 +1,30 @@
+/* ---------- Card (M3 Card) ---------- */
+.card {
+  display: flex;
+  flex-direction: column;
+  background: var(--clr-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-8);
+}
+
+/* ---------- Elevated (default) ---------- */
+.card-elevated {
+  box-shadow: var(--shadow-md);
+}
+
+/* ---------- Outlined ---------- */
+.card-outlined {
+  border: 1px solid var(--clr-border);
+}
+
+/* ---------- Filled ---------- */
+.card-filled {
+  background: var(--clr-bg);
+}
+
+/* ---------- Constrained (centered, max-width) ---------- */
+.card-constrained {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}

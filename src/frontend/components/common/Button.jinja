@@ -1,0 +1,12 @@
+{#def variant="primary", size="md", href=None, block=False #}
+{% set classes = "btn btn-" ~ variant ~ " btn-" ~ size %}
+{% if block %}{% set classes = classes ~ " btn-block" %}{% endif %}
+{% if href %}
+<a href="{{ href }}" {{ attrs.render(class=classes) }}>
+  {{ content }}
+</a>
+{% else %}
+<button {{ attrs.render(class=classes) }}>
+  {{ content }}
+</button>
+{% endif %}

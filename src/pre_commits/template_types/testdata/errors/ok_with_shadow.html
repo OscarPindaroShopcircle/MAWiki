@@ -1,0 +1,5 @@
+{# `view` is rebound from the *outer* `view`, and outer names stay visible. #}
+{% with view = view.leaf %}
+  {{ view.name }} {{ leaf.name }}
+{% endwith %}
+{{ view.leaf.name }}

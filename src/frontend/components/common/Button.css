@@ -1,0 +1,51 @@
+/* ---------- Button ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  border-radius: var(--radius-md);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: background var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), opacity var(--dur-base) var(--ease-out);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* Sizes */
+.btn-sm { font-size: var(--text-xs); padding: var(--sp-1) var(--sp-3); }
+.btn-md { font-size: var(--text-sm); padding: var(--sp-2) var(--sp-5); }
+.btn-lg { font-size: var(--text-base); padding: var(--sp-3) var(--sp-6); }
+
+/* Variants */
+.btn-primary {
+  background: var(--clr-accent);
+  color: var(--clr-text-on-accent);
+  border-color: var(--clr-accent);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--clr-accent-hover);
+  border-color: var(--clr-accent-hover);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--clr-text);
+  border-color: var(--clr-border);
+}
+.btn-secondary:hover:not(:disabled) { border-color: var(--clr-border-strong); }
+
+.btn-danger {
+  background: var(--status-danger);
+  color: var(--clr-text-on-accent);
+  border-color: var(--status-danger);
+}
+.btn-danger:hover:not(:disabled) { opacity: .85; }
+
+/* Block — fill parent width */
+.btn-block {
+  width: 100%;
+  justify-content: center;
+}

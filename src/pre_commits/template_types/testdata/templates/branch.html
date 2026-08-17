@@ -1,0 +1,8 @@
+{{ view.leaf.name }}
+{{ view.leaf.created_at.strftime("%Y-%m-%d") }}
+{{ view.leaf.colour | lower }}
+{{ view.leaf.note or "none" }}
+{{ view.newest.name }}
+{% set alias = view.maybe_leaf %}
+{% if alias %}{{ alias.name }}{% endif %}
+{% for leaf in view.leaves %}{% include "leaf_row.html" %}{% endfor %}

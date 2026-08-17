@@ -1,0 +1,29 @@
+{#def label, name, type="text", placeholder=None, required=False, autocomplete=None, minlength=None, value=None, options=None, variant="outlined", error=None, helper=None #}
+<label class="field field-{{ variant }}{{ ' field-error' if error else '' }}">
+  <span class="field-label">{{ label }}</span>
+  {% if options is not none %}
+  <select class="field-input"
+    name="{{ name }}"
+    {% if required %}required{% endif %}
+  >
+    {% for opt in options %}
+    <option value="{{ opt.value }}" {{ 'selected' if opt.value == value else '' }}>{{ opt.label }}</option>
+    {% endfor %}
+  </select>
+  {% else %}
+  <input class="field-input"
+    name="{{ name }}"
+    type="{{ type }}"
+    {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+    {% if required %}required{% endif %}
+    {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
+    {% if minlength is not none %}minlength="{{ minlength }}"{% endif %}
+    {% if value is not none %}value="{{ value }}"{% endif %}
+  >
+  {% endif %}
+  {% if error %}
+  <span class="field-supporting field-supporting-error">{{ error }}</span>
+  {% elif helper %}
+  <span class="field-supporting">{{ helper }}</span>
+  {% endif %}
+</label>

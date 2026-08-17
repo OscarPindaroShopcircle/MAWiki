@@ -1,0 +1,43 @@
+{#def current_user=None #}
+<div class="user-menu" id="user-menu">
+  <common.Button variant="primary" size="md" block
+                  type="button"
+                  aria-haspopup="menu"
+                  aria-expanded="false"
+                  aria-controls="user-menu-popover"
+                  data-user-menu-trigger>
+    <common.Avatar name={{ current_user.name }} size=32 />
+    <span class="user-menu-info">
+      <span class="user-menu-name">{{ current_user.name }}</span>
+      <span class="user-menu-email">{{ current_user.email }}</span>
+    </span>
+    <common.Icon name="chevron-up" size=16 />
+  </common.Button>
+  <div class="user-menu-popover" id="user-menu-popover" popover="auto">
+    <a href="/auth/logout-view" class="user-menu-item user-menu-item-danger">
+      <span class="user-menu-item-icon">
+        <common.Icon name="log-out" size=18 />
+      </span>
+      <span class="user-menu-item-label">Logout</span>
+    </a>
+  </div>
+</div>
+<script>
+  document.querySelectorAll('[data-user-menu-trigger]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var p = document.getElementById('user-menu-popover');
+      if (p.open) {
+        p.close();
+        btn.setAttribute('aria-expanded', 'false');
+      } else {
+        var r = btn.getBoundingClientRect();
+        p.style.top = 'auto';
+        p.style.right = 'auto';
+        p.style.left = r.left + 'px';
+        p.style.bottom = (window.innerHeight - r.top) + 'px';
+        p.showPopover();
+        btn.setAttribute('aria-expanded', 'true');
+      }
+    });
+  });
+</script>

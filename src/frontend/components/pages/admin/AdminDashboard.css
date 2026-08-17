@@ -1,0 +1,22 @@
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-8);
+}
+
+.admin-header h1 {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+}
+
+.admin-section {
+  margin-bottom: var(--sp-10);
+}
+
+.admin-section-title {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  margin-bottom: var(--sp-4);
+  color: var(--clr-text);
+}

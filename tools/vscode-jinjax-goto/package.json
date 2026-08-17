@@ -1,0 +1,25 @@
+{
+  "name": "jinjax-goto-definition",
+  "displayName": "JinjaX Go to Definition",
+  "description": "Ctrl+click a JinjaX component tag (e.g. common.Button) to jump to its .jinja file",
+  "version": "0.0.1",
+  "publisher": "local",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "JinjaX Go to Definition",
+      "properties": {
+        "jinjaxGoto.componentsDir": {
+          "type": "string",
+          "default": "src/frontend/components",
+          "description": "Path to the JinjaX components root folder, relative to the workspace root."
+        }
+      }
+    }
+  }
+}

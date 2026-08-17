@@ -1,0 +1,6 @@
+/* ---------- Home page ---------- */
+.home h1 {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  margin-bottom: var(--sp-2);
+}

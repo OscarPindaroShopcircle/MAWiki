@@ -1,0 +1,28 @@
+/* ---------- Divider (M3 Divider) ---------- */
+.divider {
+  border: none;
+  border-top: 1px solid var(--clr-border);
+  margin: 0;
+}
+
+/* Labeled — line with centered text */
+.divider-labeled {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  border: none;
+  color: var(--clr-text-muted);
+  font-size: var(--text-xs);
+}
+
+.divider-labeled::before,
+.divider-labeled::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--clr-border);
+}
+
+.divider-label {
+  white-space: nowrap;
+}

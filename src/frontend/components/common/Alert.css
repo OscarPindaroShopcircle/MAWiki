@@ -1,0 +1,12 @@
+/* ---------- Alert (status message block) ---------- */
+.alert {
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
+.alert-danger  { background: var(--status-danger-bg);  color: var(--status-danger); }
+.alert-warning { background: var(--status-warning-bg); color: var(--status-warning); }
+.alert-info    { background: var(--status-info-bg);    color: var(--status-info); }
+.alert-success { background: var(--status-success-bg); color: var(--status-success); }

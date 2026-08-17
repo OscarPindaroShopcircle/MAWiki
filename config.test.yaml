@@ -1,0 +1,11 @@
+database:
+  user: app_user
+  host: localhost
+  port: 5432
+  db: backend_test
+
+migrator:
+  user: migrator_user
+  host: localhost
+  port: 5432
+  db: backend_test

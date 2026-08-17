@@ -1,0 +1,6 @@
+{#def variant="elevated", max_width=None #}
+{% set classes = "card card-" ~ variant %}
+{% if max_width %}{% set classes = classes ~ " card-constrained" %}{% endif %}
+<div {{ attrs.render(class=classes) }}{% if max_width %} style="max-width: {{ max_width }}px;"{% endif %}>
+  {{ content }}
+</div>

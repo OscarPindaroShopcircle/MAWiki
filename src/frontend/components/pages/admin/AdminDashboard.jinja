@@ -1,0 +1,32 @@
+{#def users, invitations, current_user=None #}
+{#css common/Dialog.css, common/Alert.css, common/Field.css, pages/admin/InviteDialog.css #}
+<layout.Page title="Users" current_user={{ current_user }} active="admin-users">
+  <div class="admin-dashboard">
+    <header class="admin-header">
+      <h1>Users</h1>
+      <common.Button variant="primary" size="md"
+        hx-get="/admin/users/invite"
+        hx-target="#invite-dialog"
+        hx-swap="innerHTML"
+        hx-on::after-request="if(event.detail.successful) { document.querySelector('#invite-dialog dialog').showModal(); lucide.createIcons(); }">
+        <common.Icon name="user-plus" size=16 />
+        Invite User
+      </common.Button>
+    </header>
+
+    <section class="admin-section">
+      <h2 class="admin-section-title">Users</h2>
+      <pages.admin.UsersTable users={{ users }} />
+    </section>
+
+    <section class="admin-section">
+      <h2 class="admin-section-title">Pending Invitations</h2>
+      <div id="invitations-table">
+        <pages.admin.InvitationsTable invitations={{ invitations }} />
+      </div>
+    </section>
+
+    <div id="invite-dialog"></div>
+    <div id="confirm-dialog"></div>
+  </div>
+</layout.Page>

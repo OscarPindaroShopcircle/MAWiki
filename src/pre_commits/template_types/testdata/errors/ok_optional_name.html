@@ -1,0 +1,6 @@
+{# A partial included under `{% with %}` by some callers and rendered bare by
+   others: guarded names are declared optional, so a bare use is not unbound. #}
+{% set tab = tab | default("companies") %}
+{{ tab }}
+{{ label | default("none") }}
+{{ count if count is defined else 0 }}

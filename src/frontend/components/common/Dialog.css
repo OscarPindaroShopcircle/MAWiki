@@ -1,0 +1,60 @@
+/* ---------- Dialog (M3 Dialog) ---------- */
+.dialog {
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--clr-surface);
+  padding: 0;
+  margin: auto;
+  max-width: 480px;
+  width: calc(100% - var(--sp-8));
+  box-shadow: var(--shadow-lg);
+  color: var(--clr-text);
+  outline: none;
+}
+
+.dialog::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.dialog-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-4) var(--sp-5) var(--sp-2);
+}
+
+.dialog-title {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  margin: 0;
+}
+
+.dialog-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--clr-text-secondary);
+  cursor: pointer;
+  padding: var(--sp-1);
+  border-radius: var(--radius-md);
+  transition: color var(--dur-base) var(--ease-out), background var(--dur-base) var(--ease-out);
+}
+
+.dialog-close:hover {
+  color: var(--clr-text);
+  background: var(--clr-bg);
+}
+
+.dialog-body {
+  padding: var(--sp-2) var(--sp-5) var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}

@@ -1,0 +1,9 @@
+{# First binding is a Leaf, so the partial is clean; the second is a *list* of
+   Leaf, which the partial derefs - proving the with-bound type crosses the
+   include rather than arriving as unknown. #}
+{% with leaf = view.newest %}
+  {% include "leaf_row.html" %}
+{% endwith %}
+{% with leaf = view.leaves %}
+  {% include "leaf_row.html" %}
+{% endwith %}

@@ -1,0 +1,19 @@
+{#def title #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }} — Circeus</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  {{ catalog.render_assets() }}
+</head>
+<body hx-ext="json-enc">
+  {{ content }}
+  <script src="/static/js/htmx.min.js"></script>
+  <script src="/static/js/json-enc.min.js"></script>
+  <script src="/static/js/lucide.min.js"></script>
+  <script src="/static/js/format-times.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

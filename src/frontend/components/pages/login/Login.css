@@ -1,0 +1,73 @@
+/* ---------- Login page ---------- */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--clr-bg);
+  padding: var(--sp-4);
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-6);
+}
+
+.login-brand-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: var(--clr-accent);
+  color: var(--clr-text-on-accent);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-lg);
+}
+
+.login-brand-name {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--clr-text);
+}
+
+.login-title {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  margin-bottom: var(--sp-1);
+}
+
+.login-subtitle {
+  font-size: var(--text-sm);
+  color: var(--clr-text-secondary);
+  margin-bottom: var(--sp-1);
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.login-switch {
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--clr-text-secondary);
+  margin-top: var(--sp-4);
+}
+
+.login-switch a {
+  color: var(--clr-accent);
+  font-weight: var(--weight-medium);
+}
+
+.login-switch a:hover {
+  color: var(--clr-accent-hover);
+}
+
+.login-page .divider {
+  margin: var(--sp-5) 0;
+}

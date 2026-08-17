@@ -1,0 +1,131 @@
+/* ---------- UserMenu (sidebar footer popover) ---------- */
+.user-menu {
+  position: relative;
+}
+
+/* Override common.Button styling — this is a nav element, not a CTA */
+.user-menu .btn {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--clr-nav-text);
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--dur-base) var(--ease-out);
+}
+
+.user-menu .btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.user-menu .btn[aria-expanded="true"] {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.user-menu-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.user-menu-name {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-menu-email {
+  font-size: var(--text-xs);
+  color: var(--clr-nav-link);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-menu .btn svg {
+  stroke: var(--clr-nav-link);
+  flex-shrink: 0;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.user-menu .btn[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+
+/* Collapsed sidebar — hide text, center avatar */
+.sidebar-collapsed .user-menu-info,
+.sidebar-collapsed .user-menu .btn svg {
+  display: none;
+}
+
+.sidebar-collapsed .user-menu .btn {
+  justify-content: center;
+  padding: var(--sp-2);
+}
+
+/* ---------- Popover menu ---------- */
+.user-menu-popover {
+  margin: 0;
+  padding: var(--sp-1);
+  background: var(--clr-nav);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  width: var(--sidebar-width);
+  /* position:fixed is the UA default for [popover]; left/bottom
+     are set by JS on open, anchored to the trigger button. */
+  margin-bottom: var(--sp-2);
+}
+
+/* Override the UA :popover-open margin:auto that centers the popover */
+.user-menu-popover:popover-open {
+  margin: 0;
+  margin-bottom: var(--sp-2);
+}
+
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--clr-nav-link);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out);
+}
+
+.user-menu-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--clr-nav-text);
+}
+
+.user-menu-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.user-menu-item-icon svg {
+  stroke: currentColor;
+}
+
+.user-menu-item-danger {
+  color: var(--status-danger-light);
+}
+
+.user-menu-item-danger:hover {
+  background: rgba(255, 107, 94, 0.15);
+  color: var(--status-danger-light);
+}

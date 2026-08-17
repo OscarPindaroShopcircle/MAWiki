@@ -1,0 +1,17 @@
+/* ---------- Layout shell ---------- */
+.page-main {
+  margin-left: var(--sidebar-width);
+  padding: var(--sp-8) var(--sp-10);
+  min-height: 100vh;
+  transition: margin-left .2s ease;
+}
+
+body:has(.sidebar-collapsed) .page-main {
+  margin-left: 72px;
+}
+
+/* Center content so it doesn't jump when sidebar toggles */
+.admin-dashboard {
+  max-width: 960px;
+  margin: 0 auto;
+}
