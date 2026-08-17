@@ -5,5 +5,5 @@ if [ -z "$VIRTUAL_ENV" ]; then
 fi
 
 
-uv sync --dev
+uv sync --dev --extra cpu
 uv run pre-commit install
