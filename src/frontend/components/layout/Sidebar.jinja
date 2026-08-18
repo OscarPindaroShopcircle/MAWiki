@@ -9,39 +9,28 @@
     </common.Tooltip>
   </div>
   <nav class="sidebar-nav">
-    <a href="/" class="sidebar-link {{ 'sidebar-link-active' if active == 'home' else '' }}">
-      <span class="sidebar-link-icon">
-        <common.Icon name="home" size=20 />
-      </span>
-      <span class="sidebar-link-label">Home</span>
-    </a>
-
-    <a href="/knowledge-bases" class="sidebar-link {{ 'sidebar-link-active' if active == 'knowledge-bases' else '' }}">
-      <span class="sidebar-link-icon">
-        <common.Icon name="database" size=20 />
-      </span>
-      <span class="sidebar-link-label">Knowledge Bases</span>
-    </a>
+    <layout.SidebarSection>
+      <layout.SidebarItem href="/" icon="home" label="Home" :active="active" match="home" />
+      <layout.SidebarItem href="/knowledge-bases" icon="database" label="Knowledge Bases"
+                          :active="active" match="knowledge-bases" />
+    </layout.SidebarSection>
 
     {% if current_user is admin %}
-    <span class="sidebar-section-label">Admin</span>
-    <a href="/admin/users" class="sidebar-link {{ 'sidebar-link-active' if active == 'admin-users' else '' }}">
-      <span class="sidebar-link-icon">
-        <common.Icon name="users" size=20 />
-      </span>
-      <span class="sidebar-link-label">Users</span>
+    <layout.SidebarSection label="Admin">
       {% if badges and badges.get('admin') %}
-      <span class="sidebar-link-badge">{{ badges['admin'] }}</span>
+      <layout.SidebarItem href="/admin/users" icon="users" label="Users"
+                          :active="active" match="admin-users"
+                          :badge="badges['admin']" />
+      {% else %}
+      <layout.SidebarItem href="/admin/users" icon="users" label="Users"
+                          :active="active" match="admin-users" />
       {% endif %}
-    </a>
-    {% if is_dev %}
-    <a href="/components" class="sidebar-link {{ 'sidebar-link-active' if active == 'showcase' else '' }}">
-      <span class="sidebar-link-icon">
-        <common.Icon name="palette" size=20 />
-      </span>
-      <span class="sidebar-link-label">Showcase</span>
-    </a>
-    {% endif %}
+
+      {% if env is dev %}
+      <layout.SidebarItem href="/components" icon="palette" label="Showcase"
+                          :active="active" match="showcase" />
+      {% endif %}
+    </layout.SidebarSection>
     {% endif %}
   </nav>
   <div class="sidebar-footer">
@@ -50,3 +39,25 @@
     {% endif %}
   </div>
 </aside>
+<script>
+  // Keyboard navigation — Arrow keys, Home, End navigate between sidebar links
+  (function () {
+    document.addEventListener("keydown", function (e) {
+      var sidebar = document.getElementById("sidebar");
+      if (!sidebar || !sidebar.contains(document.activeElement)) return;
+      var links = Array.from(sidebar.querySelectorAll(".sidebar-link"));
+      if (!links.length) return;
+      var index = links.indexOf(document.activeElement);
+      if (index === -1) return;
+      var next = null;
+      if (e.key === "ArrowDown") next = (index + 1) % links.length;
+      if (e.key === "ArrowUp") next = (index - 1 + links.length) % links.length;
+      if (e.key === "Home") next = 0;
+      if (e.key === "End") next = links.length - 1;
+      if (next !== null) {
+        links[next].focus();
+        e.preventDefault();
+      }
+    });
+  })();
+</script>

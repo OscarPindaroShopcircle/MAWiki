@@ -1,0 +1,11 @@
+  {#def href, icon, label, active=None, match=None, badge=None #}
+<a href="{{ href }}"
+   class="sidebar-link {{ 'sidebar-link-active' if active == match else '' }}">
+  <span class="sidebar-link-icon">
+    <common.Icon :name="icon" size=20 />
+  </span>
+  <span class="sidebar-link-label">{{ label }}</span>
+  {% if badge is not none %}
+  <span class="sidebar-link-badge">{{ badge }}</span>
+  {% endif %}
+</a>

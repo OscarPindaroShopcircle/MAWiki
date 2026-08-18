@@ -565,7 +565,7 @@ A bare unquoted value like `size=32` is **not** a valid expression — it is tre
 ```
 src/frontend/components/
 ├── common/        # Reusable M3 primitives (Button, Card, Field, Icon, Pill, Table, Avatar, Alert, Divider, Dialog, Menu, MenuTrigger, Tooltip)
-├── layout/        # Page shells (BlankPage, Page, Sidebar)
+├── layout/        # Page shells (BlankPage, Page, Sidebar, SidebarSection, SidebarItem)
 └── pages/         # Full pages composed from common + layout
     ├── admin/     # Admin dashboard, tables, invite/revoke dialogs
     ├── home/
