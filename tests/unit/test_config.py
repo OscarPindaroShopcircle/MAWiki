@@ -4,6 +4,7 @@ from pydantic import SecretStr
 
 from backend import config as config_module
 from backend.config import (
+    AppConfig,
     AuthConfig,
     ConfigException,
     EnvSecret,
@@ -77,6 +78,24 @@ def test_secret_preview_only_returns_last_four_string_characters() -> None:
 
     assert secret_preview(config.jwt_secret) == "****cret"
     assert secret_preview(1234) == ""
+
+
+def test_dev_auto_login_is_rejected_outside_development() -> None:
+    values = {
+        "database": {"user": "app", "password": "secret", "db": "app"},
+        "migrator": {"user": "migrator", "password": "secret", "db": "app"},
+        "auth": {
+            "jwt_secret": "secret",
+            "dev_auto_login_email": "developer@example.com",
+        },
+    }
+
+    assert (
+        AppConfig(env="dev", **values).auth.dev_auto_login_email
+        == "developer@example.com"
+    )
+    with pytest.raises(ValueError, match="may only be set when env is 'dev'"):
+        AppConfig(env="production", **values)
 
 
 def test_get_app_config_hides_invalid_input(monkeypatch: pytest.MonkeyPatch) -> None:
