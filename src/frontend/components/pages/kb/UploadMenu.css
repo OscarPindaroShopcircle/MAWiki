@@ -5,3 +5,5 @@
 .kb-upload-popover {
   width: 220px;
 }
+
+.kb-upload-popover .menu-item-icon .lucide { color: var(--clr-accent); }

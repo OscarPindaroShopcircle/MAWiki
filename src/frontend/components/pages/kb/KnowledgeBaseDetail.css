@@ -35,17 +35,26 @@
 }
 
 .kb-file-name > svg {
-  color: var(--clr-text-secondary);
   flex-shrink: 0;
 }
 
+/* File type icon colours */
+.kb-file-name .lucide-file-image    { color: var(--cat-3); }
+.kb-file-name .lucide-file-audio    { color: var(--cat-4); }
+.kb-file-name .lucide-file-video    { color: var(--cat-3); }
+.kb-file-name .lucide-file-archive  { color: var(--cat-6); }
+.kb-file-name .lucide-file-spreadsheet { color: var(--cat-0); }
+.kb-file-name .lucide-presentation  { color: var(--cat-4); }
+.kb-file-name .lucide-file-code     { color: var(--cat-7); }
+.kb-file-name .lucide-file-text     { color: var(--cat-2); }
+.kb-file-name .lucide-file          { color: var(--clr-text-muted); }
+
+/* Action icon colours */
+.kb-detail-back svg        { color: var(--clr-accent); }
+.kb-file-actions .lucide   { color: var(--clr-accent); }
+
 .kb-file-label {
   color: var(--clr-text);
-}
-
-.kb-file-type {
-  color: var(--clr-text-muted);
-  font-size: var(--text-xs);
 }
 
 .kb-file-actions {
