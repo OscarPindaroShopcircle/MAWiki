@@ -20,6 +20,13 @@ from markupsafe import Markup
 import jinjax
 from fastapi.templating import Jinja2Templates
 
+from .db.enums import UserRole
+
+
+def _is_admin(user) -> bool:
+    """Jinja test: ``{% if current_user is admin %}`` — checks for the ADMIN role."""
+    return user is not None and user.role == UserRole.ADMIN
+
 
 def _money(value: float | None) -> str:
     """Jinja filter: ``{{ view.cost.total_cost | money }}`` -> ``"$0.42"``.
@@ -104,7 +111,10 @@ def get_catalog(components_dir: str, *, env: str = "dev") -> Catalog:
     subfolders). CSS/JS files colocated next to a component are
     auto-loaded and served via a StaticFiles mount (see ``server.py``).
     """
-    catalog = jinjax.Catalog(globals={"is_dev": env == "dev", "env": env})
+    catalog = jinjax.Catalog(
+        globals={"is_dev": env == "dev", "env": env},
+        tests={"admin": _is_admin},
+    )
     catalog.add_folder(components_dir)
     catalog.jinja_env.filters["cat_index"] = _cat_index
     catalog.jinja_env.filters["time"] = _time

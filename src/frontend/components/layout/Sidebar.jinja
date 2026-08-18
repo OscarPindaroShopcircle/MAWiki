@@ -23,7 +23,7 @@
       <span class="sidebar-link-label">Knowledge Bases</span>
     </a>
 
-    {% if current_user and current_user.role == 'admin' %}
+    {% if current_user is admin %}
     <span class="sidebar-section-label">Admin</span>
     <a href="/admin/users" class="sidebar-link {{ 'sidebar-link-active' if active == 'admin-users' else '' }}">
       <span class="sidebar-link-icon">
