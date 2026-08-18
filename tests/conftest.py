@@ -29,14 +29,14 @@ def app_config() -> AppConfig:
     return TestAppConfig()
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture
 async def db_manager(app_config: AppConfig) -> AsyncGenerator[DatabaseManager, None]:
     manager = DatabaseManager(app_config.database)
     yield manager
     await manager.close()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def app(app_config: AppConfig, db_manager: DatabaseManager) -> FastAPI:
     test_app = create_app(app_config)
 

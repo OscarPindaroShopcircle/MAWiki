@@ -4,10 +4,9 @@ from pathlib import Path
 from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..config import AppConfig
 from ..db.enums import UserRole
 from ..files.models import FileModel, StorageType
-from ..filesystem import LocalFileSystem
+from ..filesystem.base import FileSystem
 from ..users.schemas import User
 from .exception import (
     FileUploadException,
@@ -102,7 +101,7 @@ async def upload_files_to_knowledge_base(
     knowledge_base_id: uuid.UUID,
     uploads: list[UploadFile],
     user: User,
-    config: AppConfig,
+    filesystem: FileSystem,
 ) -> KnowledgeBaseModel:
     knowledge_base = await get_knowledge_base(
         db, knowledge_base_id, user, include_files=True
@@ -112,7 +111,6 @@ async def upload_files_to_knowledge_base(
     if not uploads:
         raise FileUploadException()
 
-    filesystem = LocalFileSystem(config.storage.storage_root)
     staged: list[tuple[FileModel, str]] = []
     try:
         for upload in uploads:
