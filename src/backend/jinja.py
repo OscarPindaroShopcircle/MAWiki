@@ -1,5 +1,5 @@
 """Jinja environment factory and the app's custom filters.
-
+ù
 The environment is built in one place -- ``_build_templates`` -- so that the
 compile-time checks (the ``template-types`` pre-commit hook and the
 ``test_templates_compile`` suite) and runtime rendering share the same set of
@@ -26,6 +26,11 @@ from .db.enums import UserRole
 def _is_admin(user) -> bool:
     """Jinja test: ``{% if current_user is admin %}`` — checks for the ADMIN role."""
     return user is not None and user.role == UserRole.ADMIN
+
+
+def _is_dev(env: str) -> bool:
+    """Jinja test: ``{% if env is dev %}`` — checks for the dev environment."""
+    return env == "dev"
 
 
 def _money(value: float | None) -> str:
@@ -112,8 +117,8 @@ def get_catalog(components_dir: str, *, env: str = "dev") -> Catalog:
     auto-loaded and served via a StaticFiles mount (see ``server.py``).
     """
     catalog = jinjax.Catalog(
-        globals={"is_dev": env == "dev", "env": env},
-        tests={"admin": _is_admin},
+        globals={"env": env},
+        tests={"admin": _is_admin, "dev": _is_dev},
     )
     catalog.add_folder(components_dir)
     catalog.jinja_env.filters["cat_index"] = _cat_index
