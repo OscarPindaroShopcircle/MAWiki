@@ -44,7 +44,8 @@ services:
       - ./src:/app/src
       - ./alembic:/app/alembic
       - ./config.docker.yaml:/app/config.yaml:ro
-    command: ["uv", "run", "alembic", "upgrade", "head"]
+    entrypoint: ["uv", "run", "--extra", "cpu"]
+    command: ["alembic", "upgrade", "head"]
     restart: "no"
     networks:
       - app_network
@@ -68,8 +69,8 @@ services:
       - ./alembic:/app/alembic
       - ./docs:/app/docs
       - ./config.docker.yaml:/app/config.yaml:ro
-    command: >
-      sh -c "uv run uvicorn src.backend.server:app --host 0.0.0.0 --port 8000 --reload"
+    entrypoint: ["uv", "run", "--extra", "cpu"]
+    command: ["uvicorn", "src.backend.server:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     networks:
       - app_network
 
@@ -86,7 +87,7 @@ services:
       - ./docs:/app/docs
       - ./pyproject.toml:/app/pyproject.toml:ro
       - ./uv.lock:/app/uv.lock:ro
-    entrypoint: ["uv", "run"]
+    entrypoint: ["uv", "run", "--extra", "cpu"]
     networks:
       - app_network
 

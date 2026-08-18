@@ -27,6 +27,8 @@ RUN uv sync --frozen --no-dev --extra cpu --no-install-project
 
 COPY --chown=appuser:appuser . .
 
+RUN uv sync --frozen --no-dev --extra cpu
+
 EXPOSE 8000
 
-CMD ["uv", "run", "uvicorn", "src.backend.server:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "--no-sync", "uvicorn", "src.backend.server:app", "--host", "0.0.0.0", "--port", "8000"]
