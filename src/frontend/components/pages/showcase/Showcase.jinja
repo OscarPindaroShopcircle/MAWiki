@@ -145,12 +145,7 @@
     <section class="showcase-section">
       <h2>Menus</h2>
       <p class="showcase-note">M3 vertical menu with shared positioning, focus, and keyboard navigation.</p>
-      <common.Button id="showcase-menu-trigger" variant="secondary" size="md"
-                     aria-haspopup="menu" aria-expanded="false"
-                     aria-controls="showcase-menu" popovertarget="showcase-menu">
-        Open menu
-        <common.Icon name="chevron-down" size=16 />
-      </common.Button>
+      <common.MenuTrigger label="Open menu" target="showcase-menu" variant="secondary" />
       <common.Menu id="showcase-menu" labelledby="showcase-menu-trigger">
         <common.MenuItem icon="pencil" label="Rename" />
         <common.MenuItem icon="trash-2" label="Delete" variant="danger" />

@@ -564,7 +564,7 @@ A bare unquoted value like `size=32` is **not** a valid expression — it is tre
 
 ```
 src/frontend/components/
-├── common/        # Reusable M3 primitives (Button, Card, Field, Icon, Pill, Table, Avatar, Alert, Divider, Dialog, Menu, Tooltip)
+├── common/        # Reusable M3 primitives (Button, Card, Field, Icon, Pill, Table, Avatar, Alert, Divider, Dialog, Menu, MenuTrigger, Tooltip)
 ├── layout/        # Page shells (BlankPage, Page, Sidebar)
 └── pages/         # Full pages composed from common + layout
     ├── admin/     # Admin dashboard, tables, invite/revoke dialogs
@@ -629,6 +629,7 @@ Material Design 3 (M3) is the reference. Component variants and states follow th
 - **Divider** — full-width separator
 - **Dialog** — native `<dialog>` opened with `showModal()`, M3 modal styling
 - **Menu** — native popover with shared positioning and keyboard navigation
+- **MenuTrigger** — icon + label + chevron button that toggles a linked menu
 - **Tooltip** — plain tooltip for icon-only actions, rendered in the top layer
 
 When adding a new component, check the M3 spec first, then map it to the existing tokens.

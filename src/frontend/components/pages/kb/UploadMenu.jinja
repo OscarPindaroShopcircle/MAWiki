@@ -1,18 +1,12 @@
 {#def knowledge_base_id #}
 <div class="kb-upload-menu" id="kb-upload-menu">
-  <common.Button variant="primary" size="md" type="button" id="kb-upload-trigger"
-                 aria-haspopup="menu" aria-expanded="false" aria-controls="kb-upload-popover"
-                 popovertarget="kb-upload-popover">
-    <common.Icon name="upload" size=16 />
-    Upload
-    <common.Icon name="chevron-down" size=16 />
-  </common.Button>
+  <common.MenuTrigger icon="upload" label="Upload" target="kb-upload-popover" />
   <form hx-post="/knowledge-bases/{{ knowledge_base_id }}/files"
         hx-target="#kb-files-table" hx-swap="outerHTML"
         hx-encoding="multipart/form-data" hx-ext="ignore:json-enc"
         hx-trigger="change"
         hx-on::after-request="document.getElementById('kb-upload-popover').hidePopover(); this.reset(); if(event.detail.successful) lucide.createIcons();">
-    <common.Menu id="kb-upload-popover" labelledby="kb-upload-trigger"
+    <common.Menu id="kb-upload-popover" labelledby="kb-upload-popover-trigger"
                  placement="bottom-start" class="kb-upload-popover">
       <common.MenuItem icon="file-plus" label="Upload file"
         onclick="var input=this.form.querySelector('[data-kb-upload-input]'); input.removeAttribute('webkitdirectory'); input.value=''; input.click();" />

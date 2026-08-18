@@ -57,6 +57,15 @@
   flex: 1;
 }
 
+.menu-trigger-chevron {
+  flex-shrink: 0;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+[aria-expanded="true"] .menu-trigger-chevron {
+  transform: rotate(180deg);
+}
+
 .menu-item-danger {
   color: var(--status-danger);
 }
