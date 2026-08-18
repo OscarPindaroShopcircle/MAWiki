@@ -6,7 +6,6 @@ from jinjax.catalog import Catalog
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user
-from ..config import AppConfig, get_app_config
 from ..dependencies import get_catalog_dep, get_db_session
 from ..filesystem.base import FileSystem
 from ..filesystem.dependencies import get_filesystem
@@ -26,7 +25,6 @@ router = APIRouter(tags=["kb-views"])
 @router.get("/knowledge-bases", response_class=HTMLResponse)
 async def knowledge_bases_page(
     catalog: Catalog = Depends(get_catalog_dep),
-    config: AppConfig = Depends(get_app_config),
     db: AsyncSession = Depends(get_db_session),
     user: User = Depends(get_current_user),
 ):
@@ -38,7 +36,6 @@ async def knowledge_bases_page(
         "pages.kb.KnowledgeBaseList",
         knowledge_bases=knowledge_bases,
         current_user=user,
-        is_dev=(config.env == "dev"),
     )
 
 
@@ -78,7 +75,6 @@ async def create_knowledge_base_submit(
 async def knowledge_base_detail_page(
     knowledge_base_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    config: AppConfig = Depends(get_app_config),
     db: AsyncSession = Depends(get_db_session),
     user: User = Depends(get_current_user),
 ):
@@ -90,7 +86,6 @@ async def knowledge_base_detail_page(
         "pages.kb.KnowledgeBaseDetail",
         knowledge_base=knowledge_base,
         current_user=user,
-        is_dev=(config.env == "dev"),
     )
 
 

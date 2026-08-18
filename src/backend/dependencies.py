@@ -45,7 +45,10 @@ def get_catalog_dep(config: AppConfig = Depends(get_app_config)) -> Catalog:
             "Catalog requested but no `frontend` config is set; "
             "add a `frontend:` block to config.yaml."
         )
-    return get_catalog(config.frontend.components_dir)
+    return get_catalog(
+        config.frontend.components_dir,
+        env=config.env,
+    )
 
 
 def get_templates(config: AppConfig = Depends(get_app_config)):

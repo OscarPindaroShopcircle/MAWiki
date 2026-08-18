@@ -54,7 +54,6 @@ async def _build_invitations(db: AsyncSession) -> list[InvitationView]:
 @router.get("/admin/users", response_class=HTMLResponse)
 async def admin_users(
     catalog=Depends(get_catalog_dep),
-    config: AppConfig = Depends(get_app_config),
     db: AsyncSession = Depends(get_db_session),
     user: User = Depends(get_current_admin_user),
 ):
@@ -67,7 +66,6 @@ async def admin_users(
         users=users,
         invitations=invitations,
         current_user=user,
-        is_dev=(config.env == "dev"),
     )
 
 
