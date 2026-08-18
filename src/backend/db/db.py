@@ -3,6 +3,7 @@ import re
 from contextlib import asynccontextmanager, contextmanager
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.ext.asyncio import (
+    AsyncAttrs,
     AsyncSession,
     AsyncEngine,
     async_sessionmaker,
@@ -23,7 +24,7 @@ NAMING_CONVENTION: dict[str, str] = {
 }
 
 
-class Base(DeclarativeBase):
+class Base(AsyncAttrs, DeclarativeBase):
     """Base class for all SQLAlchemy models."""
 
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
