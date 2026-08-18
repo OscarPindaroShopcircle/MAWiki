@@ -48,6 +48,7 @@ def get_catalog_dep(config: AppConfig = Depends(get_app_config)) -> Catalog:
     return get_catalog(
         config.frontend.components_dir,
         env=config.env,
+        app_name=config.app_name,
     )
 
 

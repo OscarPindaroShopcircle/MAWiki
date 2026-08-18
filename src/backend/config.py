@@ -206,6 +206,7 @@ class StorageConfig(BaseModel):
 
 
 class AppConfig(BaseConfig):
+    app_name: str = Field(default="Circeus")
     env: str = Field(default="dev")
     database: PostgresConfig = Field(default_factory=PostgresConfig)
     migrator: MigratorConfig = Field(default_factory=MigratorConfig)

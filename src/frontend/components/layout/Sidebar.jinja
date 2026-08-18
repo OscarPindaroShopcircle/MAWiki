@@ -1,14 +1,14 @@
   {#def current_user=None, active=None, badges=None #}
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-header">
-    <span class="sidebar-brand-name">Circeus</span>
+    <span class="sidebar-brand-name">{{ app_name }}</span>
     <common.Tooltip text="Toggle sidebar" position="bottom">
       <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
         <common.Icon name="panel-left-close" size=18 />
       </button>
     </common.Tooltip>
   </div>
-  <nav class="sidebar-nav">
+  <nav class="sidebar-nav" tabindex="0">
     <layout.SidebarSection>
       <layout.SidebarItem href="/" icon="home" label="Home" :active="active" match="home" />
       <layout.SidebarItem href="/knowledge-bases" icon="database" label="Knowledge Bases"
@@ -39,25 +39,3 @@
     {% endif %}
   </div>
 </aside>
-<script>
-  // Keyboard navigation — Arrow keys, Home, End navigate between sidebar links
-  (function () {
-    document.addEventListener("keydown", function (e) {
-      var sidebar = document.getElementById("sidebar");
-      if (!sidebar || !sidebar.contains(document.activeElement)) return;
-      var links = Array.from(sidebar.querySelectorAll(".sidebar-link"));
-      if (!links.length) return;
-      var index = links.indexOf(document.activeElement);
-      if (index === -1) return;
-      var next = null;
-      if (e.key === "ArrowDown") next = (index + 1) % links.length;
-      if (e.key === "ArrowUp") next = (index - 1 + links.length) % links.length;
-      if (e.key === "Home") next = 0;
-      if (e.key === "End") next = links.length - 1;
-      if (next !== null) {
-        links[next].focus();
-        e.preventDefault();
-      }
-    });
-  })();
-</script>

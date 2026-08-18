@@ -29,11 +29,6 @@
   gap: var(--sp-3);
 }
 
-.kb-file-name > span {
-  display: flex;
-  flex-direction: column;
-}
-
 .kb-file-name > svg {
   flex-shrink: 0;
 }

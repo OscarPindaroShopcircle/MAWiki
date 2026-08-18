@@ -1,3 +1,5 @@
+app_name: Menelao
+
 database:
   user: app_user
   host: localhost

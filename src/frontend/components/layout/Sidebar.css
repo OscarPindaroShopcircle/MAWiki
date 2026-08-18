@@ -51,11 +51,10 @@
 
 /* Collapsed state — becomes a navigation rail (icons only) */
 .sidebar-collapsed {
-  width: 72px;
+  width: 88px;
 }
 
 .sidebar-collapsed .sidebar-brand-name,
-.sidebar-collapsed .sidebar-link-label,
 .sidebar-collapsed .sidebar-user-name,
 .sidebar-collapsed .sidebar-user-email {
   display: none;
@@ -67,8 +66,22 @@
 }
 
 .sidebar-collapsed .sidebar-link {
+  flex-direction: column;
   justify-content: center;
-  padding: var(--sp-2);
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-1);
+  font-size: var(--text-xs);
+  line-height: var(--leading-tight);
+  text-align: center;
+}
+
+.sidebar-collapsed .sidebar-link-label {
+  display: block;
+  flex: none;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sidebar-collapsed .sidebar-link-badge {
@@ -82,6 +95,12 @@
   padding: var(--sp-4) var(--sp-2);
   display: flex;
   flex-direction: column;
+  outline: none;
+}
+
+.sidebar-nav:focus-visible {
+  outline: 1px solid var(--clr-nav-accent);
+  outline-offset: -1px;
 }
 
 /* M3 section — groups links with an optional label */
@@ -192,4 +211,37 @@
 .sidebar-user-email {
   font-size: var(--text-xs);
   color: var(--clr-nav-link);
+}
+
+@media (max-width: 48rem) {
+  .sidebar {
+    width: 80px;
+    height: 100dvh;
+  }
+
+  .sidebar-header {
+    display: none;
+  }
+
+  .sidebar-nav {
+    padding: var(--sp-4) var(--sp-2);
+  }
+
+  .sidebar-section {
+    gap: var(--sp-2);
+  }
+
+  .sidebar-section-label {
+    display: none;
+  }
+
+  .sidebar .user-menu-info,
+  .sidebar .user-menu .btn > svg {
+    display: none;
+  }
+
+  .sidebar .user-menu .btn {
+    justify-content: center;
+    padding: var(--sp-2);
+  }
 }

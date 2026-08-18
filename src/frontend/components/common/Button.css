@@ -44,6 +44,9 @@
 }
 .btn-danger:hover:not(:disabled) { opacity: .85; }
 
+/* Icon-only — square button */
+.btn-icon { padding: var(--sp-1); }
+
 /* Block — fill parent width */
 .btn-block {
   width: 100%;

@@ -49,3 +49,21 @@
 .kb-empty {
   color: var(--clr-text-secondary);
 }
+
+@media (max-width: 48rem) {
+  .kb-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: var(--sp-4);
+  }
+
+  .kb-header .btn {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .kb-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-4);
+  }
+}

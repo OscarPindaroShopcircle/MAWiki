@@ -109,7 +109,9 @@ def _build_templates(templates_dir: str):
 
 
 @lru_cache(maxsize=1)
-def get_catalog(components_dir: str, *, env: str = "dev") -> Catalog:
+def get_catalog(
+    components_dir: str, *, env: str = "dev", app_name: str = "Circeus"
+) -> Catalog:
     """Build the JinjaX catalog — the object that manages components.
 
     Components are ``.jinja`` files inside ``components_dir`` (and its
@@ -117,7 +119,7 @@ def get_catalog(components_dir: str, *, env: str = "dev") -> Catalog:
     auto-loaded and served via a StaticFiles mount (see ``server.py``).
     """
     catalog = jinjax.Catalog(
-        globals={"env": env},
+        globals={"env": env, "app_name": app_name},
         tests={"admin": _is_admin, "dev": _is_dev},
     )
     catalog.add_folder(components_dir)

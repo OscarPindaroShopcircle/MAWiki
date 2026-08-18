@@ -7,11 +7,20 @@
 }
 
 body:has(.sidebar-collapsed) .page-main {
-  margin-left: 72px;
+  margin-left: 88px;
 }
 
 /* Center content so it doesn't jump when sidebar toggles */
 .admin-dashboard {
   max-width: 960px;
   margin: 0 auto;
+}
+
+@media (max-width: 48rem) {
+  body:has(.sidebar) .page-main {
+    margin-left: 80px;
+    min-height: 100dvh;
+    min-width: 0;
+    padding: var(--sp-6) var(--sp-4);
+  }
 }

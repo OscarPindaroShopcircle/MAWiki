@@ -2,26 +2,7 @@
 <div id="kb-files-table">
   <common.Table headers={{ ["Name", "Uploaded", ""] }}>
     {% for file in files %}
-    <tr>
-      <td>
-        <div class="kb-file-name">
-          <pages.kb.FileIcon :name="file.name" :mime_type="file.mime_type" />
-          <span>
-            <span class="kb-file-label">{{ file.name }}</span>
-          </span>
-        </div>
-      </td>
-      <td>{{ file.created_at | time }}</td>
-      <td class="kb-file-actions">
-        <common.Tooltip text="Download">
-          <common.Button variant="secondary" size="sm"
-            :href="'/api/knowledge-bases/' + knowledge_base_id|string + '/files/' + file.id|string + '/download'"
-            :aria-label="'Download ' + file.name" download>
-            <common.Icon name="download" size=16 />
-          </common.Button>
-        </common.Tooltip>
-      </td>
-    </tr>
+    <pages.kb.FileRow file={{ file }} knowledge_base_id={{ knowledge_base_id }} />
     {% else %}
     <tr><td colspan="3" class="kb-files-empty">No files yet. Upload some to get started.</td></tr>
     {% endfor %}
