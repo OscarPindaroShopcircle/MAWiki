@@ -5,6 +5,7 @@
   var surface = document.createElement('div');
   surface.className = 'tooltip-surface';
   surface.setAttribute('role', 'tooltip');
+  surface.setAttribute('popover', 'manual');
   document.body.appendChild(surface);
   var active = null;
 
@@ -24,6 +25,7 @@
   function show(anchor) {
     active = anchor;
     surface.textContent = anchor.dataset.tooltip;
+    if (!surface.matches(':popover-open')) surface.showPopover();
     position();
     surface.classList.add('tooltip-surface-visible');
   }
@@ -31,6 +33,7 @@
   function hide(anchor) {
     if (anchor && anchor !== active) return;
     surface.classList.remove('tooltip-surface-visible');
+    if (surface.matches(':popover-open')) surface.hidePopover();
     active = null;
   }
 

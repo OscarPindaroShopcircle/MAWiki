@@ -143,6 +143,27 @@
     </section>
 
     <section class="showcase-section">
+      <h2>Menus</h2>
+      <p class="showcase-note">M3 vertical menu with shared positioning, focus, and keyboard navigation.</p>
+      <common.Button id="showcase-menu-trigger" variant="secondary" size="md"
+                     aria-haspopup="menu" aria-expanded="false"
+                     aria-controls="showcase-menu" popovertarget="showcase-menu">
+        Open menu
+        <common.Icon name="chevron-down" size=16 />
+      </common.Button>
+      <common.Menu id="showcase-menu" labelledby="showcase-menu-trigger">
+        <common.MenuItem>
+          <common.Icon name="pencil" size=18 />
+          Rename
+        </common.MenuItem>
+        <common.MenuItem variant="danger">
+          <common.Icon name="trash-2" size=18 />
+          Delete
+        </common.MenuItem>
+      </common.Menu>
+    </section>
+
+    <section class="showcase-section">
       <h2>Tooltips</h2>
       <p class="showcase-note">M3 plain tooltips describe icon-only actions on hover or keyboard focus.</p>
       <div class="showcase-row">

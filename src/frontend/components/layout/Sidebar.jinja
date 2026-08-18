@@ -1,4 +1,4 @@
-{#def current_user=None, active=None, badges=None #}
+{#def current_user=None, active=None, badges=None, is_dev=False #}
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <span class="sidebar-brand-name">Circeus</span>
@@ -34,6 +34,14 @@
       <span class="sidebar-link-badge">{{ badges['admin'] }}</span>
       {% endif %}
     </a>
+    {% if is_dev %}
+    <a href="/components" class="sidebar-link {{ 'sidebar-link-active' if active == 'showcase' else '' }}">
+      <span class="sidebar-link-icon">
+        <common.Icon name="palette" size=20 />
+      </span>
+      <span class="sidebar-link-label">Showcase</span>
+    </a>
+    {% endif %}
     {% endif %}
   </nav>
   <div class="sidebar-footer">

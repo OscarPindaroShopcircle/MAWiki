@@ -1,0 +1,184 @@
+---
+name: tech-dd
+description: Produce a technical due diligence report on a company from a website link, PDFs, slide decks, or Word documents. Use this skill whenever the user asks for "tech DD", "technical due diligence", "technical assessment", "technical evaluation", "tech evaluation", or "technical review" of a company, or when they hand over a company link plus documents and ask what to make of it technically. Also trigger when the user mentions pre-LOI or post-LOI technical work, an IC deck's technical section, an AI maturity assessment, or an architecture signal read on a target. If a company name or URL appears alongside uploaded PDFs/DOCX/PPTX in an investment or acquisition context, prefer this skill even without the exact phrase "due diligence".
+---
+
+# Technical Due Diligence
+
+Produce a structured technical due diligence report on an acquisition/investment target across 8 dimensions plus a technical taxonomy, using whatever combination of a company link and uploaded documents the user provides.
+
+## Inputs
+
+The user will provide **at least one** of the following:
+- One or more URLs (typically the company website, sometimes a product page, blog, or docs).
+- One or more files: PDF, DOCX, PPTX, TXT, MD.
+
+**If neither is present, stop and ask the user for at least one input.** Do not fabricate content from the company name alone.
+
+Also check for a mode signal:
+- Default is **pre-LOI** (screening depth).
+- If the user says "post-LOI", "deep-dive", "we're in DD", "answer the full questionnaire", or similar, switch to **post-LOI** mode.
+
+## Workflow
+
+Follow this order. Do not compress or reorder.
+
+### 1. Gather all source material first (before writing anything)
+
+- For **each URL** provided:
+  - Fetch it with `web_fetch`.
+  - If the URL looks like a company homepage (root domain, no meaningful path), also fetch 2–5 sublinks that look relevant to a tech assessment: `/product`, `/platform`, `/technology`, `/security`, `/docs`, `/about`, `/careers`, `/engineering`, `/blog`, `/pricing`. Take what exists; skip what doesn't.
+  - Also consider fetching pages that reveal the stack or team: engineering blog posts, open job postings, security/trust pages.
+- For **each uploaded file**: read it end-to-end. Use the file-reading skill guidance if the file's contents aren't already visible in context.
+- Do **not** start writing the report until all gathering is done. This matters — the sections cross-reference each other and premature writing produces contradictions.
+
+### 2. Decide on intermediary files
+
+Intermediary files let you draft each section independently, then compose the final artifact by reading them back. Use them when the material is substantial or the user is likely to want to inspect intermediate work.
+
+- **If in a project workspace** (a writable working directory exists and persists): write intermediary files there as `application_and_product.md`, `software_architecture.md`, `physical_architecture.md`, `tech_stack.md`, `security.md`, `third_party.md`, `proprietary_data.md`, `ai_models.md`, `taxonomy.md`, `top_summary.md`.
+- **If in a plain chat** (no persistent workspace): save them to `/home/claude/tech-dd-work/` as scratch files. These are not shown to the user unless explicitly requested.
+- **If the user says "keep everything in context" or "no intermediary files"**: skip the intermediary files and hold each section in your own working memory (i.e., in your response drafting) before assembling the final output.
+
+### 3. Draft the 8 sections, in order
+
+For each section, read the guidance in `references/section-guidance.md` and follow it. Draft each section based on the gathered material.
+
+Section order:
+1. Application & Use Case
+2. Software Architecture
+3. Physical Architecture
+4. Tech Stack, Codebase & Engineering Team
+5. Security
+6. Third Party Dependencies
+7. Proprietary Data & Data Advantages
+8. AI Models
+
+**Pre-LOI mode (default)**: Write each section as a short prose assessment (roughly 3–8 sentences per section, or a small number of bullets when a list genuinely fits — e.g., a list of third-party vendors). Do **not** try to answer the numbered post-LOI sub-questions one by one. The goal is a screening-depth read, not an exhaustive questionnaire.
+
+**Post-LOI mode**: For each section, answer every numbered sub-question from `references/section-guidance.md` individually, in order, using the sub-question number and text as a heading or label. If the information isn't in the sources, write "NA".
+
+**The NA rule (applies in both modes)**: If nothing in the fetched pages or uploaded files supports a claim, write `NA` for that item. Do not invent, do not extrapolate from the company name, do not guess at industry defaults and present them as fact. It is far better to have five NAs and three solid observations than eight speculative paragraphs.
+
+### 4. Fill in the taxonomy
+
+Read `references/taxonomy.md` and produce two classifications:
+- **3b — AI Maturity Level** (pick one of 1–5).
+- **3c — Architecture Signal** (pick one of the listed architectural styles, plus integration/AI deployment notes).
+
+For each classification, always include the full description of the chosen level/style verbatim from `references/taxonomy.md`, so the reader understands what that classification means without looking it up.
+
+If the material genuinely doesn't support a classification, write "NA — insufficient signal" and explain in one sentence what evidence would be needed.
+
+### 5. Write the top summary (last, not first)
+
+Only after sections 1–8 and the taxonomy are drafted, write the three opening paragraphs:
+1. A brief plain-language description of what the company is and does.
+2. A summary of the tech DD findings across the 8 sections — what's notable, what's concerning, what's missing.
+3. A consideration on AI maturity and architectural posture, based on the taxonomy classifications.
+
+Writing this last is deliberate: it forces the summary to reflect the actual sections rather than a pre-conceived narrative.
+
+### 6. Assemble the final output
+
+Compose the report in this order:
+1. Company one-paragraph description
+2. Tech DD summary paragraph
+3. AI maturity & architecture consideration paragraph
+4. Technical Taxonomy section (3b AI Maturity Level with full level description; 3c Architecture Signal with full style description)
+5. The 8 sections in order
+
+If intermediary files exist, assemble by reading them back and concatenating with light connective tissue. If not, assemble from your draft in memory.
+
+## Output format
+
+- **Default**: markdown artifact.
+- If the user asks for a **PDF**: use the pdf skill.
+- If the user asks for a **Word document / .docx**: use the docx skill.
+- If the user asks to **put the output in the chat** (or "just tell me", "no artifact", "inline"): produce the report as a chat response, not an artifact.
+- If unclear, default to a markdown artifact and mention at the end that you can also produce a PDF or Word version.
+
+## Style rules for the tech DD report
+
+Write for a software engineer. Short direct sentences. Descriptive, not evaluative. If the reader needs a conclusion, put it in the summary — and even there, keep it factual.
+
+### Banned openers (editorial framing that sounds insightful but isn't)
+
+Do not open a paragraph or sentence with:
+- "The strongest signal(s)..."
+- "The clearest signal on X comes from..."
+- "The most consequential X is..."
+- "One of the better-evidenced areas is..."
+- "What matters here is..."
+- "Security posture is one of the..."
+- "Notably", "Interestingly", "Tellingly", "Crucially"
+
+### Banned hedges and opinions
+
+Do not write:
+- "and only barely" (Level 2 is Level 2; don't editorialize the classification)
+- "aged enough that X is unsurprising" (opinion, not description)
+- "a real infrastructure dependency" (implies fake ones exist)
+- "structurally the opposite of" (dramatic)
+- "the language only makes sense if..." (say what the roadmap says, then say what it implies, flatly)
+- "positioned as", "framed as" (unless the point is the positioning differs from reality — and then say that plainly)
+
+### Ban the "X rather than Y" juxtaposition pattern
+
+Do not write:
+- "Customer data isolation is architectural rather than just procedural"
+- "A productivity signal rather than a product one"
+- "The per-client database is structurally the opposite of a data-pooling architecture"
+- "It's not just a feature, it's a fundamental design choice"
+
+These read as forced insight. Describe X. If a contrast is genuinely useful, write two flat sentences: "Each client has its own database. That is isolation at the database layer, not at the application layer."
+
+### Use lists for list-like content
+
+If you are enumerating 3+ items, use a bullet or numbered list. Do not string them into a comma-separated sentence. This applies to:
+- Product modules or features
+- Pricing tiers (one bullet per tier, with what's included and the price)
+- Team composition and FTE breakdowns (one bullet per role)
+- Certifications
+- Integrations, connectors, third-party services
+- Cloud services, technologies, or vendors when more than two
+
+Prose is for narrative and reasoning. Lists are for lists.
+
+### Quotes and formatting
+
+- Do not wrap product names or terms in raw double quotes as decoration. Use *italics* for terms and **bold** for emphasis.
+- Use quotation marks only for text actually quoted from a source, and cite the source inline (e.g., "the roadmap labels the 2026 work 'initial AI features (with Teammaite)'").
+- Ensure quote characters render consistently — no orphaned `"` in HTML output.
+
+### Descriptive over evaluative — before/after examples
+
+Bad: "The company's roadmap only makes sense if the current backend is not API-first."
+Good: "The roadmap lists an in-progress API-first migration running 2025–2027, so the current backend is not API-first."
+
+Bad: "Security posture is one of the better-evidenced areas: Testersuite holds ISO 27001..."
+Good: "Testersuite holds ISO 27001 and NEN 7510 certification for the whole organisation and the platform, audited annually by TÜV Netherlands. Its hosting partner's data centres carry ISO 20000, ISO 27001, and NEN 7510."
+
+Bad: "The most consequential third-party relationship for the AI story is the one with Teammaite."
+Good: "AI features are delivered through a partnership with Teammaite. Teammaite's *Testmaite* generates test cases; Testersuite handles execution, tracking, and reporting."
+
+Bad: "Because most functions have only a single 0.8–0.9 FTE lead, key-person concentration is a real consideration."
+Good: "Most functions have a single 0.8–0.9 FTE lead (DevOps, front-end, full-stack, lead engineer). There is one point of failure per role."
+
+## DO NOT
+
+Avoid smart-sounding but vague analytical language. When a section boils down to a short list of facts (what data/feature exists, what it's used for, what it's not used for, and what the gap between the sales pitch and reality is), write it that way — plainly, close to a list, even inside prose. Do not dress up simple facts in abstract phrasing like "supporting an existing rules-based allocation function rather than feeding a machine-learning layer" or "explicitly frames advanced applications of this kind as a future possibility resting on an existing data foundation." That kind of sentence sounds analytical but forces the reader to decode what is actually a simple point. A useful test: if the paragraph can be rewritten as 3-4 short factual bullets without losing any information, the prose version is too dense and should be simplified to match. Prefer concrete phrasing ("used for billing and reporting," "not used for X, Y, Z," "named only as a future feature, not work in progress") over abstract phrasing ("feeding a machine-learning layer," "resting on an existing data foundation"). When the source material oversells something (e.g., an IM implying a data asset is AI-relevant when the answers show it's just operational data), say that directly instead of implying it through hedged, technical-sounding language.
+
+## Common failure modes to avoid
+
+- **Writing the summary first.** Always draft sections and taxonomy first, summary last.
+- **Guessing to fill gaps.** Use NA.
+- **Answering post-LOI sub-questions in pre-LOI mode.** Pre-LOI is short prose, not a questionnaire response.
+- **Skipping the taxonomy level descriptions.** Always include the verbatim description of the chosen level so the reader has context.
+- **Fetching only the homepage.** For a homepage URL, always try to fetch a few relevant sublinks — the homepage alone rarely contains enough for a tech DD.
+- **Reading files after starting to write.** Read everything first.
+
+## Reference files
+
+- `references/section-guidance.md` — Description of each of the 8 sections plus the post-LOI sub-questions for each. Read at the start of drafting.
+- `references/taxonomy.md` — 3b AI Maturity Level (5 levels with descriptions) and 3c Architecture Signal. Read before filling in the taxonomy.

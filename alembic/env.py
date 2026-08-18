@@ -1,3 +1,4 @@
+import os
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -14,9 +15,12 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-app_config = get_app_config()
-# CHANGED: use migrator credentials, not the app's runtime credentials
-config.set_main_option("sqlalchemy.url", app_config.migrator.sync_url)
+db_url = os.environ.get("HARNESS_DB_URL")
+if db_url:
+    config.set_main_option("sqlalchemy.url", db_url)
+else:
+    app_config = get_app_config()
+    config.set_main_option("sqlalchemy.url", app_config.migrator.sync_url)
 
 target_metadata = Base.metadata
 

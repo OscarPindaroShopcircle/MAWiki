@@ -1,0 +1,11 @@
+{#def href=None, variant="default" #}
+{% set classes = "menu-item menu-item-" ~ variant %}
+{% if href %}
+<a href="{{ href }}" role="menuitem" {{ attrs.render(class=classes) }}>
+  {{ content }}
+</a>
+{% else %}
+<button type="button" role="menuitem" {{ attrs.render(class=classes) }}>
+  {{ content }}
+</button>
+{% endif %}

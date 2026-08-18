@@ -90,9 +90,6 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     return app
 
 
-app = create_app()
-
-
 if __name__ == "__main__":
     config = get_app_config()
     app = create_app(config)

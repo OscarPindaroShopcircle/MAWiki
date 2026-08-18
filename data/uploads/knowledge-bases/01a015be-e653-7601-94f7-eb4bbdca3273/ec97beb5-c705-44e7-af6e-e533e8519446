@@ -1,0 +1,155 @@
+# Section Guidance
+
+For each of the 8 sections, this file gives:
+- The **scope description** — what the section is really about, so you focus the pre-LOI prose on the right topics.
+- The **post-LOI sub-questions** — the numbered items to answer individually only when the user is in post-LOI mode.
+
+In pre-LOI mode, use the scope description to shape 3–8 sentences of prose per section. Do not answer the sub-questions.
+In post-LOI mode, answer every sub-question in order, using NA when the sources don't cover it.
+
+---
+
+## 1. Application & Use Case
+
+**Scope.** This section aims to build a clear, shared understanding of what the product does and the problem it solves. It is intentionally high-level and product-focused.
+
+**Post-LOI sub-questions.**
+- 1.1 A full description of the application and the use case.
+- 1.2 List of key problems that the product solves.
+- 1.3 Access to a live product demo showcasing the main functionalities.
+- 1.4 A written product roadmap covering the next 12–24 months, including planned features and their expected timeline.
+- 1.5 A written AI-specific roadmap: which AI features are planned, at what stage they are, and the reasoning behind them.
+- 1.6 A high-level overview of the pricing model: tiers, structure, and what differentiates each tier.
+- 1.7 A description of how users behave in front of the application and the typical user interaction.
+- 1.8 A description of the expected lifetime of the solution, including the anticipated trajectory of the architecture over both the short and long term.
+
+---
+
+## 2. Software Architecture
+
+**Scope.** This section focuses on how the software is organized from a logical point of view. Specifically, it is about how the software is structured to do it — which components exist, what each one is responsible for, and how they interact with each other.
+
+We are not yet asking about infrastructure or hosting, which will be covered in the Physical Architecture section. The focus here is purely on the internal logical organization of the software: modules, services, features, and the relationships between them.
+
+A few examples of what we are looking for: a product may have a core processing engine, a notification module, and a user management layer. We want to understand what each does and how they are connected. Or a complex feature may be the result of two or more components working in tandem — we want that relationship to be visible.
+
+Technical depth is expected and welcome in this section.
+
+**Post-LOI sub-questions.**
+- 2.1 A description of the logical structure of the application: how it is organized (modules, services, features), what each component is responsible for, and how they interact with each other.
+- 2.2 A description of the process used to create internal documentation. Internal documentation is about how the software works, how it's structured, how it can be deployed in different environments.
+- 2.3 Access to the internal documentation (pdf, link, confluence, github).
+- 2.4 A description of the process used to create customer-facing documentation (or user manual). This documentation is about how the user uses the software and how they expect it to work.
+- 2.5 Access to the user manual.
+- 2.6 A diagram of the logical architecture of the application, outlining its core building blocks and how they interact with each other (UML, draw.io, PNG, PDF).
+- 2.7 A description of the database technology used by the application (SQL, NoSQL, key-value store, filesystem manager), including the rationale behind the choice, the features that benefit from it, and any features that may be constrained or weakened by it.
+- 2.8 A description of how the application's services and modules communicate with each other, including the protocols and patterns used such as REST APIs, event-driven messaging, or batch processing.
+- 2.9 A description of the application's known architectural limitations, including any planned redesigns on the roadmap and the rationale behind them.
+
+---
+
+## 3. Physical Architecture
+
+**Scope.** This section focuses on how and where the software is deployed and hosted from an infrastructure point of view. Specifically, it is about the physical and cloud environments that support the application, which servers, services, and platforms are used, where they are located, and how they are connected.
+
+We are not asking about the internal logical organization of the software, which has been covered in the Software Architecture section. The focus here is purely on the infrastructure layer: hosting environments, deployment topology, network boundaries, and the physical or virtual resources that keep the system running.
+
+A few examples of what we are looking for: a product may be hosted on a cloud provider such as AWS or Azure, with separate environments for production, staging, and development. We want to understand where each component is deployed, how traffic flows between them, and what infrastructure services are leveraged — such as load balancers, databases, storage, or CDN layers. Or a solution may span multiple regions or rely on third-party hosted services; we want that topology to be visible.
+
+**Post-LOI sub-questions.**
+- 3.1 A description of the application's architectural style — whether it is built as a monolithic application, organized as a set of microservices, or follows an alternative pattern such as a service-oriented architecture (SOA), modular monolith, event-driven architecture, serverless, or a hybrid approach.
+- 3.2 A description of how the application is organized across tiers; whether it follows a traditional frontend, backend, and database structure, leverages serverless functions such as lambdas, or adopts a different layering approach.
+- 3.3 A description of the application's scalability characteristics, including how much additional load it can handle before requiring an architectural redesign, and whether that level of load is realistically expected given the context of the business.
+- 3.4 The current traffic profile of the application.
+- 3.5 A description of the application's usage profile, including growth trends over time, and a breakdown of operations by intensity and concurrency.
+- 3.6 A description of the application's data interaction patterns, including whether the process is stateless or stateful, the balance between read and write operations, and any identified performance bottlenecks.
+- 3.7 A description of the application's cloud infrastructure, including the depth of integration with the cloud provider's ecosystem, a full list of cloud services used with their respective provider and region, and a breakdown of the monthly infrastructure costs.
+- 3.8 A description of the application's scalability profile, including current load levels and future projections, the threshold at which the system breaks down or becomes too costly to scale, known performance bottlenecks, and any past incidents caused by scale along with how they were resolved.
+- 3.9 A diagram of the overall solution architecture, covering all components in scope, including both proprietary and third-party technologies and platforms.
+- 3.10 A description of the decoupling layers present in the architecture, including how they are designed and how they contribute to the application's scalability.
+- 3.11 A description of the application's SLA profile, including the strategies used to reduce latency and improve the end-user experience, and the approaches adopted to maximize throughput and support a high number of concurrent users.
+- 3.12 A description of the application's auto-scaling mechanisms and monitoring setup, including the metrics tracked, the thresholds that trigger scaling, and the tools used to observe the health and performance of the system.
+- 3.13 A description of how infrastructure and operational costs scale with traffic growth.
+- 3.14 A description of the parts of the system that become disproportionately expensive as traffic and usage scale.
+- 3.15 A description of the potential applications of AI foreseen for the product, including how each would be implemented and the expected impact on the existing architecture.
+- 3.16 A description of the nature of the company's relationship with Azure, including whether there is an exclusivity partnership or preferential agreement in place, and what the implications would be of moving to a different cloud provider.
+
+---
+
+## 4. Tech Stack, Codebase & Engineering Team
+
+**Scope.** This section focuses on the technical choices made to build the application and on how maintainable and extensible the codebase is in practice. Specifically, it covers the languages, frameworks, and tools that make up the tech stack, the structure and quality of the codebase, and the engineering team responsible for it. We are not yet asking about infrastructure or architecture, which have been covered in previous sections.
+
+The focus here is on the day-to-day technical reality of the software: what it is built with, how easy it is to change, and who builds and maintains it.
+
+**Post-LOI sub-questions.**
+- 4.1 A description of the backend technology stack, covering the languages, frameworks, and libraries used across the different parts of the application, along with the rationale behind each of these technology choices.
+- 4.2 A description of the frontend technology stack, covering the languages, frameworks, and libraries used across the different parts of the application, along with the rationale behind each of these technology choices.
+- 4.3 A description of the application's codebase, including its age, how it is maintained over time, and whether an active test suite is in place.
+- 4.4 A description of the application's known areas of technical debt.
+- 4.5 A description of the process followed to introduce new features into the existing codebase.
+- 4.6 Access to the application's code repository or repositories.
+- 4.7 A description of the development environment, including how it is set up and used by the engineering team to build and test new features.
+- 4.8 A description of the staging environment, including how it mirrors production and how it is used to validate changes before release.
+- 4.9 A description of the CI/CD strategy and deployment process in place, including the steps and automation used to build, test, and promote changes from development through to production.
+- 4.10 A description of the technical team composition, including the roles, skills, and seniority levels of the staff involved in developing and maintaining the application.
+- 4.11 A description of the process used to allocate engineering staff to features/clients.
+
+---
+
+## 5. Security
+
+**Scope.** This section covers the security posture of the application across both human and computational systems. Specifically, it examines how the application protects itself and its users from threats, how sensitive data is managed, and how access is controlled.
+
+A few examples of what we are looking for: whether there is a history of known data breaches that must be disclosed; whether the application is exposed to DDoS risk and what protections are in place; how roles, secrets, and developer credentials are managed; how customer data is isolated across tenants; and how client secrets are stored and protected.
+
+**Post-LOI sub-questions.**
+- 5.1 A description of any known data breaches, both current and historical, including the circumstances, impact, and how they were addressed.
+- 5.2 A description of how roles and secrets are managed across the application, including how developer credentials are handled and controlled.
+- 5.3 A description of how customer data is isolated, including whether the application follows a multi-tenant or single-tenant model.
+- 5.4 A description of the sensitive data handled by the application, including what it is, where it is stored, and how it is protected.
+
+---
+
+## 6. Third Party Dependencies
+
+**Scope.** This section covers the application's dependencies on external vendors, APIs, and services. Specifically, it examines which third-party components the application relies on, the criticality of each, and the degree to which the application is locked into specific vendors.
+
+A few examples of what we are looking for: a full list of external APIs and services in use, such as a database hosted on a cloud provider or a logging service from a third party; which vendors, if they were to disappear or become unavailable, would completely break the application; and whether there are any contractual or technical lock-ins with specific vendors that would make switching costly or difficult.
+
+**Post-LOI sub-questions.**
+- 6.1 A description of the upstream and downstream services and external APIs the application depends on, including the vendor, the nature of each dependency, the role it plays within the application, and its criticality to the application's operation.
+- 6.2 A description of the vendors whose disappearance or unavailability would completely break the application, and the extent of the impact in each case.
+- 6.3 A description of any contractual or technical lock-in with third-party vendors, including the nature of the dependency and the implications of switching.
+- 6.4 Licensing constraint: do you have dependence on commercial software? Do you have dependence on Open Source? How do you protect your intellectual property in respect of community development?
+- 6.5 A description of planned integrations with commercial software, including the nature of each integration and the expected value it would bring to the application and its users.
+
+---
+
+## 7. Proprietary Data & Data Advantages
+
+**Scope.** This section covers the data assets owned by the company, focusing on their uniqueness and the ease with which they can be leveraged. Specifically, it examines what proprietary data the company holds, how difficult it would be for a competitor to replicate it, and how readily it can be used to generate value.
+
+A few examples of what we are looking for: whether the company has accumulated unique datasets that are hard to obtain elsewhere; how structured and accessible the data is for analysis or product development; and whether the data represents a meaningful competitive advantage.
+
+**Post-LOI sub-questions.**
+- 7.1 A description of the data assets the company holds, covering both structured and unstructured data, the current volume, and the rate at which new data is being generated.
+- 7.2 A description of how the data is stored and accessed, including the tools, systems, and processes required to query and retrieve it.
+- 7.3 A description of how data is collected and the extent to which the company is free to use it to implement AI-powered features, including any contractual or consent-based restrictions.
+- 7.4 A description of how data is collected and the extent to which the company is free to use it to train machine learning models, including any rights, restrictions, or obligations tied to the data sources.
+
+---
+
+## 8. AI Models
+
+**Scope.** This section covers the models used within the application (whether proprietary, foundational, or open-source), how each is used, and how they are hosted and served. Specifically, it examines the role each model plays in the application, the lifecycle of proprietary models from training to deployment, the degree of dependency on external model providers, and the costs and risks associated with each.
+
+A few examples of what we are looking for: whether the company has developed its own models and what makes them defensible; which foundation models or external AI solutions are used and how easy it would be to switch providers; whether open-source models are self-hosted or externally served; and any past incidents related to model output quality or hallucinations, including their impact and resolution.
+
+**Post-LOI sub-questions.**
+- 8.1 A description of the OCR module, including whether it is built on a proprietary model or relies on an external provider, and how tightly the core application functionality depends on it.
+- 8.2 A description of whether AI models are used elsewhere in the application, and if so, which functions they serve.
+- 8.3 A description of how the company uses AI internally to support its own processes and operations, beyond what is exposed to end users in the product.
+- 8.4 A description of the Azure Translator integration, including how it is used within the application, which features depend on it, and how tightly the core application functionality relies on it.
+- 8.5 A description of the Azure OpenAI integration, including which models are used, how they are embedded in the application's features, and how tightly the core application functionality depends on it.
+- 8.6 A description of the AI talent within the company, including the size and composition of the team, what they work on, and whether their focus is on building and maintaining proprietary models, integrating external AI solutions, or both.

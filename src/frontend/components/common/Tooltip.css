@@ -4,9 +4,12 @@
 
 .tooltip-surface {
   position: fixed;
+  inset: auto;
   z-index: var(--z-tooltip);
+  margin: 0;
   padding: var(--sp-1) var(--sp-2);
   background: var(--clr-nav);
+  border: none;
   color: var(--clr-nav-text);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-sm);

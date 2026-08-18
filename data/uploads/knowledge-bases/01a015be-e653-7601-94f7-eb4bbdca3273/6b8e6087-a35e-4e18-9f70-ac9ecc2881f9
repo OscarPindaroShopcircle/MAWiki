@@ -1,0 +1,42 @@
+# Technical Taxonomy
+
+Two classifications go into every report. Both must appear in the final output with the full description of the chosen level/style included verbatim, so the reader has context without needing to look up what "Level 3" or "hybrid" means.
+
+---
+
+## 3b. AI Maturity Level
+
+Assess where the company currently sits on the AI maturity scale. This is a classification, not a value ranking — being at Level 4 instead of Level 3 is not inherently better. What matters is whether the current level matches the workflow potential, and how large the gap is between where the company is and where it could credibly reach.
+
+| Level | Label | Description |
+|-------|-------|-------------|
+| 1 | None | No AI in the product. If the workflow type supports AI integration, this represents high effort but also high upside. |
+| 2 | Integration | AI models incorporated off-the-shelf via API, with genuine feature-market fit — not cosmetic, but meaningfully improving UX and willingness to pay. Most AI-enabled software sits here. Replicable by competitors without a proprietary edge. |
+| 3 | Orchestration | Significant engineering around the edges of base models to improve performance for customers: data/context structuring, prompt engineering, model routing, output optimisation, evals. The company has processes to extract maximum value from available models. A legitimate and often sufficient competitive position. |
+| 4 | Fine-tuning | Moving from engineering around models to enhancing the models themselves: supervised fine-tuning on proprietary datasets, distillation, quantisation, reinforcement learning. Produces faster, cheaper, purpose-built models. Requires data scientists and ML engineers — validate against team composition. |
+| 5 | Foundation | Pre-training proprietary foundational models. Extremely rare outside of dedicated AI labs. Almost never relevant for B2B vertical software targets. |
+
+**The gap that matters.** Identify the current level, the realistic ceiling given the workflow nature and data assets, and whether the distance between them represents untapped value or an unrealistic ambition.
+
+**How to present this in the report.** State the chosen level (e.g., "Level 2 — Integration"), quote the level's description verbatim from the table above, then add a short paragraph on: (a) what evidence in the sources supports the classification, (b) the realistic ceiling, (c) the gap.
+
+---
+
+## 3c. Architecture Signal
+
+From job postings, website, LinkedIn, or any available signal, estimate the architecture posture along two axes.
+
+**Deployment model** — pick one:
+- **On-premises.** Software installed and run on customer-controlled infrastructure. Common in regulated verticals, government, older enterprise.
+- **Cloud-SaaS.** Multi-tenant hosted product, accessed over the web. The default for modern B2B SaaS.
+- **Hybrid.** Some components hosted, some on-prem or at the customer edge. Common for products with heavy data-residency requirements or on-device compute.
+- **Agentic-ready (API-first, event-driven).** The architecture is designed such that other software — including AI agents — can call, be called by, and coordinate with the product. API-first design, webhooks, event streams, and typed schemas are the tells.
+
+**Integration complexity and AI deployment timeline** — note any signals about:
+- How easy or hard it is to integrate with (thin API surface vs. rich API vs. UI-only).
+- Whether the architecture would readily accept AI features, or would require significant refactoring.
+- Whether the company has already shown movement toward agentic-ready patterns (job postings for platform/API engineers, event-driven references, MCP or agent framework mentions).
+
+**How to present this in the report.** State the chosen deployment model, quote its description verbatim from the list above, then a short paragraph on integration complexity and AI deployment timeline based on the signals actually found in the sources.
+
+If the sources don't give enough signal, write "NA — insufficient signal" and identify in one sentence what would be needed (e.g., "would need to see the API docs or a systems diagram to classify confidently").

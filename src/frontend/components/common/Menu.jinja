@@ -1,0 +1,6 @@
+{#def id, labelledby, placement="bottom-start" #}
+<div id="{{ id }}" role="menu" aria-labelledby="{{ labelledby }}"
+     popover="auto" data-menu data-menu-placement="{{ placement }}"
+     {{ attrs.render(class="menu") }}>
+  {{ content }}
+</div>
