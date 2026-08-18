@@ -41,3 +41,8 @@ repos:
           --exclude-file src/backend/db/db.py
         language: system
         files: \.py$
+      - id: exception-name-guard
+        name: Enforce exception class names
+        entry: uv run python -m pre_commits.exception_name_guard
+        language: system
+        files: \.py$
