@@ -1,9 +1,10 @@
 import uuid
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, File, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user
+from ..config import AppConfig, get_app_config
 from ..dependencies import get_db_session
 from ..schemas import PagedResponse
 from ..users.schemas import User
@@ -15,6 +16,7 @@ from .service import (
     get_knowledge_base,
     get_knowledge_bases,
     update_knowledge_base,
+    upload_files_to_knowledge_base,
 )
 
 
@@ -60,6 +62,23 @@ async def list_knowledge_bases(
         page=page,
         page_size=page_size,
     )
+
+
+@router.post(
+    "/{knowledge_base_id}/files",
+    response_model=KnowledgeBaseResponse,
+)
+async def upload_knowledge_base_files(
+    knowledge_base_id: uuid.UUID,
+    files: list[UploadFile] = File(...),
+    user: User = Depends(get_current_user),
+    config: AppConfig = Depends(get_app_config),
+    db: AsyncSession = Depends(get_db_session),
+) -> KnowledgeBaseResponse:
+    knowledge_base = await upload_files_to_knowledge_base(
+        db, knowledge_base_id, files, user, config
+    )
+    return _to_response(knowledge_base)
 
 
 @router.get(

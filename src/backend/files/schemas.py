@@ -21,5 +21,15 @@ class FileUpdate(AppBaseModel):
 class FileResponse(AppBaseModel, TimestampMixin):
     # NOTE: deliberately omits ``storage_type`` and ``location`` — where/how a
     # file is physically stored is internal and must never be exposed to the UI.
-    id: Annotated[UUIDField, Field(description="File ID")]
-    name: Annotated[str, Field(max_length=255)]
+    id: Annotated[
+        UUIDField,
+        Field(description="File ID", examples=["01J5KQ3X-file-example"]),
+    ]
+    name: Annotated[
+        str,
+        Field(
+            max_length=255,
+            examples=["report.pdf"],
+            description="Original file name",
+        ),
+    ]

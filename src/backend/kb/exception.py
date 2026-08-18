@@ -25,3 +25,11 @@ class SharedUserNotFoundException(HTTPException):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="One or more shared users do not exist",
         )
+
+
+class FileUploadException(HTTPException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unable to store one or more uploaded files",
+        )
