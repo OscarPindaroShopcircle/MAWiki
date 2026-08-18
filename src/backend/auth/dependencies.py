@@ -83,6 +83,37 @@ async def _try_refresh_from_cookie(
     return User.model_validate(user_model)
 
 
+async def _try_dev_auto_login(
+    response: Response,
+    db: AsyncSession,
+    config: AppConfig,
+) -> User | None:
+    """Authenticate the configured development user and issue normal cookies."""
+    email = config.auth.dev_auto_login_email if config.auth else None
+    if config.env != "dev" or email is None:
+        return None
+
+    result = await db.execute(select(UserModel).where(UserModel.email == email))
+    user_model = result.scalar_one_or_none()
+    if user_model is None or not user_model.is_active:
+        return None
+
+    access_token = create_access_token(user_model.id, user_model.email, user_model.role)
+    refresh_token = create_refresh_token(user_model.id)
+    set_auth_cookies(response, access_token, refresh_token, config)
+    return User.model_validate(user_model)
+
+
+async def _try_browser_auth(
+    request: Request,
+    response: Response,
+    db: AsyncSession,
+    config: AppConfig,
+) -> User | None:
+    user = await _try_refresh_from_cookie(request, response, db, config)
+    return user or await _try_dev_auto_login(response, db, config)
+
+
 async def get_current_user(
     request: Request,
     response: Response,
@@ -98,8 +129,9 @@ async def get_current_user(
     path** (no explicit ``Authorization: Bearer`` header present), the
     dependency silently mints a fresh access+refresh pair from the
     ``refresh_token`` cookie and sets them on the response — so plain
-    browser navigations self-heal without a JS round trip. API clients
-    sending an explicit expired Bearer header still get a clean 401.
+    browser navigations self-heal without a JS round trip. In development, a
+    configured auto-login user is used when cookie authentication fails. API
+    clients sending an explicit expired Bearer header still get a clean 401.
 
     Raises ``InvalidTokenException`` (401) if no valid token is found and no valid
     refresh cookie is available, the token type is not ``"access"``, or
@@ -113,7 +145,7 @@ async def get_current_user(
         # request did not carry an explicit Bearer header (API clients with
         # a missing header still get a clean 401).
         if not bearer_header_present:
-            refreshed = await _try_refresh_from_cookie(request, response, db, config)
+            refreshed = await _try_browser_auth(request, response, db, config)
             if refreshed is not None:
                 return refreshed
         raise InvalidTokenException("Missing or invalid Authorization header")
@@ -125,11 +157,15 @@ async def get_current_user(
         # cookie path (no explicit Bearer header) — API clients with an
         # expired Bearer header get a clean 401.
         if not bearer_header_present:
-            refreshed = await _try_refresh_from_cookie(request, response, db, config)
+            refreshed = await _try_browser_auth(request, response, db, config)
             if refreshed is not None:
                 return refreshed
         raise InvalidTokenException("Token has expired")
     except jwt.InvalidTokenError:
+        if not bearer_header_present:
+            refreshed = await _try_browser_auth(request, response, db, config)
+            if refreshed is not None:
+                return refreshed
         raise InvalidTokenException("Invalid token")
 
     if payload.get("type") != "access":

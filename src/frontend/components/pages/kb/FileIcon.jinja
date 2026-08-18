@@ -1,0 +1,22 @@
+{#def name, mime_type=None, size=18 #}
+{% set mime = mime_type or "" %}
+{% set extension = name.rsplit(".", 1)[1]|lower if "." in name else "" %}
+{% set icon = "file" %}
+{% if mime[:6] == "image/" %}
+  {% set icon = "file-image" %}
+{% elif mime[:6] == "audio/" %}
+  {% set icon = "file-audio" %}
+{% elif mime[:6] == "video/" %}
+  {% set icon = "file-video" %}
+{% elif extension in ["zip", "tar", "gz", "tgz", "rar", "7z"] %}
+  {% set icon = "file-archive" %}
+{% elif extension in ["csv", "xls", "xlsx", "ods"] %}
+  {% set icon = "file-spreadsheet" %}
+{% elif extension in ["ppt", "pptx", "odp"] %}
+  {% set icon = "presentation" %}
+{% elif extension in ["py", "js", "ts", "html", "css", "json", "yaml", "yml", "xml", "sql", "sh"] %}
+  {% set icon = "file-code" %}
+{% elif mime[:5] == "text/" or extension in ["pdf", "doc", "docx", "odt", "rtf", "md", "txt"] %}
+  {% set icon = "file-text" %}
+{% endif %}
+<common.Icon :name="icon" :size="size" />

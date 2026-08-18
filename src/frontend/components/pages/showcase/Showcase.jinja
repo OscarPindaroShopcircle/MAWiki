@@ -143,6 +143,23 @@
     </section>
 
     <section class="showcase-section">
+      <h2>Tooltips</h2>
+      <p class="showcase-note">M3 plain tooltips describe icon-only actions on hover or keyboard focus.</p>
+      <div class="showcase-row">
+        <common.Tooltip text="Download">
+          <common.Button variant="secondary" size="sm" aria-label="Download">
+            <common.Icon name="download" size=16 />
+          </common.Button>
+        </common.Tooltip>
+        <common.Tooltip text="Delete" position="bottom">
+          <common.Button variant="danger" size="sm" aria-label="Delete">
+            <common.Icon name="trash-2" size=16 />
+          </common.Button>
+        </common.Tooltip>
+      </div>
+    </section>
+
+    <section class="showcase-section">
       <h2>Dividers</h2>
       <p class="showcase-note">M3 dividers — full width and labeled (centered text).</p>
       <div style="display: flex; flex-direction: column; gap: var(--sp-4); max-width: 480px;">

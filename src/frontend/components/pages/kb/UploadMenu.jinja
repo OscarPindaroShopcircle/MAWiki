@@ -1,0 +1,89 @@
+{#def knowledge_base_id #}
+<div class="kb-upload-menu" id="kb-upload-menu">
+  <common.Button variant="primary" size="md" type="button" id="kb-upload-trigger"
+                 aria-haspopup="menu" aria-expanded="false" aria-controls="kb-upload-popover"
+                 data-kb-upload-trigger>
+    <common.Icon name="upload" size=16 />
+    Upload
+    <common.Icon name="chevron-down" size=16 />
+  </common.Button>
+  <div class="kb-upload-popover" id="kb-upload-popover" role="menu"
+       aria-labelledby="kb-upload-trigger" popover="auto">
+    <form hx-post="/knowledge-bases/{{ knowledge_base_id }}/files"
+          hx-target="#kb-files-table" hx-swap="outerHTML"
+          hx-encoding="multipart/form-data" hx-ext="ignore:json-enc"
+          hx-trigger="change"
+          hx-on::after-request="document.getElementById('kb-upload-popover').hidePopover(); if(event.detail.successful) lucide.createIcons();">
+      <button class="kb-upload-item" type="button" role="menuitem"
+              onclick="this.nextElementSibling.click()">
+        <span class="kb-upload-item-icon"><common.Icon name="file-plus" size=18 /></span>
+        <span class="kb-upload-item-label">Upload file</span>
+      </button>
+      <input type="file" name="files" multiple hidden>
+    </form>
+    <form hx-post="/knowledge-bases/{{ knowledge_base_id }}/files"
+          hx-target="#kb-files-table" hx-swap="outerHTML"
+          hx-encoding="multipart/form-data" hx-ext="ignore:json-enc"
+          hx-trigger="change"
+          hx-on::after-request="document.getElementById('kb-upload-popover').hidePopover(); if(event.detail.successful) lucide.createIcons();">
+      <button class="kb-upload-item" type="button" role="menuitem"
+              onclick="this.nextElementSibling.click()">
+        <span class="kb-upload-item-icon"><common.Icon name="folder-plus" size=18 /></span>
+        <span class="kb-upload-item-label">Upload folder</span>
+      </button>
+      <input type="file" name="files" multiple webkitdirectory hidden>
+    </form>
+  </div>
+</div>
+<script>
+  (function () {
+    var btn = document.querySelector('#kb-upload-menu [data-kb-upload-trigger]');
+    var popover = document.getElementById('kb-upload-popover');
+    if (!btn || !popover) return;
+    var items = Array.from(popover.querySelectorAll('[role="menuitem"]'));
+
+    function positionPopover() {
+      if (!popover.matches(':popover-open')) return;
+      var r = btn.getBoundingClientRect();
+      var left = Math.min(r.left, window.innerWidth - popover.offsetWidth - 8);
+      var top = r.bottom + 4;
+      if (top + popover.offsetHeight > window.innerHeight - 8) {
+        top = r.top - popover.offsetHeight - 4;
+      }
+      popover.style.top = Math.max(8, top) + 'px';
+      popover.style.left = Math.max(8, left) + 'px';
+    }
+
+    btn.addEventListener('click', function () {
+      if (popover.matches(':popover-open')) {
+        popover.hidePopover();
+      } else {
+        popover.showPopover();
+        positionPopover();
+      }
+    });
+    popover.addEventListener('toggle', function () {
+      var open = popover.matches(':popover-open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open && items.length) items[0].focus();
+    });
+    popover.addEventListener('keydown', function (event) {
+      var index = items.indexOf(document.activeElement);
+      var next = null;
+      if (event.key === 'ArrowDown') next = (index + 1) % items.length;
+      if (event.key === 'ArrowUp') next = (index - 1 + items.length) % items.length;
+      if (event.key === 'Home') next = 0;
+      if (event.key === 'End') next = items.length - 1;
+      if (event.key === 'Escape') {
+        popover.hidePopover();
+        btn.focus();
+        event.preventDefault();
+      } else if (next !== null) {
+        items[next].focus();
+        event.preventDefault();
+      }
+    });
+    window.addEventListener('resize', positionPopover);
+    window.addEventListener('scroll', positionPopover, true);
+  })();
+</script>

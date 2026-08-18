@@ -1,6 +1,8 @@
+import mimetypes
 import uuid
+from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, File, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Query, Response, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user
@@ -16,12 +18,13 @@ from .service import (
     delete_knowledge_base,
     get_knowledge_base,
     get_knowledge_bases,
+    read_knowledge_base_file,
     update_knowledge_base,
     upload_files_to_knowledge_base,
 )
 
 
-router = APIRouter(prefix="/knowledge-bases", tags=["knowledge-bases"])
+router = APIRouter(prefix="/api/knowledge-bases", tags=["knowledge-bases"])
 
 
 def _to_response(knowledge_base: KnowledgeBaseModel) -> KnowledgeBaseResponse:
@@ -87,6 +90,29 @@ async def upload_knowledge_base_files(
         db, knowledge_base_id, files, user, filesystem
     )
     return _to_response(knowledge_base)
+
+
+@router.get("/{knowledge_base_id}/files/{file_id}/download", response_class=Response)
+async def download_knowledge_base_file(
+    knowledge_base_id: uuid.UUID,
+    file_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    filesystem: FileSystem = Depends(get_filesystem),
+    db: AsyncSession = Depends(get_db_session),
+) -> Response:
+    """Download a file when the authenticated user can access its knowledge base."""
+    file, content = await read_knowledge_base_file(
+        db, knowledge_base_id, file_id, user, filesystem
+    )
+    media_type = file.mime_type or mimetypes.guess_type(file.name)[0]
+    return Response(
+        content,
+        media_type=media_type or "application/octet-stream",
+        headers={
+            "Content-Disposition": f"attachment; filename*=UTF-8''{quote(file.name, safe='')}",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
 
 
 @router.get(

@@ -1,0 +1,57 @@
+.kb-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--sp-8);
+}
+
+.kb-detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--text-sm);
+  color: var(--clr-text-secondary);
+  margin-bottom: var(--sp-2);
+}
+
+.kb-detail-back:hover {
+  color: var(--clr-text);
+}
+
+.kb-detail-header h1 {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+}
+
+.kb-file-name {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.kb-file-name > span {
+  display: flex;
+  flex-direction: column;
+}
+
+.kb-file-name > svg {
+  color: var(--clr-text-secondary);
+  flex-shrink: 0;
+}
+
+.kb-file-label {
+  color: var(--clr-text);
+}
+
+.kb-file-type {
+  color: var(--clr-text-muted);
+  font-size: var(--text-xs);
+}
+
+.kb-file-actions {
+  text-align: right;
+}
+
+.kb-files-empty {
+  color: var(--clr-text-secondary);
+}

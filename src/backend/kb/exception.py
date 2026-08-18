@@ -27,6 +27,14 @@ class SharedUserNotFoundException(HTTPException):
         )
 
 
+class KnowledgeBaseFileNotFoundException(HTTPException):
+    def __init__(self, file_id: uuid.UUID):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"File with id {file_id} not found in this knowledge base",
+        )
+
+
 class FileUploadException(HTTPException):
     def __init__(self):
         super().__init__(

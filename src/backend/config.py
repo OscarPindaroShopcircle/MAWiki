@@ -7,9 +7,11 @@ from pydantic import (
     BaseModel,
     BeforeValidator,
     ConfigDict,
+    EmailStr,
     Field,
     SecretStr,
     ValidationError,
+    model_validator,
 )
 from pydantic_settings import BaseSettings
 from pydantic_settings import (
@@ -189,6 +191,7 @@ class AuthConfig(BaseModel):
     refresh_token_expire_days: int = 30
     invitation_expire_days: int = 7
     bootstrap_admin_email: Optional[str] = None
+    dev_auto_login_email: Optional[EmailStr] = None
     redirect_uri: str = "http://localhost:8000/auth/callback"
     cookie_secure: Optional[bool] = None  # None = auto (True unless env=dev)
 
@@ -232,6 +235,14 @@ class AppConfig(BaseConfig):
     cors_allow_headers: List[str] = Field(
         default=["*"], description="CORS allowed headers", alias="CORS_ALLOW_HEADERS"
     )
+
+    @model_validator(mode="after")
+    def validate_dev_auto_login(self) -> "AppConfig":
+        if self.auth and self.auth.dev_auto_login_email and self.env != "dev":
+            raise ValueError(
+                "auth.dev_auto_login_email may only be set when env is 'dev'"
+            )
+        return self
 
 
 @lru_cache(maxsize=1)

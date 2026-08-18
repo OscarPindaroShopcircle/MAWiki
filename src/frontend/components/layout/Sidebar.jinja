@@ -2,9 +2,11 @@
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <span class="sidebar-brand-name">Circeus</span>
-    <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
-      <common.Icon name="panel-left-close" size=18 />
-    </button>
+    <common.Tooltip text="Toggle sidebar" position="bottom">
+      <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
+        <common.Icon name="panel-left-close" size=18 />
+      </button>
+    </common.Tooltip>
   </div>
   <nav class="sidebar-nav">
     <a href="/" class="sidebar-link {{ 'sidebar-link-active' if active == 'home' else '' }}">
@@ -12,6 +14,13 @@
         <common.Icon name="home" size=20 />
       </span>
       <span class="sidebar-link-label">Home</span>
+    </a>
+
+    <a href="/knowledge-bases" class="sidebar-link {{ 'sidebar-link-active' if active == 'knowledge-bases' else '' }}">
+      <span class="sidebar-link-icon">
+        <common.Icon name="database" size=20 />
+      </span>
+      <span class="sidebar-link-label">Knowledge Bases</span>
     </a>
 
     {% if current_user and current_user.role == 'admin' %}

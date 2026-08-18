@@ -3,10 +3,12 @@
   <div class="dialog-container">
     <header class="dialog-header">
       <h2 class="dialog-title">{{ title }}</h2>
-      <button class="dialog-close" type="button" aria-label="Close"
-              onclick="this.closest('dialog').close()">
-        <common.Icon name="x" size=20 />
-      </button>
+      <common.Tooltip text="Close">
+        <button class="dialog-close" type="button" aria-label="Close"
+                onclick="this.closest('dialog').close()">
+          <common.Icon name="x" size=20 />
+        </button>
+      </common.Tooltip>
     </header>
     <div class="dialog-body">
       {{ content }}

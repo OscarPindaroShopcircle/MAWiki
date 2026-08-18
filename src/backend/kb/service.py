@@ -1,3 +1,4 @@
+import mimetypes
 import uuid
 from pathlib import Path
 
@@ -11,6 +12,7 @@ from ..users.schemas import User
 from .exception import (
     FileUploadException,
     KnowledgeBaseAccessDeniedException,
+    KnowledgeBaseFileNotFoundException,
     KnowledgeBaseNotFoundException,
     SharedUserNotFoundException,
 )
@@ -128,6 +130,8 @@ async def upload_files_to_knowledge_base(
                         id=file_id,
                         name=filename,
                         location=location,
+                        mime_type=upload.content_type
+                        or mimetypes.guess_type(filename)[0],
                         storage_type=StorageType.LOCAL,
                     ),
                     location,
@@ -151,6 +155,22 @@ async def upload_files_to_knowledge_base(
     finally:
         for upload in uploads:
             await upload.close()
+
+
+async def read_knowledge_base_file(
+    db: AsyncSession,
+    knowledge_base_id: uuid.UUID,
+    file_id: uuid.UUID,
+    user: User,
+    filesystem: FileSystem,
+) -> tuple[FileModel, bytes]:
+    knowledge_base = await get_knowledge_base(
+        db, knowledge_base_id, user, include_files=True
+    )
+    file = next((file for file in knowledge_base.files if file.id == file_id), None)
+    if file is None:
+        raise KnowledgeBaseFileNotFoundException(file_id)
+    return file, await filesystem.read_async(file.location)
 
 
 async def delete_knowledge_base(

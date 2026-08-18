@@ -1,0 +1,17 @@
+{#def knowledge_base, current_user=None #}
+<layout.Page :title="knowledge_base.name" current_user={{ current_user }} active="knowledge-bases">
+  <div class="kb-detail">
+    <header class="kb-detail-header">
+      <div>
+        <a href="/knowledge-bases" class="kb-detail-back">
+          <common.Icon name="arrow-left" size=16 />
+          Knowledge Bases
+        </a>
+        <h1>{{ knowledge_base.name }}</h1>
+      </div>
+      <pages.kb.UploadMenu knowledge_base_id={{ knowledge_base.id }} />
+    </header>
+
+    <pages.kb.FilesTable knowledge_base_id={{ knowledge_base.id }} files={{ knowledge_base.files }} />
+  </div>
+</layout.Page>

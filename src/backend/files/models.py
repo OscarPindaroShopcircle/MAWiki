@@ -33,6 +33,7 @@ class FileModel(Base, UUIDv7PrimaryKeyMixin, TimestampMixin):
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     location: Mapped[str] = mapped_column(Text, nullable=False)
+    mime_type: Mapped[str | None] = mapped_column(String(255), nullable=True)
     storage_type: Mapped[StorageType | None] = mapped_column(
         SAEnum(StorageType),
         nullable=True,

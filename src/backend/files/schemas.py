@@ -9,12 +9,14 @@ from ..schemas import AppBaseModel, TimestampMixin, UUIDField
 class FileCreate(AppBaseModel):
     name: Annotated[str, Field(min_length=1, max_length=255, examples=["report.csv"])]
     location: Annotated[str, Field(min_length=1, examples=["uploads/report.csv"])]
+    mime_type: Annotated[str | None, Field(default=None, max_length=255)]
     storage_type: Annotated[StorageType | None, Field(default=None)]
 
 
 class FileUpdate(AppBaseModel):
     name: Annotated[str | None, Field(default=None, min_length=1, max_length=255)]
     location: Annotated[str | None, Field(default=None, min_length=1)]
+    mime_type: Annotated[str | None, Field(default=None, max_length=255)]
     storage_type: Annotated[StorageType | None, Field(default=None)]
 
 
@@ -31,5 +33,14 @@ class FileResponse(AppBaseModel, TimestampMixin):
             max_length=255,
             examples=["report.pdf"],
             description="Original file name",
+        ),
+    ]
+    mime_type: Annotated[
+        str | None,
+        Field(
+            default=None,
+            max_length=255,
+            examples=["application/pdf"],
+            description="Media type reported when the file was uploaded",
         ),
     ]

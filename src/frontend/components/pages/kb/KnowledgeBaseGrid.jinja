@@ -1,0 +1,16 @@
+{#def knowledge_bases #}
+<div class="kb-grid">
+  {% for kb in knowledge_bases %}
+  <a href="/knowledge-bases/{{ kb.id }}" class="kb-card-link">
+    <common.Card variant="outlined" class="kb-card">
+      <div class="kb-card-icon"><common.Icon name="database" size=24 /></div>
+      <h3 class="kb-card-title">{{ kb.name }}</h3>
+      <p class="kb-card-meta">
+        {{ kb.files|length if kb.files is not none else 0 }} files &middot; by {{ kb.created_by.name }}
+      </p>
+    </common.Card>
+  </a>
+  {% else %}
+  <p class="kb-empty">No knowledge bases yet. Create one to get started.</p>
+  {% endfor %}
+</div>
