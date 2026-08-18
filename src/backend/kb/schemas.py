@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class KbSchema(BaseModel):
+class KnowledgeBaseSchema(BaseModel):
     """ """
 
     name: str

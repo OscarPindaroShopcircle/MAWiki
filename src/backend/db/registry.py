@@ -15,14 +15,14 @@ from ..auth.models import (  # noqa: F401
     UserPasswordModel,
 )
 from ..files.models import FileModel  # noqa: F401
-from ..kb.models import KbModel  # noqa: F401
+from ..kb.models import KnowledgeBaseModel  # noqa: F401
 from ..tasks.models import TaskModel  # noqa: F401
 from ..users.models import UserModel  # noqa: F401
 
 __all__ = [
     "FileModel",
     "InvitationModel",
-    "KbModel",
+    "KnowledgeBaseModel",
     "TaskModel",
     "UserAuthProviderModel",
     "UserModel",

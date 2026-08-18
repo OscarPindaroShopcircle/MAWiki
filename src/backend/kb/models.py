@@ -4,7 +4,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from ..db.db import Base
 
 
-class KbModel(Base):
+class KnowledgeBaseModel(Base):
     """ """
 
     __tablename__ = "kb"

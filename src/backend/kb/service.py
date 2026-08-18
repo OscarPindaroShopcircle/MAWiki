@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-class KbService:
+class KnowledgeBaseService:
     """ """
 
     def __init__(self, db: AsyncSession) -> None:
