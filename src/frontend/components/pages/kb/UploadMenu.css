@@ -5,11 +5,3 @@
 .kb-upload-popover {
   width: 220px;
 }
-
-.kb-upload-item-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--clr-text-secondary);
-  flex-shrink: 0;
-}

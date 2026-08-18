@@ -115,16 +115,6 @@
   outline-offset: -1px;
 }
 
-.user-menu-item-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.user-menu-item-icon svg {
-  stroke: currentColor;
-}
 
 .user-menu-item-danger {
   color: var(--status-danger-light);

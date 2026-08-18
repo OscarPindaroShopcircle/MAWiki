@@ -42,6 +42,21 @@
   outline: none;
 }
 
+.menu-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.menu-item-icon svg {
+  stroke: currentColor;
+}
+
+.menu-item-label {
+  flex: 1;
+}
+
 .menu-item-danger {
   color: var(--status-danger);
 }

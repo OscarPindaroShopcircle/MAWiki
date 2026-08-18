@@ -1,11 +1,24 @@
-{#def href=None, variant="default" #}
+{#def label=None, icon=None, href=None, variant="default" #}
+{# Standard usage supplies label and optional icon; icons stay at the M3-aligned 18px size.
+   Supplying href renders a link, otherwise a button. Omit label to use custom content,
+   including a differently sized icon or more complex item layout. #}
 {% set classes = "menu-item menu-item-" ~ variant %}
 {% if href %}
 <a href="{{ href }}" role="menuitem" {{ attrs.render(class=classes) }}>
-  {{ content }}
+  {% if label %}
+    {% if icon %}<span class="menu-item-icon"><common.Icon :name="icon" size={{ 18 }} /></span>{% endif %}
+    <span class="menu-item-label">{{ label }}</span>
+  {% else %}
+    {{ content }}
+  {% endif %}
 </a>
 {% else %}
 <button type="button" role="menuitem" {{ attrs.render(class=classes) }}>
-  {{ content }}
+  {% if label %}
+    {% if icon %}<span class="menu-item-icon"><common.Icon :name="icon" size={{ 18 }} /></span>{% endif %}
+    <span class="menu-item-label">{{ label }}</span>
+  {% else %}
+    {{ content }}
+  {% endif %}
 </button>
 {% endif %}

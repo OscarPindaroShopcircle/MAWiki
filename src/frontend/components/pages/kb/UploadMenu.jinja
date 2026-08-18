@@ -7,29 +7,18 @@
     Upload
     <common.Icon name="chevron-down" size=16 />
   </common.Button>
-  <common.Menu id="kb-upload-popover" labelledby="kb-upload-trigger"
-               placement="bottom-start" class="kb-upload-popover">
-    <form hx-post="/knowledge-bases/{{ knowledge_base_id }}/files"
-          hx-target="#kb-files-table" hx-swap="outerHTML"
-          hx-encoding="multipart/form-data" hx-ext="ignore:json-enc"
-          hx-trigger="change"
-          hx-on::after-request="document.getElementById('kb-upload-popover').hidePopover(); if(event.detail.successful) lucide.createIcons();">
-      <common.MenuItem class="kb-upload-item" onclick="this.nextElementSibling.click()">
-        <span class="kb-upload-item-icon"><common.Icon name="file-plus" size=18 /></span>
-        <span class="kb-upload-item-label">Upload file</span>
-      </common.MenuItem>
-      <input type="file" name="files" multiple hidden>
-    </form>
-    <form hx-post="/knowledge-bases/{{ knowledge_base_id }}/files"
-          hx-target="#kb-files-table" hx-swap="outerHTML"
-          hx-encoding="multipart/form-data" hx-ext="ignore:json-enc"
-          hx-trigger="change"
-          hx-on::after-request="document.getElementById('kb-upload-popover').hidePopover(); if(event.detail.successful) lucide.createIcons();">
-      <common.MenuItem class="kb-upload-item" onclick="this.nextElementSibling.click()">
-        <span class="kb-upload-item-icon"><common.Icon name="folder-plus" size=18 /></span>
-        <span class="kb-upload-item-label">Upload folder</span>
-      </common.MenuItem>
-      <input type="file" name="files" multiple webkitdirectory hidden>
-    </form>
-  </common.Menu>
+  <form hx-post="/knowledge-bases/{{ knowledge_base_id }}/files"
+        hx-target="#kb-files-table" hx-swap="outerHTML"
+        hx-encoding="multipart/form-data" hx-ext="ignore:json-enc"
+        hx-trigger="change"
+        hx-on::after-request="document.getElementById('kb-upload-popover').hidePopover(); this.reset(); if(event.detail.successful) lucide.createIcons();">
+    <common.Menu id="kb-upload-popover" labelledby="kb-upload-trigger"
+                 placement="bottom-start" class="kb-upload-popover">
+      <common.MenuItem icon="file-plus" label="Upload file"
+        onclick="var input=this.form.querySelector('[data-kb-upload-input]'); input.removeAttribute('webkitdirectory'); input.value=''; input.click();" />
+      <common.MenuItem icon="folder-plus" label="Upload folder"
+        onclick="var input=this.form.querySelector('[data-kb-upload-input]'); input.setAttribute('webkitdirectory', ''); input.value=''; input.click();" />
+    </common.Menu>
+    <input type="file" name="files" data-kb-upload-input multiple hidden>
+  </form>
 </div>
