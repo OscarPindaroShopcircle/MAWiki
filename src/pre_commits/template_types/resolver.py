@@ -50,7 +50,7 @@ from .typerefs import (
 )
 
 
-class ResolutionError(RuntimeError):
+class ResolutionException(RuntimeError):
     """A module named by a view could not be imported — a setup failure."""
 
 
@@ -103,7 +103,9 @@ class Resolver:
             try:
                 self._modules[module.dotted] = importlib.import_module(module.dotted)
             except Exception as exc:  # ImportError and anything raised at import time
-                raise ResolutionError(f"cannot import {module.dotted}: {exc}") from exc
+                raise ResolutionException(
+                    f"cannot import {module.dotted}: {exc}"
+                ) from exc
         return self._modules[module.dotted]
 
     def lookup(self, module: ModuleIndex, dotted: str) -> object | None:

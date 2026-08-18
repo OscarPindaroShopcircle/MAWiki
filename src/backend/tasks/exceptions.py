@@ -3,7 +3,7 @@ import uuid
 from fastapi import HTTPException, status
 
 
-class TaskNotFound(HTTPException):
+class TaskNotFoundException(HTTPException):
     def __init__(self, task_id: uuid.UUID):
         super().__init__(
             status_code=status.HTTP_404_NOT_FOUND,

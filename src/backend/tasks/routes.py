@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..dependencies import get_db_session
-from .exceptions import TaskNotFound
+from .exceptions import TaskNotFoundException
 from .repository import TaskRepository
 from .schemas import TaskResponse
 
@@ -26,5 +26,5 @@ async def get_task(
     """Poll a task's status/completion — e.g. after POST /projects."""
     task = await TaskRepository(db).get(task_id)
     if task is None:
-        raise TaskNotFound(task_id)
+        raise TaskNotFoundException(task_id)
     return task

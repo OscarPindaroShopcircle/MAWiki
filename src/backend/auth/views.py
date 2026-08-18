@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..config import AppConfig, get_app_config
 from ..dependencies import get_catalog_dep, get_db_session
 from .dependencies import get_current_user
-from .exceptions import AuthError, InvalidCredentials, NotInvited
+from .exceptions import AuthException, InvalidCredentialsException, NotInvitedException
 from .schemas import LoginRequest, RegisterRequest
 from .service import login_with_password, register_with_password
 from .sso import build_google_sso
@@ -40,7 +40,7 @@ async def login_form(
     """Browser form-based login (JSON body) — sets cookies and redirects to /."""
     try:
         user = await login_with_password(db, body.email, body.password)
-    except InvalidCredentials:
+    except InvalidCredentialsException:
         return RedirectResponse(
             url="/login?error=Invalid email or password", status_code=303
         )
@@ -60,12 +60,12 @@ async def register_form(
     """Browser form-based registration (JSON body) — sets cookies and redirects to /."""
     try:
         user = await register_with_password(db, body, config)
-    except NotInvited:
+    except NotInvitedException:
         return RedirectResponse(
             url="/login?mode=register&error=This email is not invited",
             status_code=303,
         )
-    except AuthError as e:
+    except AuthException as e:
         return RedirectResponse(
             url=f"/login?mode=register&error={e.detail}", status_code=303
         )

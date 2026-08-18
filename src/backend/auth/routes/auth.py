@@ -11,7 +11,11 @@ from ...config import AppConfig, get_app_config
 from ...db.enums import UserRole
 from ...dependencies import get_db_session
 from ...users.models import UserModel
-from ..exceptions import AuthError, InvalidCredentials, InvalidToken
+from ..exceptions import (
+    AuthException,
+    InvalidCredentialsException,
+    InvalidTokenException,
+)
 from ..schemas import LoginRequest, RefreshRequest, RegisterRequest, TokenResponse
 from ..service import (
     find_pending_invitation,
@@ -41,7 +45,7 @@ async def auth_google(config: AppConfig = Depends(get_app_config)):
     """Redirect the user to Google's OAuth consent screen."""
     sso = build_google_sso(config)
     if sso is None:
-        raise AuthError("Google SSO is not configured")
+        raise AuthException("Google SSO is not configured")
     async with sso:
         return await sso.get_login_redirect(params={"prompt": "consent"})
 
@@ -71,20 +75,20 @@ async def auth_refresh(
     try:
         payload = decode_token(body.refresh_token)
     except jwt.ExpiredSignatureError:
-        raise InvalidToken("Refresh token has expired")
+        raise InvalidTokenException("Refresh token has expired")
     except jwt.InvalidTokenError:
-        raise InvalidToken("Invalid refresh token")
+        raise InvalidTokenException("Invalid refresh token")
 
     if payload.get("type") != "refresh":
-        raise InvalidToken("Not a refresh token")
+        raise InvalidTokenException("Not a refresh token")
 
     user_id = int(payload["sub"])
     result = await db.execute(select(UserModel).where(UserModel.id == user_id))
     user = result.scalar_one_or_none()
     if user is None:
-        raise InvalidToken("User not found")
+        raise InvalidTokenException("User not found")
     if not user.is_active:
-        raise InvalidToken("User is inactive")
+        raise InvalidTokenException("User is inactive")
 
     new_access = create_access_token(user.id, user.email, user.role)
     new_refresh = create_refresh_token(user.id)
@@ -118,11 +122,11 @@ async def auth_callback(
     """
     sso = build_google_sso(config)
     if sso is None:
-        raise AuthError("Google SSO is not configured")
+        raise AuthException("Google SSO is not configured")
     async with sso:
         openid = await sso.verify_and_process(request)
     if openid is None:
-        raise AuthError("Login failed — no OpenID payload returned")
+        raise AuthException("Login failed — no OpenID payload returned")
 
     user = await login_with_provider(db, "google", openid, config)
     access_token = create_access_token(user.id, user.email, user.role)

@@ -35,9 +35,10 @@ from rich.console import Console
 
 from .diagnostics import WARNING_CODES, Diagnostic
 from .discovery import find_bindings
-from .resolver import ResolutionError, Resolver
+from .resolver import ResolutionException, Resolver
 from .typerefs import TypeRef, normalize
 from .walker import TemplateChecker
+from .diagnostics import scan_suppressions
 
 EXIT_OK = 0
 EXIT_ERROR = 1
@@ -112,7 +113,7 @@ def _build_environment(templates_dir: Path, factory: str):
     try:
         built = _import_object(factory)(str(templates_dir))
     except Exception as exc:
-        raise ResolutionError(
+        raise ResolutionException(
             f"could not build env factory '{factory}' ({exc}). "
             "The application may not be packaged -- check your uv pyproject.toml -- "
             f"or the factory '{factory}' has been moved."
@@ -186,8 +187,6 @@ def run_check(
     probe = TemplateChecker(env)
     for name in template_names:
         try:
-            from .diagnostics import scan_suppressions
-
             found = scan_suppressions(probe.source(name)).overrides
         except Exception:
             found = {}
@@ -318,7 +317,7 @@ def main(
             env_factory=env_factory,
             exclude_view_dirs=tuple(exclude_view_dir or ["testdata"]),
         )
-    except ResolutionError as exc:
+    except ResolutionException as exc:
         print_error(str(exc))
         raise typer.Exit(EXIT_USAGE)
 
@@ -350,7 +349,7 @@ def cli() -> None:
         sys.exit(EXIT_OK)
     except SystemExit as exc:
         sys.exit(exc.code)
-    except ResolutionError as exc:
+    except ResolutionException as exc:
         print_error(str(exc))
         sys.exit(EXIT_USAGE)
     except Exception as exc:

@@ -10,7 +10,7 @@ from ..dependencies import get_db_session
 from ..db.enums import UserRole
 from ..users.models import UserModel
 from ..users.schemas import User
-from .exceptions import InvalidToken, NotAdmin
+from .exceptions import InvalidTokenException, NotAdminException
 from .tokens import (
     create_access_token,
     create_refresh_token,
@@ -52,7 +52,7 @@ async def _try_refresh_from_cookie(
     Returns the authenticated ``User`` and sets new auth cookies on
     ``response`` if the refresh cookie is present and valid. Returns
     ``None`` if no refresh cookie is present or it is invalid/expired —
-    the caller should then raise ``InvalidToken`` as usual.
+    the caller should then raise ``InvalidTokenException`` as usual.
     """
     refresh_cookie = request.cookies.get("refresh_token")
     if not refresh_cookie:
@@ -101,7 +101,7 @@ async def get_current_user(
     browser navigations self-heal without a JS round trip. API clients
     sending an explicit expired Bearer header still get a clean 401.
 
-    Raises ``InvalidToken`` (401) if no valid token is found and no valid
+    Raises ``InvalidTokenException`` (401) if no valid token is found and no valid
     refresh cookie is available, the token type is not ``"access"``, or
     the user is missing/inactive.
     """
@@ -116,7 +116,7 @@ async def get_current_user(
             refreshed = await _try_refresh_from_cookie(request, response, db, config)
             if refreshed is not None:
                 return refreshed
-        raise InvalidToken("Missing or invalid Authorization header")
+        raise InvalidTokenException("Missing or invalid Authorization header")
 
     try:
         payload = decode_token(token)
@@ -128,23 +128,23 @@ async def get_current_user(
             refreshed = await _try_refresh_from_cookie(request, response, db, config)
             if refreshed is not None:
                 return refreshed
-        raise InvalidToken("Token has expired")
+        raise InvalidTokenException("Token has expired")
     except jwt.InvalidTokenError:
-        raise InvalidToken("Invalid token")
+        raise InvalidTokenException("Invalid token")
 
     if payload.get("type") != "access":
-        raise InvalidToken("Not an access token")
+        raise InvalidTokenException("Not an access token")
 
     try:
         user_id = uuid.UUID(payload["sub"])
     except ValueError, KeyError, TypeError:
-        raise InvalidToken("Malformed token subject") from None
+        raise InvalidTokenException("Malformed token subject") from None
     result = await db.execute(select(UserModel).where(UserModel.id == user_id))
     user_model = result.scalar_one_or_none()
     if user_model is None:
-        raise InvalidToken("User not found")
+        raise InvalidTokenException("User not found")
     if not user_model.is_active:
-        raise InvalidToken("User is inactive")
+        raise InvalidTokenException("User is inactive")
     return User.model_validate(user_model)
 
 
@@ -153,7 +153,7 @@ async def get_current_admin_user(
 ) -> User:
     """Require the authenticated user to have the ``admin`` role."""
     if user.role != UserRole.ADMIN:
-        raise NotAdmin()
+        raise NotAdminException()
     return user
 
 
@@ -170,5 +170,5 @@ async def get_optional_user(
     """
     try:
         return await get_current_user(request, response, db, config)
-    except InvalidToken:
+    except InvalidTokenException:
         return None

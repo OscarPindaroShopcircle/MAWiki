@@ -19,7 +19,7 @@ from pydantic_settings import (
 )
 
 
-class ConfigError(RuntimeError):
+class ConfigException(RuntimeError):
     """Raised when application configuration cannot be parsed or validated."""
 
 
@@ -244,4 +244,4 @@ def get_app_config() -> AppConfig:
             f"  {'.'.join(str(part) for part in issue['loc'])}: {issue['msg']}"
             for issue in error.errors(include_url=False, include_input=False)
         )
-        raise ConfigError(f"AppConfig validation failed:\n{details}") from None
+        raise ConfigException(f"AppConfig validation failed:\n{details}") from None

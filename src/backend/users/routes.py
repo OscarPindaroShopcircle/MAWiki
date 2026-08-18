@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..dependencies import get_db_session
 from ..schemas import ListResponse
-from .exceptions import UserNotFound
+from .exceptions import UserNotFoundException
 from .schemas import UserCreate, UserResponse, UserUpdate
 from .service import create_user, get_user, get_all_users, update_user, delete_user
 
@@ -45,7 +45,7 @@ async def get_user_endpoint(
     """Retrieve a single user by their ID."""
     user = await get_user(db, user_id)
     if user is None:
-        raise UserNotFound(user_id)
+        raise UserNotFoundException(user_id)
     return user
 
 
@@ -80,7 +80,7 @@ async def update_user_endpoint(
     """Update an existing user's name."""
     user = await update_user(db, user_id, user_data)
     if user is None:
-        raise UserNotFound(user_id)
+        raise UserNotFoundException(user_id)
     return user
 
 
@@ -99,4 +99,4 @@ async def delete_user_endpoint(
     """Delete a user by their ID."""
     deleted = await delete_user(db, user_id)
     if not deleted:
-        raise UserNotFound(user_id)
+        raise UserNotFoundException(user_id)

@@ -5,7 +5,7 @@ from pydantic import SecretStr
 from backend import config as config_module
 from backend.config import (
     AuthConfig,
-    ConfigError,
+    ConfigException,
     EnvSecret,
     GoogleSSOConfig,
     PostgresConfig,
@@ -90,7 +90,7 @@ def test_get_app_config_hides_invalid_input(monkeypatch: pytest.MonkeyPatch) -> 
     config_module.get_app_config.cache_clear()
 
     with pytest.raises(
-        ConfigError, match="AppConfig validation failed"
+        ConfigException, match="AppConfig validation failed"
     ) as startup_error:
         config_module.get_app_config()
 

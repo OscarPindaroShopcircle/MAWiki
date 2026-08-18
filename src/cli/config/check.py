@@ -21,11 +21,11 @@ def main() -> int:
     print(f"ENV_FILE         = {env_file}")
     print()
 
-    from backend.config import ConfigError, get_app_config, secret_preview  # noqa: PLC0415
+    from backend.config import ConfigException, get_app_config, secret_preview  # noqa: PLC0415
 
     try:
         config = get_app_config()
-    except ConfigError as error:
+    except ConfigException as error:
         print("AppConfig FAILED to build:\n")
         print(str(error).removeprefix("AppConfig validation failed:\n"))
         return 1

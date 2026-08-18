@@ -5,7 +5,10 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_admin_user
-from ..auth.exceptions import InvitationAlreadyExists, InvitationNotFound
+from ..auth.exceptions import (
+    InvitationAlreadyExistsException,
+    InvitationNotFoundException,
+)
 from ..auth.schemas import InvitationCreate, InvitationView
 from ..auth.service import (
     create_invitation as create_invitation_service,
@@ -99,7 +102,7 @@ async def invite_user_submit(
             user.id,
             expire_days=expire_days,
         )
-    except InvitationAlreadyExists:
+    except InvitationAlreadyExistsException:
         return catalog.render(
             "pages.admin.InviteDialog",
             current_user=user,
@@ -150,7 +153,7 @@ async def revoke_invitation(
     """Revoke (delete) an invitation via htmx — returns the updated table."""
     try:
         await revoke_invitation_service(db, invitation_id)
-    except InvitationNotFound:
+    except InvitationNotFoundException:
         raise HTTPException(status_code=404, detail="Invitation not found")
 
     invitations = await _build_invitations(db)

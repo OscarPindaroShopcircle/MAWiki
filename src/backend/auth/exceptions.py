@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 
 
-class AuthError(HTTPException):
+class AuthException(HTTPException):
     """Generic authentication failure (invalid token, SSO failure, …)."""
 
     def __init__(self, detail: str = "Authentication error"):
@@ -12,7 +12,7 @@ class AuthError(HTTPException):
         )
 
 
-class NotInvited(HTTPException):
+class NotInvitedException(HTTPException):
     """The email is not in any pending invitation and is not the bootstrap admin."""
 
     def __init__(self, email: str | None = None):
@@ -23,7 +23,7 @@ class NotInvited(HTTPException):
         )
 
 
-class InvalidToken(HTTPException):
+class InvalidTokenException(HTTPException):
     """The JWT is malformed, expired, or has the wrong type claim."""
 
     def __init__(self, detail: str = "Invalid or expired token"):
@@ -34,7 +34,7 @@ class InvalidToken(HTTPException):
         )
 
 
-class NotAdmin(HTTPException):
+class NotAdminException(HTTPException):
     """The authenticated user does not have the admin role."""
 
     def __init__(self):
@@ -44,7 +44,7 @@ class NotAdmin(HTTPException):
         )
 
 
-class InvalidCredentials(HTTPException):
+class InvalidCredentialsException(HTTPException):
     """Email or password is incorrect, or the user has no password set."""
 
     def __init__(self, detail: str = "Invalid email or password"):
@@ -54,7 +54,7 @@ class InvalidCredentials(HTTPException):
         )
 
 
-class InvitationNotFound(HTTPException):
+class InvitationNotFoundException(HTTPException):
     """The invitation does not exist."""
 
     def __init__(self, invitation_id: int):
@@ -64,7 +64,7 @@ class InvitationNotFound(HTTPException):
         )
 
 
-class InvitationAlreadyExists(HTTPException):
+class InvitationAlreadyExistsException(HTTPException):
     """An invitation for this email already exists."""
 
     def __init__(self, email: str):
