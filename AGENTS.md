@@ -109,3 +109,10 @@ See **`docs/database_migrations.md`** for complete documentation on:
 - Configuration files (`.env`, `config.yaml`, `config.docker.yaml`)
 - Detailed migration workflows
 - Best practices and troubleshooting
+
+## IMPORTANT
+Again:
+Be concise, both when talking and writing code.
+Every line of code is a potential liablity, so a solution should not add useless complexity.
+A change done in a file in general should not have a ripple effect on a very distant unrelated file.
+If there is a bug, the bug should be as much as possible local to the place where it happened.
