@@ -4,10 +4,13 @@ import shutil
 from pathlib import Path
 
 import yaml
+from platformdirs import user_cache_path
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _CONFIG_TEST = _REPO_ROOT / "config.test.yaml"
-_CONFIG_TEST_BAK = _REPO_ROOT / "config.test.yaml.bak"
+_CONFIG_TEST_BAK = (
+    user_cache_path("menelao") / "harness" / _REPO_ROOT.name / "config.test.yaml.bak"
+)
 _ENV_TEST = _REPO_ROOT / ".env.test"
 
 
@@ -44,6 +47,7 @@ def validate() -> None:
 
 def backup() -> None:
     """Create a backup of config.test.yaml."""
+    _CONFIG_TEST_BAK.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(_CONFIG_TEST, _CONFIG_TEST_BAK)
 
 
