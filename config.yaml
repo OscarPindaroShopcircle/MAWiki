@@ -13,8 +13,8 @@ migrator:
   db: backend
 
 auth:
-  bootstrap_admin_email: oscar@shopcircle.co
-  dev_auto_login_email: oscar@shopcircle.co
+  bootstrap_admin_email: admin@admin.co
+  dev_auto_login_email: admin@admin.co
   redirect_uri: http://localhost:8000/auth/callback
 
 frontend:

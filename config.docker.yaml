@@ -10,6 +10,10 @@ migrator:
   port: 5432
   db: backend
 
+auth:
+  bootstrap_admin_email: admin@admin.co
+  dev_auto_login_email: admin@admin.co
+
 frontend:
   enabled: true
   components_dir: src/frontend/components

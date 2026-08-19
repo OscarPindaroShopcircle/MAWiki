@@ -110,6 +110,8 @@ async def _try_browser_auth(
     db: AsyncSession,
     config: AppConfig,
 ) -> User | None:
+    if config.auth is None:
+        return None
     user = await _try_refresh_from_cookie(request, response, db, config)
     return user or await _try_dev_auto_login(response, db, config)
 

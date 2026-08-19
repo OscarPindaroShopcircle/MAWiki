@@ -30,7 +30,11 @@ async def knowledge_bases_page(
 ):
     """Knowledge bases list page — cards for every KB visible to the user."""
     knowledge_bases, _ = await get_knowledge_bases(
-        db, user, page=1, page_size=100, include_files=True
+        db,
+        user,
+        page=1,
+        page_size=100,
+        include_shared_with=True,
     )
     return catalog.render(
         "pages.kb.KnowledgeBaseList",
@@ -66,7 +70,11 @@ async def create_knowledge_base_submit(
         )
 
     knowledge_bases, _ = await get_knowledge_bases(
-        db, user, page=1, page_size=100, include_files=True
+        db,
+        user,
+        page=1,
+        page_size=100,
+        include_shared_with=True,
     )
     return catalog.render("pages.kb.KnowledgeBaseGrid", knowledge_bases=knowledge_bases)
 

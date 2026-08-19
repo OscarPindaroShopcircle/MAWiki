@@ -3,11 +3,16 @@
   {% for kb in knowledge_bases %}
   <a href="/knowledge-bases/{{ kb.id }}" class="kb-card-link">
     <common.Card variant="outlined" class="kb-card">
-      <div class="kb-card-icon"><common.Icon name="database" size=24 /></div>
       <h3 class="kb-card-title">{{ kb.name }}</h3>
-      <p class="kb-card-meta">
-        {{ kb.files|length if kb.files is not none else 0 }} files &middot; by {{ kb.created_by.name }}
-      </p>
+      <p class="kb-card-date">Created at: {{ kb.created_at.strftime("%d/%m/%Y") }}</p>
+      <div class="kb-card-footer">
+        {% if kb.shared_with %}
+        <common.AvatarStack users={{ kb.shared_with }} />
+        {% else %}
+        <span></span>
+        {% endif %}
+        <p class="kb-card-owner">Owner: <strong>{{ kb.created_by.name }}</strong></p>
+      </div>
     </common.Card>
   </a>
   {% else %}

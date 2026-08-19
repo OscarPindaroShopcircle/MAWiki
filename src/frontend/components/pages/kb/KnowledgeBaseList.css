@@ -32,18 +32,32 @@
   border-color: var(--clr-border-strong);
 }
 
-.kb-card-icon {
-  color: var(--clr-accent);
-}
-
 .kb-card-title {
   font-size: var(--text-lg);
-  font-weight: 600;
+  font-weight: var(--weight-bold);
 }
 
-.kb-card-meta {
+.kb-card-date,
+.kb-card-owner {
   font-size: var(--text-sm);
   color: var(--clr-text-secondary);
+}
+
+.kb-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-top: var(--sp-2);
+}
+
+.kb-card-owner {
+  text-align: right;
+}
+
+.kb-card-owner strong {
+  color: var(--clr-text);
+  font-weight: var(--weight-bold);
 }
 
 .kb-empty {

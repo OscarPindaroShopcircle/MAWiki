@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.requests import Request
 
 from src.backend.auth import tokens
-from src.backend.auth.dependencies import get_current_user
+from src.backend.auth.dependencies import get_current_user, get_optional_user
 from src.backend.config import AppConfig
 from src.backend.db.enums import UserRole
 from src.backend.users.models import UserModel
@@ -49,3 +49,23 @@ async def test_dev_auto_login_authenticates_configured_user(
     ]
     assert any(cookie.startswith("access_token=") for cookie in cookies)
     assert any(cookie.startswith("refresh_token=") for cookie in cookies)
+
+
+@pytest.mark.integration
+async def test_optional_user_ignores_refresh_cookie_without_auth_config(
+    db_session: AsyncSession,
+    app_config: AppConfig,
+) -> None:
+    config = app_config.model_copy(deep=True)
+    config.auth = None
+    request = Request(
+        {
+            "type": "http",
+            "method": "GET",
+            "path": "/",
+            "query_string": b"",
+            "headers": [(b"cookie", b"refresh_token=stale-token")],
+        }
+    )
+
+    assert await get_optional_user(request, Response(), db_session, config) is None
