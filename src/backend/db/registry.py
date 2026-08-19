@@ -16,6 +16,7 @@ from ..auth.models import (  # noqa: F401
 )
 from ..files.models import FileModel  # noqa: F401
 from ..kb.models import KnowledgeBaseModel  # noqa: F401
+from ..rag.models import RagModel  # noqa: F401
 from ..tasks.models import TaskModel  # noqa: F401
 from ..users.models import UserModel  # noqa: F401
 
@@ -23,6 +24,7 @@ __all__ = [
     "FileModel",
     "InvitationModel",
     "KnowledgeBaseModel",
+    "RagModel",
     "TaskModel",
     "UserAuthProviderModel",
     "UserModel",
