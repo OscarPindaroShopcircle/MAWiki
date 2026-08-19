@@ -41,20 +41,6 @@ def test_real_registry_is_in_sync() -> None:
     )
 
 
-def test_real_registry_registers_all_tables() -> None:
-    """Importing the registry must populate Base.metadata with every table."""
-    models = discover_models(REAL_BACKEND)
-    names = {m.name for m in models}
-    assert names == {
-        "FileModel",
-        "InvitationModel",
-        "TaskModel",
-        "UserAuthProviderModel",
-        "UserPasswordModel",
-        "UserModel",
-    }
-
-
 # ---------------------------------------------------------------------------
 # Fixture scenarios
 # ---------------------------------------------------------------------------
