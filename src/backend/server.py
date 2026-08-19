@@ -9,6 +9,7 @@ from .config import AppConfig, get_app_config
 from .db.db import DatabaseManager
 from .users.routes import router as users_router
 from .kb.routes import router as kb_router
+from .rag.routes import router as rag_router
 from fastapi.staticfiles import StaticFiles
 
 
@@ -58,6 +59,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     app.include_router(auth_router)
     app.include_router(invitation_router)
     app.include_router(kb_router)
+    app.include_router(rag_router)
 
     # Importing the registry registers every model with Base.metadata so
     # DatabaseManager.initialize_tables() / alembic see all tables, including

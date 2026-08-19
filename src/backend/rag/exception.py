@@ -1,11 +1,11 @@
+import uuid
+
 from fastapi import HTTPException, status
 
 
-class RagException(HTTPException):
-    """ """
-
-    def __init__(self) -> None:
+class RagNotFoundException(HTTPException):
+    def __init__(self, rag_id: uuid.UUID):
         super().__init__(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Rag error.",
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"RAG model with id {rag_id} not found",
         )
