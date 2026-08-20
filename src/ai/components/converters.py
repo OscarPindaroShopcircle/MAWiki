@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import mimetypes
 from io import BytesIO
 from pathlib import Path
 from typing import Union
 
+import openpyxl
+from docx import Document as DocxDocument
 from haystack import Document, component
 from haystack.dataclasses import ByteStream
-import openpyxl
+from pypdf import PdfReader
 
 Source = Union[str, Path, ByteStream]
 
@@ -57,4 +60,69 @@ class XlsxConverter:
                 )
                 documents.append(doc)
             workbook.close()
+        return {"documents": documents}
+
+
+class UnsupportedFileTypeError(ValueError):
+    pass
+
+
+@component
+class SimpleFileConverter:
+    @staticmethod
+    def _source(source: Source) -> tuple[bytes, str, str | None]:
+        if isinstance(source, ByteStream):
+            return (
+                source.data,
+                source.meta.get("file_name", "unknown"),
+                source.mime_type,
+            )
+        path = Path(source)
+        return path.read_bytes(), path.name, mimetypes.guess_type(path.name)[0]
+
+    @component.output_types(documents=list[Document])
+    def run(self, sources: list[Source]) -> dict[str, list[Document]]:
+        documents: list[Document] = []
+        for source in sources:
+            data, file_name, mime_type = self._source(source)
+            suffix = Path(file_name).suffix.lower()
+            meta = {"file_name": file_name, "content_type": "text"}
+            if (
+                mime_type
+                and mime_type.startswith("text/")
+                or suffix
+                in {
+                    ".csv",
+                    ".json",
+                    ".md",
+                    ".txt",
+                    ".xml",
+                }
+            ):
+                documents.append(Document(content=data.decode("utf-8"), meta=meta))
+            elif mime_type == "application/pdf" or suffix == ".pdf":
+                content = "\n\n".join(
+                    page.extract_text() or "" for page in PdfReader(BytesIO(data)).pages
+                )
+                documents.append(Document(content=content, meta=meta))
+            elif (
+                mime_type
+                == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                or suffix == ".docx"
+            ):
+                document = DocxDocument(BytesIO(data))
+                lines = [paragraph.text for paragraph in document.paragraphs]
+                for table in document.tables:
+                    lines.extend(
+                        "\t".join(cell.text for cell in row.cells) for row in table.rows
+                    )
+                documents.append(Document(content="\n".join(lines), meta=meta))
+            elif (
+                mime_type
+                == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                or suffix == ".xlsx"
+            ):
+                documents.extend(XlsxConverter().run(sources=[source])["documents"])
+            else:
+                raise UnsupportedFileTypeError(file_name)
         return {"documents": documents}

@@ -4,6 +4,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from ..kb.models import KnowledgeBaseModel
 from ..users.models import UserModel
 from .models import RagModel
 from .schemas import RagCreate, RagUpdate
@@ -32,11 +33,38 @@ class RagRepository:
     ) -> RagModel | None:
         stmt = (
             select(RagModel)
-            .options(selectinload(RagModel.owner))
+            .options(
+                selectinload(RagModel.owner),
+                selectinload(RagModel.index_file),
+            )
             .where(RagModel.id == rag_id)
         )
         if not is_admin:
             stmt = stmt.where(RagModel.owner_id == owner_id)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def get_for_operation(
+        self, rag_id: uuid.UUID, lock: bool = False
+    ) -> RagModel | None:
+        stmt = (
+            select(RagModel)
+            .options(
+                selectinload(RagModel.owner),
+                selectinload(RagModel.source_knowledge_base).selectinload(
+                    KnowledgeBaseModel.files
+                ),
+                selectinload(RagModel.converted_knowledge_base).selectinload(
+                    KnowledgeBaseModel.files
+                ),
+                selectinload(RagModel.conversion_task),
+                selectinload(RagModel.indexing_task),
+                selectinload(RagModel.index_file),
+            )
+            .where(RagModel.id == rag_id)
+        )
+        if lock:
+            stmt = stmt.with_for_update()
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
 

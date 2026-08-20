@@ -1,15 +1,59 @@
+import asyncio
+import logging
 import uuid
+from contextlib import suppress
+from typing import Literal
+from zipfile import BadZipFile
 
+from docx.opc.exceptions import PackageNotFoundError
+from haystack import Document
+from haystack.dataclasses import ByteStream
+from openpyxl.utils.exceptions import InvalidFileException
+from pypdf.errors import PdfReadError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ai.components.converters import SimpleFileConverter, UnsupportedFileTypeError
+from ai.components.embedders import Model2VecDocumentEmbedder, Model2VecTextEmbedder
+from ai.components.faiss import FaissIndexer, FaissSearcher
+
+from ..config import DatabaseSettingsProtocol
+from ..db.db import DatabaseManager
 from ..db.enums import UserRole
+from ..files.models import FileModel, StorageType
+from ..filesystem.base import FileSystem
 from ..kb.exception import KnowledgeBaseAccessDeniedException
+from ..kb.models import KnowledgeBaseModel
 from ..kb.service import get_knowledge_base
+from ..tasks.models import TaskModel, TaskStatus
+from ..tasks.repository import TaskRepository
+from ..tasks.schemas import TaskCreate, TaskUpdate
 from ..users.schemas import User
-from .exception import RagNotFoundException
+from .exception import (
+    RagNotConvertedException,
+    RagNotFoundException,
+    RagNotIndexedException,
+    RagOperationInProgressException,
+    RagOperationNotStartedException,
+)
 from .models import RagModel
 from .repository import RagRepository
-from .schemas import RagCreate, RagUpdate
+from .schemas import RagCreate, RagSearchRequest, RagUpdate
+
+Operation = Literal["conversion", "indexing"]
+_RUNNING = {TaskStatus.WAITING, TaskStatus.IN_PROGRESS}
+_CONVERSION_ERRORS = (
+    BadZipFile,
+    EOFError,
+    InvalidFileException,
+    KeyError,
+    OSError,
+    PackageNotFoundError,
+    PdfReadError,
+    UnicodeError,
+    ValueError,
+)
+logger = logging.getLogger(__name__)
 
 
 def _is_admin(user: User) -> bool:
@@ -43,6 +87,322 @@ async def update_rag_model(
     return await RagRepository(db).update(rag, data)
 
 
-async def delete_rag_model(db: AsyncSession, rag_id: uuid.UUID, user: User) -> None:
+async def delete_rag_model(
+    db: AsyncSession,
+    rag_id: uuid.UUID,
+    user: User,
+    filesystem: FileSystem | None = None,
+) -> None:
     rag = await get_rag_model(db, rag_id, user)
+    index_file = rag.index_file
     await RagRepository(db).delete(rag)
+    if index_file is not None:
+        await db.delete(index_file)
+        await db.flush()
+        if filesystem is not None:
+            await filesystem.delete_async(index_file.location)
+
+
+async def _operation_rag(
+    db: AsyncSession, rag_id: uuid.UUID, lock: bool = False
+) -> RagModel:
+    rag = await RagRepository(db).get_for_operation(rag_id, lock)
+    if rag is None:
+        raise RagNotFoundException(rag_id)
+    return rag
+
+
+def _ensure_idle(rag: RagModel) -> None:
+    if any(
+        task is not None and task.status in _RUNNING
+        for task in (rag.conversion_task, rag.indexing_task)
+    ):
+        raise RagOperationInProgressException()
+
+
+async def start_rag_operation(
+    db: AsyncSession, rag_id: uuid.UUID, user: User, operation: Operation
+) -> TaskModel:
+    await get_rag_model(db, rag_id, user)
+    rag = await _operation_rag(db, rag_id, lock=True)
+    _ensure_idle(rag)
+    if operation == "indexing" and rag.converted_knowledge_base_id is None:
+        raise RagNotConvertedException()
+    task = await TaskRepository(db).create(TaskCreate(name=f"rag-{operation}-{rag.id}"))
+    setattr(rag, f"{operation}_task", task)
+    await db.flush()
+    return task
+
+
+async def poll_rag_operation(
+    db: AsyncSession, rag_id: uuid.UUID, user: User, operation: Operation
+) -> TaskModel:
+    await get_rag_model(db, rag_id, user)
+    rag = await _operation_rag(db, rag_id)
+    task = getattr(rag, f"{operation}_task")
+    if task is None:
+        raise RagOperationNotStartedException(operation)
+    return task
+
+
+def _converted_name(source_name: str, position: int, total: int) -> str:
+    suffix = f".{position + 1}" if total > 1 else ""
+    return f"{source_name[: 250 - len(suffix)]}{suffix}.txt"
+
+
+async def _remove_staged(filesystem: FileSystem, locations: list[str]) -> None:
+    for location in locations:
+        try:
+            await filesystem.delete_async(location)
+        except OSError as cleanup_error:
+            logger.warning(
+                "Unable to remove staged file %s: %s", location, cleanup_error
+            )
+
+
+async def _convert_file(
+    file: FileModel, filesystem: FileSystem, converter: SimpleFileConverter
+) -> tuple[FileModel, list[Document] | None, str | None]:
+    try:
+        content = await filesystem.read_async(file.location)
+        documents = await asyncio.to_thread(
+            converter.run,
+            sources=[
+                ByteStream(
+                    content,
+                    meta={"file_name": file.name, "source_file_id": str(file.id)},
+                    mime_type=file.mime_type,
+                )
+            ],
+        )
+        converted = [
+            doc for doc in documents["documents"] if (doc.content or "").strip()
+        ]
+        if not converted:
+            raise ValueError("no textual content")
+        return file, converted, None
+    except UnsupportedFileTypeError:
+        return file, None, "unsupported"
+    except _CONVERSION_ERRORS as exc:
+        return file, None, str(exc)
+
+
+async def convert_rag_model_files(
+    db: AsyncSession,
+    rag_id: uuid.UUID,
+    filesystem: FileSystem,
+    converter: SimpleFileConverter | None = None,
+) -> str:
+    rag = await _operation_rag(db, rag_id)
+    converter = converter or SimpleFileConverter()
+    results = await asyncio.gather(
+        *(
+            _convert_file(file, filesystem, converter)
+            for file in rag.source_knowledge_base.files
+        )
+    )
+    converted = [(file, documents) for file, documents, _ in results if documents]
+    unsupported = [file.name for file, _, error in results if error == "unsupported"]
+    failed = [
+        f"{file.name} ({error})"
+        for file, _, error in results
+        if error not in {None, "unsupported"}
+    ]
+    if not converted:
+        detail = ", ".join(unsupported + failed) or "source knowledge base is empty"
+        raise ValueError(f"No files could be converted: {detail}")
+
+    knowledge_base = rag.converted_knowledge_base
+    if knowledge_base is None:
+        knowledge_base = KnowledgeBaseModel(
+            name=f"{rag.name} converted",
+            created_by_id=rag.owner_id,
+            files=[],
+            shared_with=[],
+        )
+        db.add(knowledge_base)
+        await db.flush()
+        rag.converted_knowledge_base = knowledge_base
+
+    staged: list[FileModel] = []
+    staged_locations: list[str] = []
+    try:
+        for source, documents in converted:
+            for position, document in enumerate(documents):
+                file_id = uuid.uuid4()
+                location = f"knowledge-bases/{knowledge_base.id}/{file_id}"
+                staged_locations.append(location)
+                await filesystem.write_async(
+                    location, (document.content or "").encode("utf-8")
+                )
+                staged.append(
+                    FileModel(
+                        id=file_id,
+                        name=_converted_name(source.name, position, len(documents)),
+                        location=location,
+                        mime_type="text/plain",
+                        storage_type=StorageType.LOCAL,
+                    )
+                )
+    except OSError:
+        await _remove_staged(filesystem, staged_locations)
+        raise
+
+    old_files = list(knowledge_base.files)
+    old_index = rag.index_file
+    try:
+        knowledge_base.files = staged
+        db.add_all(staged)
+        rag.index_file = None
+        rag.indexing_task = None
+        for file in old_files:
+            await db.delete(file)
+        if old_index is not None:
+            await db.delete(old_index)
+        await db.flush()
+    except SQLAlchemyError:
+        await _remove_staged(filesystem, staged_locations)
+        raise
+    for file in old_files + ([old_index] if old_index is not None else []):
+        with suppress(FileNotFoundError):
+            await filesystem.delete_async(file.location)
+
+    message = f"Converted {len(converted)}/{len(results)} source files"
+    if unsupported:
+        message += f"; unsupported: {', '.join(unsupported)}"
+    if failed:
+        message += f"; failed: {', '.join(failed)}"
+    return message[:1024]
+
+
+async def index_rag_model_files(
+    db: AsyncSession,
+    rag_id: uuid.UUID,
+    filesystem: FileSystem,
+    indexer: FaissIndexer | None = None,
+) -> str:
+    rag = await _operation_rag(db, rag_id)
+    if rag.converted_knowledge_base is None:
+        raise RagNotConvertedException()
+    documents = []
+    for file in rag.converted_knowledge_base.files:
+        content = await filesystem.read_async(file.location)
+        documents.append(
+            Document(
+                content=content.decode("utf-8"),
+                meta={"file_id": str(file.id), "file_name": file.name},
+            )
+        )
+    if not documents:
+        raise ValueError("The converted knowledge base is empty")
+    indexer = indexer or FaissIndexer(Model2VecDocumentEmbedder())
+    result = await asyncio.to_thread(indexer.run, documents=documents)
+    file_id = uuid.uuid4()
+    location = f"rag-models/{rag.id}/indexes/{file_id}.zip"
+    try:
+        await filesystem.write_async(location, result["archive"])
+        index_file = FileModel(
+            id=file_id,
+            name=f"{rag.name}.faiss.zip",
+            location=location,
+            mime_type="application/zip",
+            storage_type=StorageType.LOCAL,
+        )
+        old_index = rag.index_file
+        db.add(index_file)
+        rag.index_file = index_file
+        if old_index is not None:
+            await db.delete(old_index)
+        await db.flush()
+    except OSError, SQLAlchemyError:
+        await _remove_staged(filesystem, [location])
+        raise
+    if old_index is not None:
+        with suppress(FileNotFoundError):
+            await filesystem.delete_async(old_index.location)
+    return f"Indexed {result['documents_indexed']} document chunks"
+
+
+async def search_rag_model(
+    db: AsyncSession,
+    rag_id: uuid.UUID,
+    data: RagSearchRequest,
+    user: User,
+    filesystem: FileSystem,
+    searcher: FaissSearcher | None = None,
+) -> list[dict]:
+    await get_rag_model(db, rag_id, user)
+    rag = await _operation_rag(db, rag_id)
+    if rag.index_file is None:
+        raise RagNotIndexedException()
+    archive = await filesystem.read_async(rag.index_file.location)
+    searcher = searcher or FaissSearcher(Model2VecTextEmbedder())
+    result = await asyncio.to_thread(
+        searcher.run, archive=archive, query=data.query, top_k=data.top_k
+    )
+    return [
+        {
+            "content": item["content"],
+            "score": item["score"],
+            "file_id": item["meta"]["file_id"],
+            "file_name": item["meta"]["file_name"],
+        }
+        for item in result["results"]
+    ]
+
+
+async def _set_task(
+    db: AsyncSession,
+    task_id: uuid.UUID,
+    status: TaskStatus,
+    completion: float,
+    message: str | None = None,
+) -> None:
+    await TaskRepository(db).update(
+        task_id,
+        TaskUpdate(status=status, completion=completion, message=message),
+    )
+
+
+async def _run_operation_job(
+    database: DatabaseSettingsProtocol,
+    filesystem: FileSystem,
+    task_id: uuid.UUID,
+    rag_id: uuid.UUID,
+    operation: Operation,
+) -> None:
+    manager = DatabaseManager(database)
+    try:
+        async with manager.async_session() as db:
+            await _set_task(db, task_id, TaskStatus.IN_PROGRESS, 0)
+        try:
+            async with manager.async_session() as db:
+                if operation == "conversion":
+                    message = await convert_rag_model_files(db, rag_id, filesystem)
+                else:
+                    message = await index_rag_model_files(db, rag_id, filesystem)
+                await _set_task(db, task_id, TaskStatus.SUCCESS, 100, message)
+        except Exception as exc:
+            logger.exception("RAG %s failed for %s", operation, rag_id)
+            async with manager.async_session() as db:
+                await _set_task(db, task_id, TaskStatus.FAILED, 100, str(exc)[:1024])
+    finally:
+        await manager.close()
+
+
+async def run_conversion_job(
+    database: DatabaseSettingsProtocol,
+    filesystem: FileSystem,
+    task_id: uuid.UUID,
+    rag_id: uuid.UUID,
+) -> None:
+    await _run_operation_job(database, filesystem, task_id, rag_id, "conversion")
+
+
+async def run_indexing_job(
+    database: DatabaseSettingsProtocol,
+    filesystem: FileSystem,
+    task_id: uuid.UUID,
+    rag_id: uuid.UUID,
+) -> None:
+    await _run_operation_job(database, filesystem, task_id, rag_id, "indexing")

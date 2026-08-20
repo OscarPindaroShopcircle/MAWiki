@@ -7,6 +7,7 @@ from haystack.components.retrievers import (
 )
 from haystack.document_stores.in_memory import InMemoryDocumentStore
 
+from ai.components.faiss import FaissIndexer, FaissSearcher
 from ai.pipelines.rag import DocumentIndexer, HybridRetriever
 
 
@@ -92,3 +93,17 @@ def test_hybrid_retriever_forwards_query_to_reranker() -> None:
     assert ranker.query == "alpha"
     assert result["documents"][0].content == "alpha"
     assert retriever.output_mapping == {"reranker.documents": "documents"}
+
+
+def test_haystack_faiss_store_persists_and_searches_documents() -> None:
+    indexed = FaissIndexer(DocumentEmbedder(), split_length=20, split_overlap=0).run(
+        documents=[Document(content="alpha")]
+    )
+
+    result = FaissSearcher(TextEmbedder()).run(
+        archive=indexed["archive"], query="alpha", top_k=1
+    )
+
+    assert indexed["documents_indexed"] == 1
+    assert result["results"][0]["content"] == "alpha"
+    assert result["results"][0]["score"] == 1.0

@@ -1,19 +1,34 @@
 import uuid
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user
+from ..config import AppConfig, get_app_config
 from ..dependencies import get_db_session
+from ..filesystem.base import FileSystem
+from ..filesystem.dependencies import get_filesystem
 from ..schemas import PagedResponse
+from ..tasks.schemas import TaskResponse
 from ..users.schemas import User
 from .models import RagModel
-from .schemas import RagCreate, RagResponse, RagUpdate
+from .schemas import (
+    RagCreate,
+    RagResponse,
+    RagSearchRequest,
+    RagSearchResponse,
+    RagUpdate,
+)
 from .service import (
     create_rag_model,
     delete_rag_model,
     get_rag_model,
     get_rag_models,
+    poll_rag_operation,
+    run_conversion_job,
+    run_indexing_job,
+    search_rag_model,
+    start_rag_operation,
     update_rag_model,
 )
 
@@ -21,7 +36,6 @@ from .service import (
 router = APIRouter(prefix="/api/rag-models", tags=["rag-models"])
 
 
-# take inspiration from the routes in kb
 def _to_response(rag: RagModel) -> RagResponse:
     return RagResponse.model_validate(rag)
 
@@ -32,6 +46,7 @@ async def create_rag_model_route(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> RagResponse:
+    """Create a RAG model for a knowledge base owned by the current user."""
     return _to_response(await create_rag_model(db, data, user))
 
 
@@ -42,6 +57,7 @@ async def list_rag_models(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> PagedResponse[RagResponse]:
+    """List RAG models visible to the current user."""
     data, total = await get_rag_models(db, user, page, page_size)
     return PagedResponse(
         data=[_to_response(rag) for rag in data],
@@ -57,6 +73,7 @@ async def get_rag_model_route(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> RagResponse:
+    """Return one RAG model visible to the current user."""
     return _to_response(await get_rag_model(db, rag_id, user))
 
 
@@ -67,6 +84,7 @@ async def update_rag_model_route(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> RagResponse:
+    """Rename a RAG model owned by the current user."""
     return _to_response(await update_rag_model(db, rag_id, data, user))
 
 
@@ -74,26 +92,103 @@ async def update_rag_model_route(
 async def delete_rag_model_route(
     rag_id: uuid.UUID,
     user: User = Depends(get_current_user),
+    filesystem: FileSystem = Depends(get_filesystem),
     db: AsyncSession = Depends(get_db_session),
 ) -> None:
-    await delete_rag_model(db, rag_id, user)
+    """Delete a RAG model without deleting either knowledge base."""
+    await delete_rag_model(db, rag_id, user, filesystem)
 
 
-# convert all the files that it can into a textual representation.
-# converrsion gets a knowledge base and creates a NEW knowledge base that contains the converted files.#
-# some files can not be converted, generally for two reasons:
-# 1. file not supported by the pipeline
-# 2. conversion failed. it should be clear.
-# this knowledge base will be linked automatically to this model, i guess with a converted_kb
-# conversion are something that is pooled, done with an asyncio gather (very blocking)
-# therefore use a Task, and keep the status. a convertion can be triggered to finish with the missing files
-# can also be forcefully retriggered to recompute everything
-# in src/ai there is an indexing pipeline that does conversion + indexing. let's create two other components
-# one for conversion and one for indexing,
+@router.post(
+    "/{rag_id}/conversion",
+    response_model=TaskResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def start_rag_conversion(
+    rag_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
+    user: User = Depends(get_current_user),
+    config: AppConfig = Depends(get_app_config),
+    filesystem: FileSystem = Depends(get_filesystem),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
+) -> TaskResponse:
+    """Start conversion in the background and return a pollable task.
 
-# indexing is a Task and therefore needs to be pooled
-# for now let's do something simple with faiss. use a smal static model model2vec/ whatever. probaly in ma_wiki, my prototype, there is already a draft of this
-# keep in mind that that was a super hasty prototype, but contains all the ideas
+    Every run converts all supported source files into text. A successful rerun
+    replaces the converted knowledge base's previous files and invalidates its
+    FAISS index; unsupported and failed filenames are reported in the task.
+    """
+    task = await start_rag_operation(db, rag_id, user, "conversion")
+    background_tasks.add_task(
+        run_conversion_job, config.database, filesystem, task.id, rag_id
+    )
+    return TaskResponse.model_validate(task)
 
-# search uses FAISS for now
-# for now no bm25, just for ease of use
+
+@router.get("/{rag_id}/conversion", response_model=TaskResponse)
+async def poll_rag_conversion(
+    rag_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+) -> TaskResponse:
+    """Poll the latest conversion task for a RAG model."""
+    return TaskResponse.model_validate(
+        await poll_rag_operation(db, rag_id, user, "conversion")
+    )
+
+
+@router.post(
+    "/{rag_id}/index",
+    response_model=TaskResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def start_rag_indexing(
+    rag_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
+    user: User = Depends(get_current_user),
+    config: AppConfig = Depends(get_app_config),
+    filesystem: FileSystem = Depends(get_filesystem),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
+) -> TaskResponse:
+    """Build a FAISS index in the background and return a pollable task.
+
+    Text files in the converted knowledge base are split, embedded with the
+    fixed Model2Vec model, and stored through Haystack's FAISS document store
+    as one replaceable artifact. Conversion must complete before indexing.
+    """
+    task = await start_rag_operation(db, rag_id, user, "indexing")
+    background_tasks.add_task(
+        run_indexing_job, config.database, filesystem, task.id, rag_id
+    )
+    return TaskResponse.model_validate(task)
+
+
+@router.get("/{rag_id}/index", response_model=TaskResponse)
+async def poll_rag_indexing(
+    rag_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+) -> TaskResponse:
+    """Poll the latest indexing task for a RAG model."""
+    return TaskResponse.model_validate(
+        await poll_rag_operation(db, rag_id, user, "indexing")
+    )
+
+
+@router.post("/{rag_id}/search", response_model=RagSearchResponse)
+async def search_rag_model_route(
+    rag_id: uuid.UUID,
+    data: RagSearchRequest,
+    user: User = Depends(get_current_user),
+    filesystem: FileSystem = Depends(get_filesystem),
+    db: AsyncSession = Depends(get_db_session),
+) -> RagSearchResponse:
+    """Search the persisted Haystack FAISS document store.
+
+    The query uses the same fixed Model2Vec model as indexing and returns the
+    best matching text chunks with scores and converted-file provenance. The
+    model must be converted and indexed before it can be searched.
+    """
+    return RagSearchResponse(
+        results=await search_rag_model(db, rag_id, data, user, filesystem)
+    )

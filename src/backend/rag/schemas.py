@@ -21,3 +21,22 @@ class RagResponse(AppBaseModel, TimestampMixin):
     owner: UserResponse
     source_knowledge_base_id: UUIDField
     converted_knowledge_base_id: UUIDField | None
+    conversion_task_id: UUIDField | None
+    indexing_task_id: UUIDField | None
+    index_file_id: UUIDField | None
+
+
+class RagSearchRequest(AppBaseModel):
+    query: Annotated[str, Field(min_length=1)]
+    top_k: Annotated[int, Field(default=10, ge=1, le=50)]
+
+
+class RagSearchResult(AppBaseModel):
+    content: str
+    score: float
+    file_id: UUIDField
+    file_name: str
+
+
+class RagSearchResponse(AppBaseModel):
+    results: list[RagSearchResult]

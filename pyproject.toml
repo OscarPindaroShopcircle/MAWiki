@@ -40,6 +40,7 @@ dependencies = [
     "rich>=13.0.0",
     "typer>=0.15.0",
     "platformdirs==4.9.4",
+    "faiss-haystack==2.0.0",
 ]
 
 [project.scripts]
