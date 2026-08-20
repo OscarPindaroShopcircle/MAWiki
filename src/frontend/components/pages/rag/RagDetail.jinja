@@ -1,0 +1,43 @@
+{#def rag, current_user=None #}
+{#css pages/kb/KnowledgeBaseDetail.css #}
+<layout.Page :title="rag.name" current_user={{ current_user }} active="rag">
+  <div class="kb-detail rag-detail">
+    <header class="kb-detail-header">
+      <div>
+        <a href="/rag" class="kb-detail-back">
+          <common.Icon name="arrow-left" size=16 />
+          RAG Models
+        </a>
+        <h1>{{ rag.name }}</h1>
+        <p class="rag-source">Source: <a href="/knowledge-bases/{{ rag.source_knowledge_base_id }}">{{ rag.source_knowledge_base_name }}</a></p>
+      </div>
+    </header>
+
+    <div class="rag-operations">
+      <common.Card variant="outlined" class="rag-operation-card">
+        <div class="rag-operation-heading">
+          <common.Icon name="file-text" size=22 />
+          <h2>Conversion</h2>
+        </div>
+        <p>Convert supported source files into text documents for indexing.</p>
+        <pages.rag.OperationStatus rag_id={{ rag.id }} operation="conversion"
+          task={{ rag.conversion_task }} :ready="rag.is_converted" />
+        <common.Button type="button" variant="primary" size="md"
+          :hx-post="'/rag/' + rag.id|string + '/conversion'"
+          hx-target="#rag-conversion-status" hx-swap="outerHTML">
+          {{ "Reconvert" if rag.is_converted else "Convert" }}
+        </common.Button>
+      </common.Card>
+
+      <common.Card variant="outlined" class="rag-operation-card">
+        <div class="rag-operation-heading">
+          <common.Icon name="scan-search" size=22 />
+          <h2>Indexing</h2>
+        </div>
+        <p>Build a FAISS index from the converted text documents.</p>
+        <pages.rag.IndexAction rag_id={{ rag.id }} :is-converted="rag.is_converted"
+          :is-indexed="rag.is_indexed" task={{ rag.indexing_task }} />
+      </common.Card>
+    </div>
+  </div>
+</layout.Page>

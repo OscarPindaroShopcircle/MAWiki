@@ -1,0 +1,54 @@
+.rag-source {
+  color: var(--clr-text-secondary);
+  margin-top: var(--sp-2);
+}
+
+.rag-source a {
+  color: var(--clr-accent);
+}
+
+.rag-operations {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--sp-5);
+}
+
+.rag-operation-card {
+  align-items: flex-start;
+  gap: var(--sp-4);
+}
+
+.rag-operation-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.rag-operation-heading svg {
+  color: var(--clr-accent);
+}
+
+.rag-operation-heading h2 {
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.rag-operation-card > p,
+.rag-operation-message {
+  color: var(--clr-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.rag-progress {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  color: var(--clr-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.rag-progress progress {
+  flex: 1;
+  accent-color: var(--clr-accent);
+}

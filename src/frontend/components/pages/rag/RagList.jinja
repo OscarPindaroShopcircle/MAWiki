@@ -1,0 +1,23 @@
+{#def rag_models, current_user=None #}
+{#css pages/kb/KnowledgeBaseList.css, common/Dialog.css, common/Alert.css, common/Field.css, pages/kb/CreateDialog.css #}
+<layout.Page title="RAG Models" current_user={{ current_user }} active="rag">
+  <div class="kb-page">
+    <header class="kb-header">
+      <h1>RAG Models</h1>
+      <common.Button variant="primary" size="md"
+        hx-get="/rag/new"
+        hx-target="#rag-create-dialog"
+        hx-swap="innerHTML"
+        hx-on::after-request="if(event.detail.successful) { document.querySelector('#rag-create-dialog dialog').showModal(); lucide.createIcons(); }">
+        <common.Icon name="plus" size=16 />
+        New RAG Model
+      </common.Button>
+    </header>
+
+    <div id="rag-grid">
+      <pages.rag.RagGrid rag_models={{ rag_models }} />
+    </div>
+
+    <div id="rag-create-dialog"></div>
+  </div>
+</layout.Page>

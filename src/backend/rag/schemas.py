@@ -3,6 +3,7 @@ from typing import Annotated
 from pydantic import Field
 
 from ..schemas import AppBaseModel, TimestampMixin, UUIDField
+from ..tasks.schemas import TaskResponse
 from ..users.schemas import UserResponse
 
 
@@ -40,3 +41,19 @@ class RagSearchResult(AppBaseModel):
 
 class RagSearchResponse(AppBaseModel):
     results: list[RagSearchResult]
+
+
+class RagKnowledgeBaseOption(AppBaseModel):
+    value: str
+    label: str
+
+
+class RagView(AppBaseModel):
+    id: UUIDField
+    name: str
+    source_knowledge_base_id: UUIDField
+    source_knowledge_base_name: str
+    is_converted: bool
+    is_indexed: bool
+    conversion_task: TaskResponse | None = None
+    indexing_task: TaskResponse | None = None

@@ -71,17 +71,37 @@ async def create_rag_model(db: AsyncSession, data: RagCreate, user: User) -> Rag
     return await RagRepository(db).create(data, user.id)
 
 
-async def get_rag_model(db: AsyncSession, rag_id: uuid.UUID, user: User) -> RagModel:
-    rag = await RagRepository(db).get(rag_id, user.id, _is_admin(user))
+async def get_rag_model(
+    db: AsyncSession,
+    rag_id: uuid.UUID,
+    user: User,
+    include_source: bool = False,
+    include_tasks: bool = False,
+    include_index: bool = False,
+) -> RagModel:
+    rag = await RagRepository(db).get(
+        rag_id,
+        user.id,
+        _is_admin(user),
+        include_source,
+        include_tasks,
+        include_index,
+    )
     if rag is None:
         raise RagNotFoundException(rag_id)
     return rag
 
 
 async def get_rag_models(
-    db: AsyncSession, user: User, page: int = 1, page_size: int = 20
+    db: AsyncSession,
+    user: User,
+    page: int = 1,
+    page_size: int = 20,
+    include_source: bool = False,
 ) -> tuple[list[RagModel], int]:
-    return await RagRepository(db).get_page(user.id, _is_admin(user), page, page_size)
+    return await RagRepository(db).get_page(
+        user.id, _is_admin(user), page, page_size, include_source
+    )
 
 
 async def update_rag_model(
@@ -97,7 +117,7 @@ async def delete_rag_model(
     user: User,
     filesystem: FileSystem | None = None,
 ) -> None:
-    rag = await get_rag_model(db, rag_id, user)
+    rag = await get_rag_model(db, rag_id, user, include_index=True)
     index_file = rag.index_file
     await RagRepository(db).delete(rag)
     if index_file is not None:

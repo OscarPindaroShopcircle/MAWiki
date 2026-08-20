@@ -13,6 +13,8 @@
       <layout.SidebarItem href="/" icon="home" label="Home" :active="active" match="home" />
       <layout.SidebarItem href="/knowledge-bases" icon="database" label="Knowledge Bases"
                           :active="active" match="knowledge-bases" />
+      <layout.SidebarItem href="/rag" icon="blocks" label="RAG Models"
+                          :active="active" match="rag" />
     </layout.SidebarSection>
 
     {% if current_user is admin %}
