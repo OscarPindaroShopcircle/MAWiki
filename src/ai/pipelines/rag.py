@@ -72,7 +72,14 @@ class DocumentIndexer:
     ) -> None:
         self.pipeline = Pipeline()
         self.pipeline.add_component(
-            "cleaner", cleaner if cleaner is not None else DocumentCleaner(keep_id=True)
+            "cleaner",
+            cleaner
+            if cleaner is not None
+            else DocumentCleaner(
+                keep_id=True,
+                remove_empty_lines=False,
+                remove_extra_whitespaces=False,
+            ),
         )
         self.pipeline.add_component(
             "splitter", splitter if splitter is not None else DocumentSplitter()

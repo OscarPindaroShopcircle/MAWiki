@@ -63,7 +63,7 @@ class RagConvertedFileView(AppBaseModel):
     id: UUIDField
     name: str
     output_index: int
-    preview: str
+    content: str
 
 
 class RagSourceFileView(AppBaseModel):
@@ -81,5 +81,7 @@ class RagChunkView(AppBaseModel):
     page_number: int | None
     split_id: int
     split_idx_start: int
+    split_idx_end: int
     character_count: int
     word_count: int
+    color_index: int

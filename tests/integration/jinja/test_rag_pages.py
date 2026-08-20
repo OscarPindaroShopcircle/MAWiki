@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime, timezone
 
 import pytest
+from haystack import Document
 
 from src.backend.db.enums import UserRole
 from src.backend.jinja import get_catalog
@@ -12,6 +13,7 @@ from src.backend.rag.schemas import (
     RagSourceFileView,
     RagView,
 )
+from src.backend.rag.views import _chunk_views
 from src.backend.tasks.models import TaskStatus
 from src.backend.tasks.schemas import TaskResponse
 from src.backend.users.schemas import User
@@ -112,7 +114,7 @@ def test_rag_file_panel_detail_and_chunks_render() -> None:
         id=uuid.uuid4(),
         name="report.pdf.md",
         output_index=0,
-        preview="Converted report text",
+        content="# Converted report text\n\n<script>alert('unsafe')</script>",
     )
     file = RagSourceFileView(
         id=uuid.uuid4(),
@@ -128,20 +130,38 @@ def test_rag_file_panel_detail_and_chunks_render() -> None:
         page_number=2,
         split_id=1,
         split_idx_start=420,
+        split_idx_end=660,
         character_count=240,
         word_count=40,
+        color_index=0,
     )
 
     files = catalog.render("pages.rag.FileList", rag_id=rag.id, files=[file])
     detail = catalog.render(
-        "pages.rag.FileDetail", rag=rag, file=file, current_user=_user()
+        "pages.rag.FileDetail", rag=rag, file=file, chunks=[chunk], current_user=_user()
     )
     chunks = catalog.render("pages.rag.ChunkList", chunks=[chunk])
 
     assert "circle-check" in files
     assert f'href="/rag/{rag.id}/files/{file.id}"' in files
-    assert "Converted report text" in detail
-    assert f"/rag/{rag.id}/files/{file.id}/chunks" in detail
+    assert "<h1>Converted report text</h1>" in detail
+    assert "&lt;script&gt;alert('unsafe')&lt;/script&gt;" in detail
+    assert 'data-rag-mode="source"' in detail
+    assert 'data-start="420" data-end="660"' in detail
     assert "Page 2" in chunks
-    assert "Offset 420" in chunks
+    assert "Characters 420–660" in chunks
     assert "A pastel chunk preview" in chunks
+
+
+def test_chunk_views_include_end_offsets_and_stable_colors() -> None:
+    chunks = _chunk_views(
+        [
+            Document(content="alpha", meta={"split_idx_start": 7}),
+            Document(content="beta", meta={"split_idx_start": 20}),
+        ]
+    )
+
+    assert chunks[0].split_idx_end == 12
+    assert chunks[0].color_index == 0
+    assert chunks[1].split_idx_end == 24
+    assert chunks[1].color_index == 1

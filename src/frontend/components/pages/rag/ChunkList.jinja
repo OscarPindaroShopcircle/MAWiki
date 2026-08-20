@@ -1,12 +1,12 @@
 {#def chunks #}
 <div class="rag-chunk-list">
   {% for chunk in chunks %}
-  <article class="rag-chunk">
+  <article class="rag-chunk" data-chunk-color="{{ chunk.color_index }}">
     <div class="rag-chunk-meta">
       <strong>Chunk {{ loop.index }}</strong>
       <span>Output {{ chunk.output_index + 1 }}</span>
       {% if chunk.page_number %}<span>Page {{ chunk.page_number }}</span>{% endif %}
-      <span>Offset {{ chunk.split_idx_start }}</span>
+      <span>Characters {{ chunk.split_idx_start }}–{{ chunk.split_idx_end }}</span>
       <span>{{ chunk.word_count }} words</span>
       <span>{{ chunk.character_count }} characters</span>
     </div>

@@ -84,6 +84,18 @@ async def test_rag_supercomponents_convert_index_and_retrieve_documents() -> Non
     assert retriever.output_mapping == {"joiner.documents": "documents"}
 
 
+async def test_document_indexer_preserves_content_for_chunk_offsets() -> None:
+    store = InMemoryDocumentStore(embedding_similarity_function="cosine")
+    indexer = DocumentIndexer(store, DocumentEmbedder())
+    content = "# Heading\n\nText  with spacing"
+
+    await indexer.run_async(documents=[Document(content=content)])
+
+    chunk = store.filter_documents()[0]
+    assert chunk.content == content
+    assert chunk.meta["split_idx_start"] == 0
+
+
 async def test_document_ingestion_pipeline_combines_conversion_and_indexing() -> None:
     store = InMemoryDocumentStore(embedding_similarity_function="cosine")
     ingestion = DocumentIngestionPipeline(

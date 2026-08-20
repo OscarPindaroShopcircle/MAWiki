@@ -79,7 +79,7 @@ def _source_file_views(
                     id=file.id,
                     name=file.name,
                     output_index=int(document.meta.get("output_index", 0)),
-                    preview=(document.content or "")[:2000],
+                    content=document.content or "",
                 )
                 for file, document in converted_by_source.get(str(source.id), [])
             ],
@@ -97,10 +97,13 @@ def _chunk_views(chunks: list[Document]) -> list[RagChunkView]:
             page_number=chunk.meta.get("page_number"),
             split_id=int(chunk.meta.get("split_id") or 0),
             split_idx_start=int(chunk.meta.get("split_idx_start") or 0),
+            split_idx_end=int(chunk.meta.get("split_idx_start") or 0)
+            + len(chunk.content or ""),
             character_count=len(chunk.content or ""),
             word_count=len((chunk.content or "").split()),
+            color_index=index % 8,
         )
-        for chunk in chunks
+        for index, chunk in enumerate(chunks)
     ]
 
 
@@ -217,7 +220,7 @@ async def rag_file_detail_page(
     filesystem: FileSystem = Depends(get_filesystem),
     user: User = Depends(get_current_user),
 ):
-    """Show conversion outputs and lazy chunk details for one source file."""
+    """Show conversion outputs and their indexed chunk ranges."""
     rag, converted_by_source = await get_rag_file_conversion_data(
         db, rag_id, user, filesystem
     )
@@ -231,10 +234,18 @@ async def rag_file_detail_page(
     )
     if file is None:
         raise RagSourceFileNotFoundException(source_file_id)
+    chunks = (
+        _chunk_views(
+            await get_rag_file_chunks(db, rag_id, source_file_id, user, filesystem)
+        )
+        if rag.index_file_id is not None and file.is_converted
+        else []
+    )
     return catalog.render(
         "pages.rag.FileDetail",
         rag=_rag_view(rag),
         file=file,
+        chunks=chunks,
         current_user=user,
     )
 

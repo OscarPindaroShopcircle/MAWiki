@@ -1,4 +1,4 @@
-{#def rag, file, current_user=None #}
+{#def rag, file, chunks=[], current_user=None #}
 {#css pages/kb/KnowledgeBaseDetail.css, pages/rag/RagDetail.css #}
 <layout.Page :title="file.name" current_user={{ current_user }} active="rag">
   <div class="kb-detail rag-detail">
@@ -20,15 +20,33 @@
       <section>
         <div class="rag-operation-heading">
           <common.Icon name="file-text" size=22 />
-          <h2>Conversion</h2>
+          <h2>Converted documents</h2>
         </div>
         {% if file.converted_files %}
         <div class="rag-output-list">
           {% for output in file.converted_files %}
-          <details>
-            <summary>{{ output.name }}</summary>
-            <pre>{{ output.preview }}</pre>
-          </details>
+          <article class="rag-document" data-rag-document>
+            <header class="rag-document-header">
+              <div>
+                <h3>{{ output.name }}</h3>
+                <span>Output {{ output.output_index + 1 }}</span>
+              </div>
+              <div class="rag-view-toggle" role="group" aria-label="Document view">
+                <button type="button" data-rag-mode="rendered" aria-pressed="true">Rendered</button>
+                <button type="button" data-rag-mode="source" aria-pressed="false">Source</button>
+              </div>
+            </header>
+            <div class="rag-document-content rag-document-rendered" data-rag-rendered>{{ output.content | markdown }}</div>
+            <pre class="rag-document-content rag-document-source" data-rag-source hidden>{{ output.content }}</pre>
+            <div hidden>
+              {% for chunk in chunks %}
+              {% if chunk.output_index == output.output_index %}
+              <span data-rag-chunk data-start="{{ chunk.split_idx_start }}" data-end="{{ chunk.split_idx_end }}"
+                data-color="{{ chunk.color_index }}" data-label="Chunk {{ loop.index }}"></span>
+              {% endif %}
+              {% endfor %}
+            </div>
+          </article>
           {% endfor %}
         </div>
         {% else %}
@@ -38,22 +56,18 @@
 
       <common.Divider />
 
-      <details class="rag-files-section"
-        {% if rag.is_indexed and file.is_converted %}
-        hx-get="/rag/{{ rag.id }}/files/{{ file.id }}/chunks"
-        hx-trigger="toggle once"
-        hx-target="#rag-chunks-content"
-        hx-swap="innerHTML"
-        {% endif %}>
+      <details class="rag-files-section" open>
         <summary>
-          <span><common.Icon name="layers-3" size=20 /> Indexed chunks</span>
+          <span><common.Icon name="layers-3" size=20 /> Chunk map</span>
           <common.Icon name="chevron-down" size=18 />
         </summary>
-        <div id="rag-chunks-content" class="rag-files-content">
-          {% if rag.is_indexed and file.is_converted %}
-          <p>Loading chunks&hellip;</p>
+        <div class="rag-files-content">
+          {% if chunks %}
+          <pages.rag.ChunkList chunks={{ chunks }} />
+          {% elif rag.is_indexed and file.is_converted %}
+          <p>No indexed chunks were found for this file.</p>
           {% else %}
-          <p>Index this RAG model to inspect its chunks.</p>
+          <p>Index this RAG model to color the document by chunk.</p>
           {% endif %}
         </div>
       </details>

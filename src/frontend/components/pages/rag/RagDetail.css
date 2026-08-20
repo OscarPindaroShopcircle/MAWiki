@@ -143,45 +143,140 @@
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
+  margin-top: var(--sp-4);
 }
 
-.rag-output-list details {
-  padding: var(--sp-3);
+.rag-document {
+  overflow: hidden;
   border: 1px solid var(--clr-border);
   border-radius: var(--radius-md);
 }
 
-.rag-output-list summary {
-  cursor: pointer;
+.rag-document-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  background: color-mix(in srgb, var(--clr-border) 24%, var(--clr-surface));
+}
+
+.rag-document-header h3 {
+  font-size: var(--text-sm);
   font-weight: 600;
 }
 
-.rag-output-list pre {
-  margin-top: var(--sp-3);
-  overflow: auto;
-  white-space: pre-wrap;
+.rag-document-header span {
+  color: var(--clr-text-secondary);
+  font-size: var(--text-xs);
 }
+
+.rag-view-toggle {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+}
+
+.rag-view-toggle button {
+  padding: var(--sp-1) var(--sp-3);
+  border: 0;
+  background: transparent;
+  color: var(--clr-text-secondary);
+  cursor: pointer;
+  font-size: var(--text-xs);
+}
+
+.rag-view-toggle button + button {
+  border-left: 1px solid var(--clr-border);
+}
+
+.rag-view-toggle button[aria-pressed="true"] {
+  background: var(--clr-accent);
+  color: var(--clr-text-on-accent);
+}
+
+.rag-document-content {
+  position: relative;
+  isolation: isolate;
+  max-height: 70vh;
+  padding: var(--sp-5);
+  overflow: auto;
+  line-height: 1.65;
+}
+
+.rag-document-source {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.rag-document-rendered > :first-child,
+.rag-document-rendered > .rag-chunk-bands + * {
+  margin-top: 0;
+}
+
+.rag-document-rendered > :last-child {
+  margin-bottom: 0;
+}
+
+.rag-document-rendered h1,
+.rag-document-rendered h2,
+.rag-document-rendered h3,
+.rag-document-rendered h4 {
+  margin: 1.25em 0 .5em;
+  font-weight: 600;
+}
+
+.rag-document-rendered p,
+.rag-document-rendered ul,
+.rag-document-rendered ol,
+.rag-document-rendered blockquote,
+.rag-document-rendered pre {
+  margin: 0 0 1em;
+}
+
+.rag-document-rendered ul,
+.rag-document-rendered ol {
+  padding-left: var(--sp-6);
+}
+
+.rag-document-rendered blockquote {
+  padding-left: var(--sp-4);
+  border-left: var(--sp-1) solid var(--clr-border-strong);
+  color: var(--clr-text-secondary);
+}
+
+.rag-document-rendered code {
+  font-family: monospace;
+}
+
+.rag-chunk-bands {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.rag-chunk-band {
+  position: absolute;
+  background: color-mix(in srgb, var(--rag-chunk-color) 35%, transparent);
+}
+
+[data-chunk-color="0"] { --rag-chunk-color: var(--cat-0); }
+[data-chunk-color="1"] { --rag-chunk-color: var(--cat-1); }
+[data-chunk-color="2"] { --rag-chunk-color: var(--cat-2); }
+[data-chunk-color="3"] { --rag-chunk-color: var(--cat-3); }
+[data-chunk-color="4"] { --rag-chunk-color: var(--cat-4); }
+[data-chunk-color="5"] { --rag-chunk-color: var(--cat-5); }
+[data-chunk-color="6"] { --rag-chunk-color: var(--cat-6); }
+[data-chunk-color="7"] { --rag-chunk-color: var(--cat-7); }
 
 .rag-chunk {
   padding: var(--sp-4);
-  border-left: var(--sp-1) solid var(--cat-0);
+  border-left: var(--sp-1) solid var(--rag-chunk-color);
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--cat-0) 12%, var(--clr-surface));
-}
-
-.rag-chunk:nth-child(4n + 2) {
-  border-color: var(--cat-2);
-  background: color-mix(in srgb, var(--cat-2) 12%, var(--clr-surface));
-}
-
-.rag-chunk:nth-child(4n + 3) {
-  border-color: var(--cat-4);
-  background: color-mix(in srgb, var(--cat-4) 12%, var(--clr-surface));
-}
-
-.rag-chunk:nth-child(4n) {
-  border-color: var(--cat-6);
-  background: color-mix(in srgb, var(--cat-6) 12%, var(--clr-surface));
+  background: color-mix(in srgb, var(--rag-chunk-color) 12%, var(--clr-surface));
 }
 
 .rag-chunk-meta {
@@ -196,9 +291,14 @@
 }
 
 @media (max-width: 48rem) {
-  .rag-stage {
+  .rag-stage,
+  .rag-document-header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .rag-view-toggle {
+    align-self: flex-start;
   }
 
   #rag-index-action {
