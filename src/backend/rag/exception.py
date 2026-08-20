@@ -11,6 +11,14 @@ class RagNotFoundException(HTTPException):
         )
 
 
+class RagSourceFileNotFoundException(HTTPException):
+    def __init__(self, file_id: uuid.UUID):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Source file with id {file_id} not found in this RAG model",
+        )
+
+
 class RagOperationInProgressException(HTTPException):
     def __init__(self):
         super().__init__(

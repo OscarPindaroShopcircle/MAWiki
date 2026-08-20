@@ -72,7 +72,7 @@ class DocumentIndexer:
     ) -> None:
         self.pipeline = Pipeline()
         self.pipeline.add_component(
-            "cleaner", cleaner if cleaner is not None else DocumentCleaner()
+            "cleaner", cleaner if cleaner is not None else DocumentCleaner(keep_id=True)
         )
         self.pipeline.add_component(
             "splitter", splitter if splitter is not None else DocumentSplitter()
@@ -116,7 +116,7 @@ class DocumentIngestionPipeline:
             "converter", converter if converter is not None else MultiFileConverter()
         )
         self.pipeline.add_component(
-            "cleaner", cleaner if cleaner is not None else DocumentCleaner()
+            "cleaner", cleaner if cleaner is not None else DocumentCleaner(keep_id=True)
         )
         self.pipeline.add_component(
             "splitter", splitter if splitter is not None else DocumentSplitter()

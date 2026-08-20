@@ -1,0 +1,62 @@
+{#def rag, file, current_user=None #}
+{#css pages/kb/KnowledgeBaseDetail.css, pages/rag/RagDetail.css #}
+<layout.Page :title="file.name" current_user={{ current_user }} active="rag">
+  <div class="kb-detail rag-detail">
+    <header class="kb-detail-header">
+      <div>
+        <a href="/rag/{{ rag.id }}" class="kb-detail-back">
+          <common.Icon name="arrow-left" size=16 />
+          {{ rag.name }}
+        </a>
+        <h1>{{ file.name }}</h1>
+        <p class="rag-source">{{ file.mime_type or "Unknown file type" }}</p>
+      </div>
+      <common.Pill :variant="'success' if file.is_converted else 'neutral'">
+        {{ "Converted" if file.is_converted else "Not converted" }}
+      </common.Pill>
+    </header>
+
+    <common.Card variant="outlined" class="rag-pipeline-panel">
+      <section>
+        <div class="rag-operation-heading">
+          <common.Icon name="file-text" size=22 />
+          <h2>Conversion</h2>
+        </div>
+        {% if file.converted_files %}
+        <div class="rag-output-list">
+          {% for output in file.converted_files %}
+          <details>
+            <summary>{{ output.name }}</summary>
+            <pre>{{ output.preview }}</pre>
+          </details>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="rag-operation-message">This file has no converted output.</p>
+        {% endif %}
+      </section>
+
+      <common.Divider />
+
+      <details class="rag-files-section"
+        {% if rag.is_indexed and file.is_converted %}
+        hx-get="/rag/{{ rag.id }}/files/{{ file.id }}/chunks"
+        hx-trigger="toggle once"
+        hx-target="#rag-chunks-content"
+        hx-swap="innerHTML"
+        {% endif %}>
+        <summary>
+          <span><common.Icon name="layers-3" size=20 /> Indexed chunks</span>
+          <common.Icon name="chevron-down" size=18 />
+        </summary>
+        <div id="rag-chunks-content" class="rag-files-content">
+          {% if rag.is_indexed and file.is_converted %}
+          <p>Loading chunks&hellip;</p>
+          {% else %}
+          <p>Index this RAG model to inspect its chunks.</p>
+          {% endif %}
+        </div>
+      </details>
+    </common.Card>
+  </div>
+</layout.Page>

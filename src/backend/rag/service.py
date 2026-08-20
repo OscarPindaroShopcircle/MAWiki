@@ -20,6 +20,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ai.components.embedders import Model2VecDocumentEmbedder, Model2VecTextEmbedder
+from ai.document_codec import MarkdownDocumentCodec, MarkdownDocumentFormatError
 from ai.pipelines.rag import DocumentConverter, DocumentIndexer, HybridRetriever
 
 from ..config import DatabaseSettingsProtocol
@@ -40,6 +41,7 @@ from .exception import (
     RagNotIndexedException,
     RagOperationInProgressException,
     RagOperationNotStartedException,
+    RagSourceFileNotFoundException,
 )
 from .models import RagModel
 from .repository import RagRepository
@@ -171,7 +173,7 @@ async def poll_rag_operation(
 
 def _converted_name(source_name: str, position: int, total: int) -> str:
     suffix = f".{position + 1}" if total > 1 else ""
-    return f"{source_name[: 250 - len(suffix)]}{suffix}.txt"
+    return f"{source_name[: 251 - len(suffix)]}{suffix}.md"
 
 
 async def _remove_staged(filesystem: FileSystem, locations: list[str]) -> None:
@@ -274,15 +276,27 @@ async def convert_rag_model_files(
                 file_id = uuid.uuid4()
                 location = f"knowledge-bases/{knowledge_base.id}/{file_id}"
                 staged_locations.append(location)
+                document.meta.update(
+                    source_file_id=str(source.id),
+                    source_file_name=source.name,
+                    output_index=position,
+                )
                 await filesystem.write_async(
-                    location, (document.content or "").encode("utf-8")
+                    location,
+                    MarkdownDocumentCodec.dumps(
+                        Document(
+                            id=str(file_id),
+                            content=document.content,
+                            meta=document.meta,
+                        )
+                    ),
                 )
                 staged.append(
                     FileModel(
                         id=file_id,
                         name=_converted_name(source.name, position, len(documents)),
                         location=location,
-                        mime_type="text/plain",
+                        mime_type="text/markdown",
                         storage_type=StorageType.LOCAL,
                     )
                 )
@@ -317,6 +331,74 @@ async def convert_rag_model_files(
     return message[:1024]
 
 
+async def get_rag_file_conversion_data(
+    db: AsyncSession,
+    rag_id: uuid.UUID,
+    user: User,
+    filesystem: FileSystem,
+) -> tuple[RagModel, dict[str, list[tuple[FileModel, Document]]]]:
+    await get_rag_model(db, rag_id, user)
+    rag = await _operation_rag(db, rag_id)
+    converted_by_source: dict[str, list[tuple[FileModel, Document]]] = {}
+    converted_files = (
+        rag.converted_knowledge_base.files
+        if rag.converted_knowledge_base is not None
+        else []
+    )
+    contents = await asyncio.gather(
+        *(filesystem.read_async(file.location) for file in converted_files)
+    )
+    for file, content in zip(converted_files, contents, strict=True):
+        try:
+            document = MarkdownDocumentCodec.loads(content, document_id=str(file.id))
+        except MarkdownDocumentFormatError as exc:
+            logger.warning("Unable to read converted file %s: %s", file.id, exc)
+            continue
+        source_file_id = document.meta.get("source_file_id")
+        if source_file_id:
+            converted_by_source.setdefault(str(source_file_id), []).append(
+                (file, document)
+            )
+    for converted_files_for_source in converted_by_source.values():
+        converted_files_for_source.sort(
+            key=lambda item: item[1].meta.get("output_index", 0)
+        )
+    return rag, converted_by_source
+
+
+async def get_rag_file_chunks(
+    db: AsyncSession,
+    rag_id: uuid.UUID,
+    source_file_id: uuid.UUID,
+    user: User,
+    filesystem: FileSystem,
+) -> list[Document]:
+    await get_rag_model(db, rag_id, user)
+    rag = await _operation_rag(db, rag_id)
+    if not any(file.id == source_file_id for file in rag.source_knowledge_base.files):
+        raise RagSourceFileNotFoundException(source_file_id)
+    if rag.index_file is None:
+        return []
+    archive = await filesystem.read_async(rag.index_file.location)
+    document_store = await asyncio.to_thread(_restore_document_store, archive)
+    chunks = document_store.filter_documents(
+        {
+            "field": "meta.source_file_id",
+            "operator": "==",
+            "value": str(source_file_id),
+        }
+    )
+    return sorted(
+        chunks,
+        key=lambda chunk: (
+            chunk.meta.get("output_index") or 0,
+            chunk.meta.get("page_number") or 0,
+            chunk.meta.get("split_idx_start") or 0,
+            chunk.meta.get("split_id") or 0,
+        ),
+    )
+
+
 async def index_rag_model_files(
     db: AsyncSession,
     rag_id: uuid.UUID,
@@ -333,13 +415,11 @@ async def index_rag_model_files(
     contents = await asyncio.gather(
         *(filesystem.read_async(file.location) for file in files)
     )
-    documents = [
-        Document(
-            content=content.decode("utf-8"),
-            meta={"file_id": str(file.id), "file_name": file.name},
-        )
-        for file, content in zip(files, contents, strict=True)
-    ]
+    documents = []
+    for file, content in zip(files, contents, strict=True):
+        document = MarkdownDocumentCodec.loads(content, document_id=str(file.id))
+        document.meta.update(file_id=str(file.id), file_name=file.name)
+        documents.append(document)
     if document_embedder is None:
         model2vec_embedder = Model2VecDocumentEmbedder()
         await asyncio.to_thread(model2vec_embedder.warm_up)

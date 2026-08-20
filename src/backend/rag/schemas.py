@@ -57,3 +57,29 @@ class RagView(AppBaseModel):
     is_indexed: bool
     conversion_task: TaskResponse | None = None
     indexing_task: TaskResponse | None = None
+
+
+class RagConvertedFileView(AppBaseModel):
+    id: UUIDField
+    name: str
+    output_index: int
+    preview: str
+
+
+class RagSourceFileView(AppBaseModel):
+    id: UUIDField
+    name: str
+    mime_type: str | None
+    is_converted: bool
+    converted_files: list[RagConvertedFileView]
+
+
+class RagChunkView(AppBaseModel):
+    id: str
+    preview: str
+    output_index: int
+    page_number: int | None
+    split_id: int
+    split_idx_start: int
+    character_count: int
+    word_count: int

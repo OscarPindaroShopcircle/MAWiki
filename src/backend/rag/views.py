@@ -3,12 +3,14 @@ from typing import Literal
 
 from fastapi import APIRouter, BackgroundTasks, Depends
 from fastapi.responses import HTMLResponse
+from haystack import Document
 from jinjax.catalog import Catalog
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user
 from ..config import AppConfig, get_app_config
 from ..dependencies import get_catalog_dep, get_db_session
+from ..files.models import FileModel
 from ..filesystem.base import FileSystem
 from ..filesystem.dependencies import get_filesystem
 from ..kb.exception import (
@@ -19,10 +21,20 @@ from ..kb.service import get_knowledge_bases
 from ..tasks.models import TaskModel, TaskStatus
 from ..tasks.schemas import TaskResponse
 from ..users.schemas import User
+from .exception import RagSourceFileNotFoundException
 from .models import RagModel
-from .schemas import RagCreate, RagKnowledgeBaseOption, RagView
+from .schemas import (
+    RagChunkView,
+    RagConvertedFileView,
+    RagCreate,
+    RagKnowledgeBaseOption,
+    RagSourceFileView,
+    RagView,
+)
 from .service import (
     create_rag_model,
+    get_rag_file_chunks,
+    get_rag_file_conversion_data,
     get_rag_model,
     get_rag_models,
     poll_rag_operation,
@@ -50,6 +62,46 @@ def _rag_view(rag: RagModel) -> RagView:
         conversion_task=_task_view(rag.conversion_task),
         indexing_task=_task_view(rag.indexing_task),
     )
+
+
+def _source_file_views(
+    rag: RagModel,
+    converted_by_source: dict[str, list[tuple[FileModel, Document]]],
+) -> list[RagSourceFileView]:
+    return [
+        RagSourceFileView(
+            id=source.id,
+            name=source.name,
+            mime_type=source.mime_type,
+            is_converted=str(source.id) in converted_by_source,
+            converted_files=[
+                RagConvertedFileView(
+                    id=file.id,
+                    name=file.name,
+                    output_index=int(document.meta.get("output_index", 0)),
+                    preview=(document.content or "")[:2000],
+                )
+                for file, document in converted_by_source.get(str(source.id), [])
+            ],
+        )
+        for source in rag.source_knowledge_base.files
+    ]
+
+
+def _chunk_views(chunks: list[Document]) -> list[RagChunkView]:
+    return [
+        RagChunkView(
+            id=chunk.id,
+            preview=" ".join((chunk.content or "").split())[:320],
+            output_index=int(chunk.meta.get("output_index") or 0),
+            page_number=chunk.meta.get("page_number"),
+            split_id=int(chunk.meta.get("split_id") or 0),
+            split_idx_start=int(chunk.meta.get("split_idx_start") or 0),
+            character_count=len(chunk.content or ""),
+            word_count=len((chunk.content or "").split()),
+        )
+        for chunk in chunks
+    ]
 
 
 async def _knowledge_base_options(
@@ -135,6 +187,70 @@ async def rag_model_detail_page(
         include_index=True,
     )
     return catalog.render("pages.rag.RagDetail", rag=_rag_view(rag), current_user=user)
+
+
+@router.get("/rag/{rag_id}/files", response_class=HTMLResponse)
+async def rag_files_panel(
+    rag_id: uuid.UUID,
+    catalog: Catalog = Depends(get_catalog_dep),
+    db: AsyncSession = Depends(get_db_session),
+    filesystem: FileSystem = Depends(get_filesystem),
+    user: User = Depends(get_current_user),
+):
+    """Load source-file conversion status for the expanded panel."""
+    rag, converted_by_source = await get_rag_file_conversion_data(
+        db, rag_id, user, filesystem
+    )
+    return catalog.render(
+        "pages.rag.FileList",
+        rag_id=rag_id,
+        files=_source_file_views(rag, converted_by_source),
+    )
+
+
+@router.get("/rag/{rag_id}/files/{source_file_id}", response_class=HTMLResponse)
+async def rag_file_detail_page(
+    rag_id: uuid.UUID,
+    source_file_id: uuid.UUID,
+    catalog: Catalog = Depends(get_catalog_dep),
+    db: AsyncSession = Depends(get_db_session),
+    filesystem: FileSystem = Depends(get_filesystem),
+    user: User = Depends(get_current_user),
+):
+    """Show conversion outputs and lazy chunk details for one source file."""
+    rag, converted_by_source = await get_rag_file_conversion_data(
+        db, rag_id, user, filesystem
+    )
+    file = next(
+        (
+            item
+            for item in _source_file_views(rag, converted_by_source)
+            if item.id == source_file_id
+        ),
+        None,
+    )
+    if file is None:
+        raise RagSourceFileNotFoundException(source_file_id)
+    return catalog.render(
+        "pages.rag.FileDetail",
+        rag=_rag_view(rag),
+        file=file,
+        current_user=user,
+    )
+
+
+@router.get("/rag/{rag_id}/files/{source_file_id}/chunks", response_class=HTMLResponse)
+async def rag_file_chunks(
+    rag_id: uuid.UUID,
+    source_file_id: uuid.UUID,
+    catalog: Catalog = Depends(get_catalog_dep),
+    db: AsyncSession = Depends(get_db_session),
+    filesystem: FileSystem = Depends(get_filesystem),
+    user: User = Depends(get_current_user),
+):
+    """Load ordered indexed chunks for one source file."""
+    chunks = await get_rag_file_chunks(db, rag_id, source_file_id, user, filesystem)
+    return catalog.render("pages.rag.ChunkList", chunks=_chunk_views(chunks))
 
 
 @router.post("/rag/{rag_id}/conversion", response_class=HTMLResponse)

@@ -13,31 +13,60 @@
       </div>
     </header>
 
-    <div class="rag-operations">
-      <common.Card variant="outlined" class="rag-operation-card">
-        <div class="rag-operation-heading">
-          <common.Icon name="file-text" size=22 />
-          <h2>Conversion</h2>
+    <common.Card variant="outlined" class="rag-pipeline-panel">
+      <div class="rag-pipeline-header">
+        <div>
+          <h2>Pipeline</h2>
+          <p>Convert source files, inspect outputs, and build the search index.</p>
         </div>
-        <p>Convert supported source files into text documents for indexing.</p>
-        <pages.rag.OperationStatus rag_id={{ rag.id }} operation="conversion"
-          task={{ rag.conversion_task }} :ready="rag.is_converted" />
+      </div>
+
+      <section class="rag-stage">
+        <div class="rag-stage-copy">
+          <div class="rag-operation-heading">
+            <common.Icon name="file-text" size=22 />
+            <h3>Conversion</h3>
+          </div>
+          <p>Convert supported source files into Markdown documents.</p>
+          <pages.rag.OperationStatus rag_id={{ rag.id }} operation="conversion"
+            task={{ rag.conversion_task }} :ready="rag.is_converted" />
+        </div>
         <common.Button type="button" variant="primary" size="md"
           :hx-post="'/rag/' + rag.id|string + '/conversion'"
           hx-target="#rag-conversion-status" hx-swap="outerHTML">
           {{ "Reconvert" if rag.is_converted else "Convert" }}
         </common.Button>
-      </common.Card>
+      </section>
 
-      <common.Card variant="outlined" class="rag-operation-card">
-        <div class="rag-operation-heading">
-          <common.Icon name="scan-search" size=22 />
-          <h2>Indexing</h2>
+      <common.Divider />
+
+      <section class="rag-stage">
+        <div class="rag-stage-copy">
+          <div class="rag-operation-heading">
+            <common.Icon name="scan-search" size=22 />
+            <h3>Indexing</h3>
+          </div>
+          <p>Split converted documents and build the FAISS index.</p>
         </div>
-        <p>Build a FAISS index from the converted text documents.</p>
         <pages.rag.IndexAction rag_id={{ rag.id }} :is-converted="rag.is_converted"
           :is-indexed="rag.is_indexed" task={{ rag.indexing_task }} />
-      </common.Card>
-    </div>
+      </section>
+
+      <common.Divider />
+
+      <details class="rag-files-section"
+        hx-get="/rag/{{ rag.id }}/files"
+        hx-trigger="toggle once"
+        hx-target="#rag-files-content"
+        hx-swap="innerHTML">
+        <summary>
+          <span><common.Icon name="files" size=20 /> Files</span>
+          <common.Icon name="chevron-down" size=18 />
+        </summary>
+        <div id="rag-files-content" class="rag-files-content">
+          <p>Loading files&hellip;</p>
+        </div>
+      </details>
+    </common.Card>
   </div>
 </layout.Page>

@@ -7,6 +7,7 @@ import pytest_asyncio
 from haystack import Document, component
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ai.document_codec import MarkdownDocumentCodec
 from src.backend.db.enums import UserRole
 from src.backend.files.models import FileModel, StorageType
 from src.backend.filesystem import LocalFileSystem
@@ -26,6 +27,8 @@ from src.backend.rag.service import (
     convert_rag_model_files,
     create_rag_model,
     delete_rag_model,
+    get_rag_file_chunks,
+    get_rag_file_conversion_data,
     get_rag_model,
     get_rag_models,
     poll_rag_operation,
@@ -183,13 +186,28 @@ async def test_conversion_index_search_and_reconversion_replace_artifacts(
     assert converted is not None
     converted_id = converted.converted_knowledge_base_id
     old_converted = converted.converted_knowledge_base.files[0]
-    assert await filesystem.read_async(old_converted.location) == b"alpha document"
+    converted_document = MarkdownDocumentCodec.loads(
+        await filesystem.read_async(old_converted.location),
+        document_id=str(old_converted.id),
+    )
+    assert converted_document.content == "alpha document"
+    assert converted_document.meta["source_file_id"] == str(source.id)
+    assert converted_document.meta["output_index"] == 0
+    _, converted_by_source = await get_rag_file_conversion_data(
+        db_session, rag.id, owner, filesystem
+    )
+    assert converted_by_source[str(source.id)][0][0].id == old_converted.id
+    assert str(unsupported.id) not in converted_by_source
 
     assert "Indexed 1 document chunks" == await index_rag_model_files(
         db_session, rag.id, filesystem, KeywordDocumentEmbedder(), embedding_dim=2
     )
     indexed = await RagRepository(db_session).get_for_operation(rag.id)
     old_index = indexed.index_file
+    chunks = await get_rag_file_chunks(db_session, rag.id, source.id, owner, filesystem)
+    assert len(chunks) == 1
+    assert chunks[0].meta["source_file_id"] == str(source.id)
+    assert chunks[0].meta["source_id"] == str(old_converted.id)
     results = await search_rag_model(
         db_session,
         rag.id,
@@ -208,11 +226,13 @@ async def test_conversion_index_search_and_reconversion_replace_artifacts(
     assert reconverted.index_file_id is None
     assert not (tmp_path / old_converted.location).exists()
     assert not (tmp_path / old_index.location).exists()
+    replacement = reconverted.converted_knowledge_base.files[0]
     assert (
-        await filesystem.read_async(
-            reconverted.converted_knowledge_base.files[0].location
-        )
-        == b"gamma replacement"
+        MarkdownDocumentCodec.loads(
+            await filesystem.read_async(replacement.location),
+            document_id=str(replacement.id),
+        ).content
+        == "gamma replacement"
     )
     with pytest.raises(RagNotIndexedException):
         await search_rag_model(
