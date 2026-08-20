@@ -18,7 +18,7 @@ auth:
 
 mcp:
   enabled: true
-  auth_enabled: true
+  auth_enabled: false
 
 frontend:
   enabled: true
