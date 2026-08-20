@@ -8,7 +8,7 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
-from ..test import environment, state
+from ..test import environment, runner, state
 from ..test.server import serve as serve_test
 
 err_console = Console(stderr=True)
@@ -21,6 +21,16 @@ def _run(command: list[str]) -> None:
     result = subprocess.run(command)
     if result.returncode:
         raise typer.Exit(result.returncode)
+
+
+def _run_suite(suite: runner.TestSuite) -> None:
+    result = runner.run(suite)
+    if result.stdout:
+        print(result.stdout, end="")
+    if result.stderr:
+        err_console.print(result.stderr, end="")
+    if result.return_code:
+        raise typer.Exit(result.return_code)
 
 
 def _require_environment(mode: state.EnvironmentMode | None = None) -> None:
@@ -42,21 +52,21 @@ def serve() -> None:
 @test_app.command()
 def unit() -> None:
     """Run unit tests without an environment."""
-    _run(["uv", "run", "pytest", "tests/unit"])
+    _run_suite(runner.TestSuite.UNIT)
 
 
 @test_app.command()
 def integration() -> None:
     """Run integration tests against the active test database."""
     _require_environment()
-    _run(["uv", "run", "pytest", "-m", "integration"])
+    _run_suite(runner.TestSuite.INTEGRATION)
 
 
 @test_app.command()
 def e2e() -> None:
     """Run E2E tests against the active Docker environment."""
     _require_environment(state.EnvironmentMode.DOCKER)
-    _run(["uv", "run", "pytest", "-m", "e2e"])
+    _run_suite(runner.TestSuite.E2E)
 
 
 @test_app.command()
