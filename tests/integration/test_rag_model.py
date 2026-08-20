@@ -4,10 +4,9 @@ from pathlib import Path
 
 import pytest
 import pytest_asyncio
-from haystack import Document
+from haystack import Document, component
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ai.components.faiss import FaissIndexer, FaissSearcher
 from src.backend.db.enums import UserRole
 from src.backend.files.models import FileModel, StorageType
 from src.backend.filesystem import LocalFileSystem
@@ -113,7 +112,9 @@ async def test_only_kb_creator_or_admin_can_create_rag_model(
     assert rag.owner_id == admin.id
 
 
+@component
 class KeywordDocumentEmbedder:
+    @component.output_types(documents=list[Document])
     def run(self, documents: list[Document]) -> dict[str, list[Document]]:
         return {
             "documents": [
@@ -128,7 +129,9 @@ class KeywordDocumentEmbedder:
         }
 
 
+@component
 class KeywordTextEmbedder:
+    @component.output_types(embedding=list[float])
     def run(self, text: str) -> dict[str, list[float]]:
         return {"embedding": [0.0, 1.0] if "gamma" in text else [1.0, 0.0]}
 
@@ -182,9 +185,8 @@ async def test_conversion_index_search_and_reconversion_replace_artifacts(
     old_converted = converted.converted_knowledge_base.files[0]
     assert await filesystem.read_async(old_converted.location) == b"alpha document"
 
-    indexer = FaissIndexer(KeywordDocumentEmbedder(), split_length=20, split_overlap=0)
     assert "Indexed 1 document chunks" == await index_rag_model_files(
-        db_session, rag.id, filesystem, indexer
+        db_session, rag.id, filesystem, KeywordDocumentEmbedder(), embedding_dim=2
     )
     indexed = await RagRepository(db_session).get_for_operation(rag.id)
     old_index = indexed.index_file
@@ -194,7 +196,7 @@ async def test_conversion_index_search_and_reconversion_replace_artifacts(
         RagSearchRequest(query="alpha", top_k=1),
         owner,
         filesystem,
-        FaissSearcher(KeywordTextEmbedder()),
+        KeywordTextEmbedder(),
     )
     assert results[0]["content"] == "alpha document"
     assert results[0]["score"] == pytest.approx(1.0)
@@ -219,7 +221,7 @@ async def test_conversion_index_search_and_reconversion_replace_artifacts(
             RagSearchRequest(query="gamma"),
             owner,
             filesystem,
-            FaissSearcher(KeywordTextEmbedder()),
+            KeywordTextEmbedder(),
         )
 
     preserved = reconverted.converted_knowledge_base.files[0]

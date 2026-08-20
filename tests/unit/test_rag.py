@@ -7,7 +7,6 @@ from haystack.components.retrievers import (
 )
 from haystack.document_stores.in_memory import InMemoryDocumentStore
 
-from ai.components.faiss import FaissIndexer, FaissSearcher
 from ai.pipelines.rag import DocumentIndexer, HybridRetriever
 
 
@@ -95,15 +94,13 @@ def test_hybrid_retriever_forwards_query_to_reranker() -> None:
     assert retriever.output_mapping == {"reranker.documents": "documents"}
 
 
-def test_haystack_faiss_store_persists_and_searches_documents() -> None:
-    indexed = FaissIndexer(DocumentEmbedder(), split_length=20, split_overlap=0).run(
-        documents=[Document(content="alpha")]
-    )
+def test_hybrid_retriever_supports_semantic_only_search() -> None:
+    store = InMemoryDocumentStore(embedding_similarity_function="cosine")
+    store.write_documents([Document(content="alpha", embedding=[1.0, 0.0])])
+    retriever = HybridRetriever(TextEmbedder(), InMemoryEmbeddingRetriever(store))
 
-    result = FaissSearcher(TextEmbedder()).run(
-        archive=indexed["archive"], query="alpha", top_k=1
-    )
+    result = retriever.run(query="alpha")
 
-    assert indexed["documents_indexed"] == 1
-    assert result["results"][0]["content"] == "alpha"
-    assert result["results"][0]["score"] == 1.0
+    assert result["documents"][0].content == "alpha"
+    assert retriever.input_mapping == {"query": ["embedder.text"]}
+    assert retriever.output_mapping == {"embedding_retriever.documents": "documents"}

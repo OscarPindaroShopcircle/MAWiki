@@ -32,10 +32,12 @@ class XlsxConverter:
             if isinstance(source, ByteStream):
                 data = source.data
                 file_name = source.meta.get("file_name", "unknown.xlsx")
+                source_meta = source.meta
             else:
                 path = Path(source)
                 data = path.read_bytes()
                 file_name = path.name
+                source_meta = {}
 
             workbook = openpyxl.load_workbook(
                 BytesIO(data), read_only=True, data_only=True
@@ -53,6 +55,7 @@ class XlsxConverter:
                 doc = Document(
                     content=content,
                     meta={
+                        **source_meta,
                         "file_name": file_name,
                         "sheet_name": sheet_name,
                         "content_type": "text",
@@ -70,23 +73,24 @@ class UnsupportedFileTypeError(ValueError):
 @component
 class SimpleFileConverter:
     @staticmethod
-    def _source(source: Source) -> tuple[bytes, str, str | None]:
+    def _source(source: Source) -> tuple[bytes, str, str | None, dict]:
         if isinstance(source, ByteStream):
             return (
                 source.data,
                 source.meta.get("file_name", "unknown"),
                 source.mime_type,
+                source.meta,
             )
         path = Path(source)
-        return path.read_bytes(), path.name, mimetypes.guess_type(path.name)[0]
+        return path.read_bytes(), path.name, mimetypes.guess_type(path.name)[0], {}
 
     @component.output_types(documents=list[Document])
     def run(self, sources: list[Source]) -> dict[str, list[Document]]:
         documents: list[Document] = []
         for source in sources:
-            data, file_name, mime_type = self._source(source)
+            data, file_name, mime_type, source_meta = self._source(source)
             suffix = Path(file_name).suffix.lower()
-            meta = {"file_name": file_name, "content_type": "text"}
+            meta = {**source_meta, "file_name": file_name, "content_type": "text"}
             if (
                 mime_type
                 and mime_type.startswith("text/")

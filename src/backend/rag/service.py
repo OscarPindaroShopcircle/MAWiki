@@ -2,12 +2,18 @@ import asyncio
 import logging
 import uuid
 from contextlib import suppress
+from io import BytesIO
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Literal
-from zipfile import BadZipFile
+from zipfile import ZIP_DEFLATED, BadZipFile, ZipFile
 
 from docx.opc.exceptions import PackageNotFoundError
 from haystack import Document
+from haystack.components.embedders.types import DocumentEmbedder, TextEmbedder
 from haystack.dataclasses import ByteStream
+from haystack_integrations.components.retrievers.faiss import FAISSEmbeddingRetriever
+from haystack_integrations.document_stores.faiss import FAISSDocumentStore
 from openpyxl.utils.exceptions import InvalidFileException
 from pypdf.errors import PdfReadError
 from sqlalchemy.exc import SQLAlchemyError
@@ -15,7 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ai.components.converters import SimpleFileConverter, UnsupportedFileTypeError
 from ai.components.embedders import Model2VecDocumentEmbedder, Model2VecTextEmbedder
-from ai.components.faiss import FaissIndexer, FaissSearcher
+from ai.pipelines.rag import DocumentIndexer, HybridRetriever
 
 from ..config import DatabaseSettingsProtocol
 from ..db.db import DatabaseManager
@@ -160,6 +166,25 @@ async def _remove_staged(filesystem: FileSystem, locations: list[str]) -> None:
             )
 
 
+def _archive_document_store(document_store: FAISSDocumentStore) -> bytes:
+    with TemporaryDirectory() as directory:
+        index_path = Path(directory) / "index"
+        document_store.save(index_path)
+        output = BytesIO()
+        with ZipFile(output, "w", ZIP_DEFLATED) as archive:
+            archive.write(index_path.with_suffix(".faiss"), "index.faiss")
+            archive.write(index_path.with_suffix(".json"), "index.json")
+    return output.getvalue()
+
+
+def _restore_document_store(archive: bytes) -> FAISSDocumentStore:
+    with TemporaryDirectory() as directory, ZipFile(BytesIO(archive)) as stored:
+        index_path = Path(directory) / "index"
+        index_path.with_suffix(".faiss").write_bytes(stored.read("index.faiss"))
+        index_path.with_suffix(".json").write_bytes(stored.read("index.json"))
+        return FAISSDocumentStore(index_path=str(index_path))
+
+
 async def _convert_file(
     file: FileModel, filesystem: FileSystem, converter: SimpleFileConverter
 ) -> tuple[FileModel, list[Document] | None, str | None]:
@@ -279,28 +304,41 @@ async def index_rag_model_files(
     db: AsyncSession,
     rag_id: uuid.UUID,
     filesystem: FileSystem,
-    indexer: FaissIndexer | None = None,
+    document_embedder: DocumentEmbedder | None = None,
+    embedding_dim: int | None = None,
 ) -> str:
     rag = await _operation_rag(db, rag_id)
     if rag.converted_knowledge_base is None:
         raise RagNotConvertedException()
-    documents = []
-    for file in rag.converted_knowledge_base.files:
-        content = await filesystem.read_async(file.location)
-        documents.append(
-            Document(
-                content=content.decode("utf-8"),
-                meta={"file_id": str(file.id), "file_name": file.name},
-            )
+    sources = [
+        ByteStream(
+            await filesystem.read_async(file.location),
+            meta={"file_id": str(file.id), "file_name": file.name},
+            mime_type=file.mime_type,
         )
-    if not documents:
+        for file in rag.converted_knowledge_base.files
+    ]
+    if not sources:
         raise ValueError("The converted knowledge base is empty")
-    indexer = indexer or FaissIndexer(Model2VecDocumentEmbedder())
-    result = await asyncio.to_thread(indexer.run, documents=documents)
+    if document_embedder is None:
+        model2vec_embedder = Model2VecDocumentEmbedder()
+        await asyncio.to_thread(model2vec_embedder.warm_up)
+        document_embedder = model2vec_embedder
+        embedding_dim = model2vec_embedder.model.dim
+    if embedding_dim is None:
+        raise ValueError("embedding_dim is required for a custom document embedder")
+    document_store = FAISSDocumentStore(embedding_dim=embedding_dim)
+    indexer = DocumentIndexer(
+        document_store,
+        document_embedder,
+        converter=SimpleFileConverter(),
+    )
+    result = await asyncio.to_thread(indexer.run, sources=sources)
+    archive = await asyncio.to_thread(_archive_document_store, document_store)
     file_id = uuid.uuid4()
     location = f"rag-models/{rag.id}/indexes/{file_id}.zip"
     try:
-        await filesystem.write_async(location, result["archive"])
+        await filesystem.write_async(location, archive)
         index_file = FileModel(
             id=file_id,
             name=f"{rag.name}.faiss.zip",
@@ -320,7 +358,7 @@ async def index_rag_model_files(
     if old_index is not None:
         with suppress(FileNotFoundError):
             await filesystem.delete_async(old_index.location)
-    return f"Indexed {result['documents_indexed']} document chunks"
+    return f"Indexed {result['documents_written']} document chunks"
 
 
 async def search_rag_model(
@@ -329,25 +367,27 @@ async def search_rag_model(
     data: RagSearchRequest,
     user: User,
     filesystem: FileSystem,
-    searcher: FaissSearcher | None = None,
+    text_embedder: TextEmbedder | None = None,
 ) -> list[dict]:
     await get_rag_model(db, rag_id, user)
     rag = await _operation_rag(db, rag_id)
     if rag.index_file is None:
         raise RagNotIndexedException()
     archive = await filesystem.read_async(rag.index_file.location)
-    searcher = searcher or FaissSearcher(Model2VecTextEmbedder())
-    result = await asyncio.to_thread(
-        searcher.run, archive=archive, query=data.query, top_k=data.top_k
+    document_store = await asyncio.to_thread(_restore_document_store, archive)
+    retriever = HybridRetriever(
+        text_embedder or Model2VecTextEmbedder(),
+        FAISSEmbeddingRetriever(document_store=document_store, top_k=data.top_k),
     )
+    result = await asyncio.to_thread(retriever.run, query=data.query)
     return [
         {
-            "content": item["content"],
-            "score": item["score"],
-            "file_id": item["meta"]["file_id"],
-            "file_name": item["meta"]["file_name"],
+            "content": document.content or "",
+            "score": document.score or 0.0,
+            "file_id": document.meta["file_id"],
+            "file_name": document.meta["file_name"],
         }
-        for item in result["results"]
+        for document in result["documents"]
     ]
 
 
