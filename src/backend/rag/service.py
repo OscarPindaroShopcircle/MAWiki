@@ -16,6 +16,7 @@ from haystack_integrations.components.retrievers.faiss import FAISSEmbeddingRetr
 from haystack_integrations.document_stores.faiss import FAISSDocumentStore
 from openpyxl.utils.exceptions import InvalidFileException
 from pypdf.errors import PdfReadError
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -461,11 +462,9 @@ async def search_rag_model(
     db: AsyncSession,
     rag_id: uuid.UUID,
     data: RagSearchRequest,
-    user: User,
     filesystem: FileSystem,
     text_embedder: TextEmbedder | None = None,
 ) -> list[dict]:
-    await get_rag_model(db, rag_id, user)
     rag = await _operation_rag(db, rag_id)
     if rag.index_file is None:
         raise RagNotIndexedException()
@@ -482,9 +481,54 @@ async def search_rag_model(
             "score": document.score or 0.0,
             "file_id": document.meta["file_id"],
             "file_name": document.meta["file_name"],
+            "source_file_id": document.meta["source_file_id"],
+            "source_file_name": document.meta["source_file_name"],
         }
         for document in result["documents"]
     ]
+
+
+async def get_mcp_rag_models(db: AsyncSession) -> list[RagModel]:
+    result = await db.execute(
+        select(RagModel)
+        .where(RagModel.index_file_id.is_not(None))
+        .order_by(RagModel.name, RagModel.id)
+    )
+    return list(result.scalars().all())
+
+
+async def get_mcp_rag_file_content(
+    db: AsyncSession,
+    rag_id: uuid.UUID,
+    source_file_id: uuid.UUID,
+    filesystem: FileSystem,
+) -> tuple[str, str]:
+    rag = await _operation_rag(db, rag_id)
+    source_file = next(
+        (file for file in rag.source_knowledge_base.files if file.id == source_file_id),
+        None,
+    )
+    if source_file is None:
+        raise RagSourceFileNotFoundException(source_file_id)
+    converted_files = (
+        rag.converted_knowledge_base.files if rag.converted_knowledge_base else []
+    )
+    contents = await asyncio.gather(
+        *(filesystem.read_async(file.location) for file in converted_files)
+    )
+    documents: list[Document] = []
+    for file, content in zip(converted_files, contents, strict=True):
+        try:
+            document = MarkdownDocumentCodec.loads(content, document_id=str(file.id))
+        except MarkdownDocumentFormatError as exc:
+            logger.warning("Unable to read converted file %s: %s", file.id, exc)
+            continue
+        if document.meta.get("source_file_id") == str(source_file_id):
+            documents.append(document)
+    documents.sort(key=lambda document: document.meta.get("output_index", 0))
+    return source_file.name, "\n\n".join(
+        document.content or "" for document in documents
+    )
 
 
 async def _set_task(

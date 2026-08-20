@@ -7,11 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user
 from ..dependencies import get_catalog_dep, get_db_session
+from ..files.schemas import FileResponse
 from ..filesystem.base import FileSystem
 from ..filesystem.dependencies import get_filesystem
 from ..users.schemas import User
 from .exception import SharedUserNotFoundException
-from .schemas import KnowledgeBaseCreate
+from .models import KnowledgeBaseModel
+from .schemas import KnowledgeBaseCreate, KnowledgeBaseResponse
 from .service import (
     create_knowledge_base,
     get_knowledge_base,
@@ -20,6 +22,10 @@ from .service import (
 )
 
 router = APIRouter(tags=["kb-views"])
+
+
+def _to_response(knowledge_base: KnowledgeBaseModel) -> KnowledgeBaseResponse:
+    return KnowledgeBaseResponse.model_validate(knowledge_base)
 
 
 @router.get("/knowledge-bases", response_class=HTMLResponse)
@@ -34,7 +40,9 @@ async def knowledge_bases_page(
     )
     return catalog.render(
         "pages.kb.KnowledgeBaseList",
-        knowledge_bases=knowledge_bases,
+        knowledge_bases=[
+            _to_response(knowledge_base) for knowledge_base in knowledge_bases
+        ],
         current_user=user,
     )
 
@@ -68,7 +76,12 @@ async def create_knowledge_base_submit(
     knowledge_bases, _ = await get_knowledge_bases(
         db, user, page=1, page_size=100, include_files=True
     )
-    return catalog.render("pages.kb.KnowledgeBaseGrid", knowledge_bases=knowledge_bases)
+    return catalog.render(
+        "pages.kb.KnowledgeBaseGrid",
+        knowledge_bases=[
+            _to_response(knowledge_base) for knowledge_base in knowledge_bases
+        ],
+    )
 
 
 @router.get("/knowledge-bases/{knowledge_base_id}", response_class=HTMLResponse)
@@ -84,7 +97,7 @@ async def knowledge_base_detail_page(
     )
     return catalog.render(
         "pages.kb.KnowledgeBaseDetail",
-        knowledge_base=knowledge_base,
+        knowledge_base=_to_response(knowledge_base),
         current_user=user,
     )
 
@@ -105,5 +118,5 @@ async def upload_knowledge_base_files_view(
     return catalog.render(
         "pages.kb.FilesTable",
         knowledge_base_id=knowledge_base_id,
-        files=knowledge_base.files,
+        files=[FileResponse.model_validate(file) for file in knowledge_base.files],
     )

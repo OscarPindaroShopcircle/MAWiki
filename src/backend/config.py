@@ -7,6 +7,7 @@ from pydantic import (
     BaseModel,
     BeforeValidator,
     ConfigDict,
+    AnyHttpUrl,
     EmailStr,
     Field,
     SecretStr,
@@ -205,6 +206,27 @@ class StorageConfig(BaseModel):
     )
 
 
+class McpGoogleConfig(BaseModel):
+    """Google Workspace credentials and access policy for the MCP server."""
+
+    client_id: str
+    client_secret: SecretValue
+    workspace_domain: str = Field(min_length=1)
+
+
+class McpConfig(BaseModel):
+    """Configuration for the optional FastMCP server."""
+
+    enabled: bool = False
+    auth_enabled: bool = True
+    public_url: AnyHttpUrl | None = Field(
+        default=None, description="Public base URL hosting the MCP endpoints"
+    )
+    google: McpGoogleConfig | None = None
+    jwt_signing_key: SecretValue | None = None
+    redirect_path: str = "/auth/mcp/callback"
+
+
 class AppConfig(BaseConfig):
     app_name: str = Field(default="Circeus")
     env: str = Field(default="dev")
@@ -214,6 +236,7 @@ class AppConfig(BaseConfig):
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     auth: Optional[AuthConfig] = Field(default=None)
     storage: StorageConfig = Field(default_factory=StorageConfig)
+    mcp: McpConfig = Field(default_factory=McpConfig)
 
     # Server configuration
     backend_host: str = Field(
@@ -243,6 +266,17 @@ class AppConfig(BaseConfig):
             raise ValueError(
                 "auth.dev_auto_login_email may only be set when env is 'dev'"
             )
+        if self.mcp.enabled and self.env != "dev" and not self.mcp.auth_enabled:
+            raise ValueError("mcp.auth_enabled may only be false when env is 'dev'")
+        if self.mcp.enabled and self.mcp.auth_enabled:
+            if self.mcp.public_url is None or self.mcp.google is None:
+                raise ValueError(
+                    "enabled authenticated MCP requires public_url and google"
+                )
+            if self.mcp.jwt_signing_key is None:
+                raise ValueError("enabled authenticated MCP requires jwt_signing_key")
+            if self.mcp.public_url.scheme != "https":
+                raise ValueError("authenticated MCP requires an HTTPS public_url")
         return self
 
 

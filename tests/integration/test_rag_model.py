@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 import pytest_asyncio
 from haystack import Document, component
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ai.document_codec import MarkdownDocumentCodec
@@ -15,6 +16,14 @@ from src.backend.kb.exception import KnowledgeBaseAccessDeniedException
 from src.backend.kb.models import KnowledgeBaseModel
 from src.backend.kb.schemas import KnowledgeBaseCreate
 from src.backend.kb.service import create_knowledge_base, get_knowledge_base
+from src.backend.mcp.exceptions import McpSessionAccessDeniedException
+from src.backend.mcp.models import McpToolCallModel, McpToolName
+from src.backend.mcp.service import (
+    McpPrincipal,
+    get_mcp_session,
+    record_mcp_tool_call,
+    resolve_mcp_user,
+)
 from src.backend.rag.exception import (
     RagNotConvertedException,
     RagNotFoundException,
@@ -27,6 +36,8 @@ from src.backend.rag.service import (
     convert_rag_model_files,
     create_rag_model,
     delete_rag_model,
+    get_mcp_rag_file_content,
+    get_mcp_rag_models,
     get_rag_file_chunks,
     get_rag_file_conversion_data,
     get_rag_model,
@@ -212,7 +223,6 @@ async def test_conversion_index_search_and_reconversion_replace_artifacts(
         db_session,
         rag.id,
         RagSearchRequest(query="alpha", top_k=1),
-        owner,
         filesystem,
         KeywordTextEmbedder(),
     )
@@ -239,7 +249,6 @@ async def test_conversion_index_search_and_reconversion_replace_artifacts(
             db_session,
             rag.id,
             RagSearchRequest(query="gamma"),
-            owner,
             filesystem,
             KeywordTextEmbedder(),
         )
@@ -277,3 +286,84 @@ async def test_rag_operations_are_pollable_and_cannot_overlap(
         await start_rag_operation(db_session, rag.id, owner, "conversion")
     with pytest.raises(RagNotFoundException):
         await poll_rag_operation(db_session, rag.id, other, "conversion")
+
+
+@pytest.mark.integration
+async def test_mcp_services_are_company_wide_and_session_audited(
+    db_session: AsyncSession, rag_users: list[User], tmp_path: Path
+):
+    owner = rag_users[0]
+    filesystem = LocalFileSystem(tmp_path)
+    knowledge_base = await create_knowledge_base(
+        db_session, KnowledgeBaseCreate(name="Company docs"), owner
+    )
+    source_id = uuid.uuid4()
+    source = FileModel(
+        id=source_id,
+        name="company.txt",
+        location=f"knowledge-bases/{knowledge_base.id}/{source_id}",
+        mime_type="text/plain",
+        storage_type=StorageType.LOCAL,
+    )
+    await filesystem.write_async(source.location, b"company knowledge")
+    db_session.add(source)
+    knowledge_base = await get_knowledge_base(
+        db_session, knowledge_base.id, owner, include_files=True
+    )
+    knowledge_base.files.append(source)
+    await db_session.flush()
+    rag = await create_rag_model(
+        db_session,
+        RagCreate(name="Company RAG", source_knowledge_base_id=knowledge_base.id),
+        owner,
+    )
+    await convert_rag_model_files(db_session, rag.id, filesystem)
+    await index_rag_model_files(
+        db_session, rag.id, filesystem, KeywordDocumentEmbedder(), embedding_dim=2
+    )
+
+    assert [str(model.id) for model in await get_mcp_rag_models(db_session)] == [
+        str(rag.id)
+    ]
+    results = await search_rag_model(
+        db_session,
+        rag.id,
+        RagSearchRequest(query="company", top_k=1),
+        filesystem,
+        KeywordTextEmbedder(),
+    )
+    assert results[0]["source_file_id"] == str(source.id)
+    file_name, content = await get_mcp_rag_file_content(
+        db_session, rag.id, source.id, filesystem
+    )
+    assert file_name == source.name
+    assert content == "company knowledge"
+
+    user = await resolve_mcp_user(
+        db_session,
+        McpPrincipal(
+            provider="google", subject="employee-1", email="employee@example.com"
+        ),
+    )
+    session = await get_mcp_session(db_session, user, None)
+    await record_mcp_tool_call(
+        db_session,
+        session,
+        McpToolName.SEARCH,
+        rag_id=rag.id,
+        query="company",
+    )
+    assert (await get_mcp_session(db_session, user, session.id)).id == session.id
+    calls = list((await db_session.execute(select(McpToolCallModel))).scalars().all())
+    assert [(str(call.session_id), call.tool, call.query) for call in calls] == [
+        (str(session.id), McpToolName.SEARCH, "company")
+    ]
+
+    other_user = await resolve_mcp_user(
+        db_session,
+        McpPrincipal(
+            provider="google", subject="employee-2", email="other@example.com"
+        ),
+    )
+    with pytest.raises(McpSessionAccessDeniedException):
+        await get_mcp_session(db_session, other_user, session.id)

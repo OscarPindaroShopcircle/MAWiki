@@ -17,6 +17,10 @@ auth:
   dev_auto_login_email: admin@admin.co
   redirect_uri: http://localhost:8000/auth/callback
 
+mcp:
+  enabled: true
+  auth_enabled: false
+
 frontend:
   enabled: true
   components_dir: src/frontend/components

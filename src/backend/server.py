@@ -9,6 +9,7 @@ from .config import AppConfig, get_app_config
 from .db.db import DatabaseManager
 from .users.routes import router as users_router
 from .kb.routes import router as kb_router
+from .mcp.server import build_mcp_application
 from .rag.routes import router as rag_router
 from fastapi.staticfiles import StaticFiles
 
@@ -19,8 +20,17 @@ async def lifespan(app: FastAPI):
     if config is None:
         config = get_app_config()
     db_manager = DatabaseManager(config.database)
-    yield
-    await db_manager.close()
+    mcp_application = getattr(app.state, "mcp_application", None)
+    try:
+        if mcp_application is None:
+            yield
+        else:
+            async with mcp_application.app.router.lifespan_context(mcp_application.app):
+                yield
+    finally:
+        if mcp_application is not None:
+            await mcp_application.close()
+        await db_manager.close()
 
 
 def create_app(config: AppConfig | None = None) -> FastAPI:
@@ -32,6 +42,8 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     app.state.config = config
+    if config.mcp.enabled:
+        app.state.mcp_application = build_mcp_application(config)
 
     app.add_middleware(
         CORSMiddleware,
@@ -90,6 +102,10 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     @app.get("/ping")
     async def ping():
         return {"status": "ok"}
+
+    mcp_application = getattr(app.state, "mcp_application", None)
+    if mcp_application is not None:
+        app.mount("/", mcp_application.app)
 
     return app
 

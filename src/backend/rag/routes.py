@@ -189,6 +189,7 @@ async def search_rag_model_route(
     best matching text chunks with scores and converted-file provenance. The
     model must be converted and indexed before it can be searched.
     """
+    await get_rag_model(db, rag_id, user)
     return RagSearchResponse(
-        results=await search_rag_model(db, rag_id, data, user, filesystem)
+        results=await search_rag_model(db, rag_id, data, filesystem)
     )

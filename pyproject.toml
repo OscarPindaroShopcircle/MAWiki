@@ -33,7 +33,7 @@ dependencies = [
     "model2vec>=0.9.0",
     "nltk>=3.10.3",
     "mcp>=1.29.0",
-    "fastmcp>=3.4.7",
+    "fastmcp==4.0.0b3",
     "markdown-it-py>=4.2.0",
     "sentence-transformers-haystack>=0.1.1",
     "accelerate>=1.14.0",
