@@ -41,6 +41,9 @@ dependencies = [
     "typer>=0.15.0",
     "platformdirs==4.9.4",
     "faiss-haystack==2.0.0",
+    "trafilatura==2.1.0",
+    "python-pptx==1.0.2",
+    "pandas==3.0.5",
 ]
 
 [project.scripts]

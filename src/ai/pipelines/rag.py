@@ -136,6 +136,10 @@ class DocumentIngestionPipeline:
 
 @super_component
 class HybridRetriever:
+    """Embed a query for semantic retrieval, optionally merge BM25 results,
+    and optionally rerank the resulting documents before returning them.
+    """
+
     def __init__(
         self,
         text_embedder: TextEmbedder,

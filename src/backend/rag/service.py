@@ -19,9 +19,8 @@ from pypdf.errors import PdfReadError
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ai.components.converters import SimpleFileConverter, UnsupportedFileTypeError
 from ai.components.embedders import Model2VecDocumentEmbedder, Model2VecTextEmbedder
-from ai.pipelines.rag import DocumentIndexer, HybridRetriever
+from ai.pipelines.rag import DocumentConverter, DocumentIndexer, HybridRetriever
 
 from ..config import DatabaseSettingsProtocol
 from ..db.db import DatabaseManager
@@ -52,7 +51,6 @@ _CONVERSION_ERRORS = (
     BadZipFile,
     EOFError,
     InvalidFileException,
-    KeyError,
     OSError,
     PackageNotFoundError,
     PdfReadError,
@@ -186,27 +184,26 @@ def _restore_document_store(archive: bytes) -> FAISSDocumentStore:
 
 
 async def _convert_file(
-    file: FileModel, filesystem: FileSystem, converter: SimpleFileConverter
+    file: FileModel, filesystem: FileSystem, converter: DocumentConverter
 ) -> tuple[FileModel, list[Document] | None, str | None]:
     try:
         content = await filesystem.read_async(file.location)
-        documents = await asyncio.to_thread(
-            converter.run,
+        documents = await converter.run_async(
             sources=[
                 ByteStream(
                     content,
                     meta={"file_name": file.name, "source_file_id": str(file.id)},
                     mime_type=file.mime_type,
                 )
-            ],
+            ]
         )
         converted = [
             doc for doc in documents["documents"] if (doc.content or "").strip()
         ]
-        if not converted:
-            raise ValueError("no textual content")
-        return file, converted, None
-    except UnsupportedFileTypeError:
+        return (file, converted, None) if converted else (file, None, "unsupported")
+    except KeyError as exc:
+        if exc.args != ("documents",):
+            raise
         return file, None, "unsupported"
     except _CONVERSION_ERRORS as exc:
         return file, None, str(exc)
@@ -216,10 +213,10 @@ async def convert_rag_model_files(
     db: AsyncSession,
     rag_id: uuid.UUID,
     filesystem: FileSystem,
-    converter: SimpleFileConverter | None = None,
+    converter: DocumentConverter | None = None,
 ) -> str:
     rag = await _operation_rag(db, rag_id)
-    converter = converter or SimpleFileConverter()
+    converter = converter or DocumentConverter()
     results = await asyncio.gather(
         *(
             _convert_file(file, filesystem, converter)
@@ -310,16 +307,19 @@ async def index_rag_model_files(
     rag = await _operation_rag(db, rag_id)
     if rag.converted_knowledge_base is None:
         raise RagNotConvertedException()
-    sources = [
-        ByteStream(
-            await filesystem.read_async(file.location),
-            meta={"file_id": str(file.id), "file_name": file.name},
-            mime_type=file.mime_type,
-        )
-        for file in rag.converted_knowledge_base.files
-    ]
-    if not sources:
+    files = rag.converted_knowledge_base.files
+    if not files:
         raise ValueError("The converted knowledge base is empty")
+    contents = await asyncio.gather(
+        *(filesystem.read_async(file.location) for file in files)
+    )
+    documents = [
+        Document(
+            content=content.decode("utf-8"),
+            meta={"file_id": str(file.id), "file_name": file.name},
+        )
+        for file, content in zip(files, contents, strict=True)
+    ]
     if document_embedder is None:
         model2vec_embedder = Model2VecDocumentEmbedder()
         await asyncio.to_thread(model2vec_embedder.warm_up)
@@ -328,12 +328,8 @@ async def index_rag_model_files(
     if embedding_dim is None:
         raise ValueError("embedding_dim is required for a custom document embedder")
     document_store = FAISSDocumentStore(embedding_dim=embedding_dim)
-    indexer = DocumentIndexer(
-        document_store,
-        document_embedder,
-        converter=SimpleFileConverter(),
-    )
-    result = await asyncio.to_thread(indexer.run, sources=sources)
+    indexer = DocumentIndexer(document_store, document_embedder)
+    result = await asyncio.to_thread(indexer.run, documents=documents)
     archive = await asyncio.to_thread(_archive_document_store, document_store)
     file_id = uuid.uuid4()
     location = f"rag-models/{rag.id}/indexes/{file_id}.zip"
@@ -379,7 +375,7 @@ async def search_rag_model(
         text_embedder or Model2VecTextEmbedder(),
         FAISSEmbeddingRetriever(document_store=document_store, top_k=data.top_k),
     )
-    result = await asyncio.to_thread(retriever.run, query=data.query)
+    result = await retriever.run_async(query=data.query)
     return [
         {
             "content": document.content or "",

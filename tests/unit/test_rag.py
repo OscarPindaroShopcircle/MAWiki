@@ -1,5 +1,6 @@
 from dataclasses import replace
 
+import pytest
 from haystack import Document, component
 from haystack.components.retrievers import (
     InMemoryBM25Retriever,
@@ -7,7 +8,12 @@ from haystack.components.retrievers import (
 )
 from haystack.document_stores.in_memory import InMemoryDocumentStore
 
-from ai.pipelines.rag import DocumentIndexer, HybridRetriever
+from ai.pipelines.rag import (
+    DocumentConverter,
+    DocumentIndexer,
+    DocumentIngestionPipeline,
+    HybridRetriever,
+)
 
 
 @component
@@ -52,14 +58,18 @@ class QueryRanker:
         return {"documents": documents[:top_k] if top_k else documents}
 
 
-def test_rag_supercomponents_index_and_retrieve_documents() -> None:
+@pytest.mark.asyncio
+async def test_rag_supercomponents_convert_index_and_retrieve_documents() -> None:
+    converter = DocumentConverter(TextConverter())
+    conversion_result = await converter.run_async(sources=["alpha beta"])
     store = InMemoryDocumentStore(embedding_similarity_function="cosine")
-    indexer = DocumentIndexer(store, DocumentEmbedder(), converter=TextConverter())
+    indexer = DocumentIndexer(store, DocumentEmbedder())
 
-    indexing_result = indexer.run(sources=["alpha beta"])
+    indexing_result = await indexer.run_async(documents=conversion_result["documents"])
 
     assert indexing_result == {"documents_written": 1}
-    assert indexer.input_mapping == {"sources": ["converter.sources"]}
+    assert converter.input_mapping == {"sources": ["converter.sources"]}
+    assert indexer.input_mapping == {"documents": ["cleaner.documents"]}
 
     retriever = HybridRetriever(
         TextEmbedder(),
@@ -67,13 +77,26 @@ def test_rag_supercomponents_index_and_retrieve_documents() -> None:
         InMemoryBM25Retriever(store),
     )
 
-    retrieval_result = retriever.run(query="alpha")
+    retrieval_result = await retriever.run_async(query="alpha")
 
     assert retrieval_result["documents"][0].content == "alpha beta"
     assert retriever.input_mapping == {
         "query": ["embedder.text", "bm25_retriever.query"]
     }
     assert retriever.output_mapping == {"joiner.documents": "documents"}
+
+
+@pytest.mark.asyncio
+async def test_document_ingestion_pipeline_combines_conversion_and_indexing() -> None:
+    store = InMemoryDocumentStore(embedding_similarity_function="cosine")
+    ingestion = DocumentIngestionPipeline(
+        store, DocumentEmbedder(), converter=TextConverter()
+    )
+
+    result = await ingestion.run_async(sources=["alpha"])
+
+    assert result == {"documents_written": 1}
+    assert store.count_documents() == 1
 
 
 def test_hybrid_retriever_forwards_query_to_reranker() -> None:
