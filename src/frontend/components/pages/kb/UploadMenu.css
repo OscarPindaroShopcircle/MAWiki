@@ -7,3 +7,19 @@
 }
 
 .kb-upload-popover .menu-item-icon .lucide { color: var(--clr-accent); }
+
+.kb-upload-status {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  position: absolute;
+  top: calc(100% + var(--sp-2));
+  right: 0;
+  color: var(--clr-text-secondary);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.kb-upload-status[hidden] {
+  display: none;
+}

@@ -9,6 +9,7 @@ from ..db.enums import UserRole
 from ..files.models import FileModel, StorageType
 from ..filesystem.base import FileSystem
 from ..users.schemas import User
+from .constants import MAX_UPLOAD_BATCH_BYTES, MAX_UPLOAD_BATCH_FILES
 from .exception import (
     FileUploadException,
     KnowledgeBaseAccessDeniedException,
@@ -73,6 +74,19 @@ async def get_knowledge_bases(
     )
 
 
+async def get_knowledge_base_files(
+    db: AsyncSession,
+    knowledge_base_id: uuid.UUID,
+    user: User,
+    page: int = 1,
+    page_size: int = 50,
+) -> tuple[list[FileModel], bool]:
+    await get_knowledge_base(db, knowledge_base_id, user)
+    return await KnowledgeBaseRepository(db).get_files_page(
+        knowledge_base_id, page, page_size
+    )
+
+
 async def update_knowledge_base(
     db: AsyncSession,
     knowledge_base_id: uuid.UUID,
@@ -104,23 +118,41 @@ async def upload_files_to_knowledge_base(
     uploads: list[UploadFile],
     user: User,
     filesystem: FileSystem,
+    include_existing_files: bool = True,
+    file_ids: list[uuid.UUID] | None = None,
 ) -> KnowledgeBaseModel:
     knowledge_base = await get_knowledge_base(
-        db, knowledge_base_id, user, include_files=True
+        db, knowledge_base_id, user, include_files=include_existing_files
     )
     if not _is_admin(user) and knowledge_base.created_by_id != user.id:
         raise KnowledgeBaseAccessDeniedException(knowledge_base_id)
-    if not uploads:
-        raise FileUploadException()
-
     staged: list[tuple[FileModel, str]] = []
     try:
-        for upload in uploads:
+        if (
+            not uploads
+            or len(uploads) > MAX_UPLOAD_BATCH_FILES
+            or sum(upload.size or 0 for upload in uploads) > MAX_UPLOAD_BATCH_BYTES
+            or file_ids is not None
+            and (len(file_ids) != len(uploads) or len(set(file_ids)) != len(file_ids))
+        ):
+            raise FileUploadException()
+
+        ids = file_ids or [uuid.uuid4() for _ in uploads]
+        linked_ids: set[uuid.UUID] = set()
+        if file_ids is not None:
+            existing_ids, linked_ids = await KnowledgeBaseRepository(
+                db
+            ).get_existing_file_ids(knowledge_base_id, file_ids)
+            if existing_ids != linked_ids:
+                raise FileUploadException()
+
+        for upload, file_id in zip(uploads, ids, strict=True):
+            if file_id in linked_ids:
+                continue
             filename = Path(upload.filename or "").name
             if not filename or filename in {".", ".."} or len(filename) > 255:
                 raise FileUploadException()
 
-            file_id = uuid.uuid4()
             location = f"knowledge-bases/{knowledge_base.id}/{file_id}"
             await upload.seek(0)
             await filesystem.write_async(location, upload.file)

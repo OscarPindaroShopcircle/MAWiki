@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, File, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Query, Response, UploadFile, status
 from fastapi.responses import HTMLResponse
 from jinjax.catalog import Catalog
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,6 +17,7 @@ from .schemas import KnowledgeBaseCreate, KnowledgeBaseResponse
 from .service import (
     create_knowledge_base,
     get_knowledge_base,
+    get_knowledge_base_files,
     get_knowledge_bases,
     upload_files_to_knowledge_base,
 )
@@ -92,31 +93,61 @@ async def knowledge_base_detail_page(
     user: User = Depends(get_current_user),
 ):
     """Knowledge base detail page — file list and upload entry point."""
-    knowledge_base = await get_knowledge_base(
-        db, knowledge_base_id, user, include_files=True
+    knowledge_base = await get_knowledge_base(db, knowledge_base_id, user)
+    files, has_more = await get_knowledge_base_files(
+        db, knowledge_base_id, user, page=1, page_size=50
     )
     return catalog.render(
         "pages.kb.KnowledgeBaseDetail",
         knowledge_base=_to_response(knowledge_base),
+        files=[FileResponse.model_validate(file) for file in files],
+        has_more=has_more,
         current_user=user,
     )
 
 
-@router.post("/knowledge-bases/{knowledge_base_id}/files", response_class=HTMLResponse)
+@router.get("/knowledge-bases/{knowledge_base_id}/files", response_class=HTMLResponse)
+async def knowledge_base_files_view(
+    knowledge_base_id: uuid.UUID,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=100),
+    catalog: Catalog = Depends(get_catalog_dep),
+    db: AsyncSession = Depends(get_db_session),
+    user: User = Depends(get_current_user),
+):
+    files, has_more = await get_knowledge_base_files(
+        db, knowledge_base_id, user, page, page_size
+    )
+    return catalog.render(
+        "pages.kb.FileRows",
+        knowledge_base_id=knowledge_base_id,
+        files=[FileResponse.model_validate(file) for file in files],
+        page=page,
+        page_size=page_size,
+        has_more=has_more,
+    )
+
+
+@router.post(
+    "/knowledge-bases/{knowledge_base_id}/files",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
 async def upload_knowledge_base_files_view(
     knowledge_base_id: uuid.UUID,
     files: list[UploadFile] = File(...),
-    catalog: Catalog = Depends(get_catalog_dep),
+    file_ids: list[uuid.UUID] = Form(...),
     db: AsyncSession = Depends(get_db_session),
     filesystem: FileSystem = Depends(get_filesystem),
     user: User = Depends(get_current_user),
-):
-    """Upload files via htmx multipart submit, then return the refreshed file table."""
-    knowledge_base = await upload_files_to_knowledge_base(
-        db, knowledge_base_id, files, user, filesystem
+) -> Response:
+    """Upload one file batch without rendering the file table."""
+    await upload_files_to_knowledge_base(
+        db,
+        knowledge_base_id,
+        files,
+        user,
+        filesystem,
+        include_existing_files=False,
+        file_ids=file_ids,
     )
-    return catalog.render(
-        "pages.kb.FilesTable",
-        knowledge_base_id=knowledge_base_id,
-        files=[FileResponse.model_validate(file) for file in knowledge_base.files],
-    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

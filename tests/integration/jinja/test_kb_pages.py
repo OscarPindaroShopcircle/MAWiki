@@ -50,15 +50,23 @@ def test_knowledge_base_components_render_response_schemas() -> None:
     detail = catalog.render(
         "pages.kb.KnowledgeBaseDetail",
         knowledge_base=knowledge_base,
+        files=knowledge_base.files,
+        has_more=True,
         current_user=user,
     )
     files = catalog.render(
         "pages.kb.FilesTable",
         knowledge_base_id=knowledge_base.id,
         files=knowledge_base.files,
+        has_more=True,
     )
 
     assert "Engineering Docs" in listing
     assert f'href="/knowledge-bases/{knowledge_base.id}"' in listing
     assert "report.pdf" in detail
+    assert 'data-max-files="5"' in detail
+    assert 'data-max-bytes="26214400"' in detail
+    assert "UploadMenu.js" in detail
     assert f"/files/{file.id}/download" in files
+    assert 'hx-trigger="revealed"' in files
+    assert "page=2&amp;page_size=50" in files
