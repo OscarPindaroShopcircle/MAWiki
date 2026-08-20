@@ -52,6 +52,10 @@ class DocumentConverter:
 
         def run(self, *, sources: list[Source]) -> dict[str, list[Document]]: ...
 
+        async def run_async(
+            self, *, sources: list[Source]
+        ) -> dict[str, list[Document]]: ...
+
 
 @super_component
 class DocumentIndexer:
@@ -89,6 +93,8 @@ class DocumentIndexer:
     if TYPE_CHECKING:
 
         def run(self, *, documents: list[Document]) -> dict[str, int]: ...
+
+        async def run_async(self, *, documents: list[Document]) -> dict[str, int]: ...
 
 
 @super_component
@@ -132,6 +138,8 @@ class DocumentIngestionPipeline:
     if TYPE_CHECKING:
 
         def run(self, *, sources: list[Source]) -> dict[str, int]: ...
+
+        async def run_async(self, *, sources: list[Source]) -> dict[str, int]: ...
 
 
 @super_component
@@ -180,3 +188,5 @@ class HybridRetriever:
     if TYPE_CHECKING:
 
         def run(self, *, query: str) -> dict[str, list[Document]]: ...
+
+        async def run_async(self, *, query: str) -> dict[str, list[Document]]: ...

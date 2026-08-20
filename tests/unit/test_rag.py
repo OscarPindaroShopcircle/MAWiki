@@ -1,6 +1,5 @@
 from dataclasses import replace
 
-import pytest
 from haystack import Document, component
 from haystack.components.retrievers import (
     InMemoryBM25Retriever,
@@ -58,7 +57,6 @@ class QueryRanker:
         return {"documents": documents[:top_k] if top_k else documents}
 
 
-@pytest.mark.asyncio
 async def test_rag_supercomponents_convert_index_and_retrieve_documents() -> None:
     converter = DocumentConverter(TextConverter())
     conversion_result = await converter.run_async(sources=["alpha beta"])
@@ -86,7 +84,6 @@ async def test_rag_supercomponents_convert_index_and_retrieve_documents() -> Non
     assert retriever.output_mapping == {"joiner.documents": "documents"}
 
 
-@pytest.mark.asyncio
 async def test_document_ingestion_pipeline_combines_conversion_and_indexing() -> None:
     store = InMemoryDocumentStore(embedding_similarity_function="cosine")
     ingestion = DocumentIngestionPipeline(
