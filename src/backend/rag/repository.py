@@ -2,7 +2,7 @@ import uuid
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import noload, selectinload
 
 from ..kb.models import KnowledgeBaseModel
 from ..users.models import UserModel
@@ -13,6 +13,28 @@ from .schemas import RagCreate, RagUpdate
 class RagRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
+
+    @staticmethod
+    def _options(
+        include_source: bool = False,
+        include_tasks: bool = False,
+        include_index: bool = False,
+    ):
+        return (
+            selectinload(RagModel.owner),
+            selectinload(RagModel.source_knowledge_base)
+            if include_source
+            else noload(RagModel.source_knowledge_base),
+            selectinload(RagModel.conversion_task)
+            if include_tasks
+            else noload(RagModel.conversion_task),
+            selectinload(RagModel.indexing_task)
+            if include_tasks
+            else noload(RagModel.indexing_task),
+            selectinload(RagModel.index_file)
+            if include_index
+            else noload(RagModel.index_file),
+        )
 
     async def create(self, data: RagCreate, owner_id: uuid.UUID) -> RagModel:
         owner = await self.db.get(UserModel, owner_id)
@@ -29,14 +51,17 @@ class RagRepository:
         return rag
 
     async def get(
-        self, rag_id: uuid.UUID, owner_id: uuid.UUID, is_admin: bool
+        self,
+        rag_id: uuid.UUID,
+        owner_id: uuid.UUID,
+        is_admin: bool,
+        include_source: bool = False,
+        include_tasks: bool = False,
+        include_index: bool = False,
     ) -> RagModel | None:
         stmt = (
             select(RagModel)
-            .options(
-                selectinload(RagModel.owner),
-                selectinload(RagModel.index_file),
-            )
+            .options(*self._options(include_source, include_tasks, include_index))
             .where(RagModel.id == rag_id)
         )
         if not is_admin:
@@ -69,10 +94,15 @@ class RagRepository:
         return result.scalar_one_or_none()
 
     async def get_page(
-        self, owner_id: uuid.UUID, is_admin: bool, page: int, page_size: int
+        self,
+        owner_id: uuid.UUID,
+        is_admin: bool,
+        page: int,
+        page_size: int,
+        include_source: bool = False,
     ) -> tuple[list[RagModel], int]:
         count_stmt = select(func.count()).select_from(RagModel)
-        stmt = select(RagModel).options(selectinload(RagModel.owner))
+        stmt = select(RagModel).options(*self._options(include_source=include_source))
         if not is_admin:
             count_stmt = count_stmt.where(RagModel.owner_id == owner_id)
             stmt = stmt.where(RagModel.owner_id == owner_id)
