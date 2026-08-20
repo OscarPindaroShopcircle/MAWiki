@@ -10,6 +10,7 @@ from typing import Annotated, Optional
 import typer
 from rich.console import Console
 
+from .commands.environment import env_app
 from .commands.install import register_commands as register_install_commands
 from .commands.test import test_app
 
@@ -77,6 +78,7 @@ def main(
         )
 
 
+app.add_typer(env_app, name="env")
 app.add_typer(test_app, name="test")
 register_install_commands(app, is_dry_run=lambda: _dry_run)
 

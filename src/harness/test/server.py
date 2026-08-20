@@ -11,7 +11,7 @@ from typing import Annotated
 from fastmcp import FastMCP
 from pydantic import Field
 
-from . import compose, config, ports
+from . import environment, state
 
 server = FastMCP(
     "harness-test",
@@ -34,41 +34,22 @@ async def start_test_db(
 ) -> str:
     """Spin up the test database.
 
-    Validates config, finds a free port, backs up config.test.yaml, patches
-    the port, starts PostgreSQL via docker compose, runs migrations, and
-    returns connection details.
+    Validates .env.test and config.test.yaml, allocates a worktree-scoped
+    port, starts PostgreSQL through Docker Compose, and returns connection
+    details.
     """
     try:
-        config.validate()
-    except config.ConfigError as e:
-        return str(e)
-
-    try:
-        chosen = ports.find_free_port(start=port or 5432)
-    except RuntimeError as e:
-        return str(e)
-
-    try:
-        config.backup()
-        config.patch_port(chosen)
-    except OSError as e:
-        return f"Failed to prepare config: {e}"
-
-    try:
-        compose.up(chosen)
-    except compose.ComposeError as e:
-        config.restore()
-        return f"Failed to start containers: {e}"
-
-    try:
-        compose.run_migrations()
-    except compose.ComposeError as e:
-        return f"Database started but migrations failed: {e}\n\nRun 'teardown' to clean up."
+        environment_state = environment.up(
+            state.EnvironmentMode.LOCAL,
+            database_port=port or 0,
+        )
+    except environment.EnvironmentError as error:
+        return str(error)
 
     return (
         f"Test database is ready.\n"
         f"  Host: localhost\n"
-        f"  Port: {chosen}\n"
+        f"  Port: {environment_state.ports.database}\n"
         f"  Database: backend_test\n"
         f"  User: app_user\n"
         f"\n"
@@ -79,27 +60,21 @@ async def start_test_db(
 @server.tool()
 async def teardown() -> str:
     """Stop and remove test containers, restore config.test.yaml."""
-    messages: list[str] = []
-
     try:
-        compose.down()
-        messages.append("Containers stopped and removed.")
-    except compose.ComposeError as e:
-        messages.append(str(e))
-
-    try:
-        config.restore()
-        messages.append("config.test.yaml restored from backup.")
-    except OSError:
-        messages.append("No backup to restore (config was not modified).")
-
-    return "\n".join(messages)
+        environment.teardown()
+    except environment.EnvironmentError as error:
+        return str(error)
+    return "Containers stopped and config restored."
 
 
 @server.tool()
 async def status() -> str:
-    """Show the current state of test containers."""
-    return compose.status_text()
+    """Show the current state of this worktree's environment."""
+    try:
+        _, output = environment.status()
+        return output
+    except environment.EnvironmentError as error:
+        return str(error)
 
 
 @server.resource("info://test_instructions")

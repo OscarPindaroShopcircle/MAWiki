@@ -1,120 +1,86 @@
-"""Test harness commands — `menelao harness test ...`."""
+"""Test commands — `menelao harness test ...`."""
 
 from __future__ import annotations
 
-import signal
-import time
+import subprocess
 from typing import Annotated
 
 import typer
 from rich.console import Console
 
-from ..test import compose, config, ports
+from ..test import environment, state
 from ..test.server import serve as serve_test
 
 err_console = Console(stderr=True)
-
-test_app = typer.Typer(no_args_is_help=True, help="Test database harness.")
-
-EXIT_OK = 0
-EXIT_ERROR = 1
-EXIT_USAGE = 2
+test_app = typer.Typer(
+    no_args_is_help=True, help="Run tests against active environments."
+)
 
 
-def _teardown() -> None:
-    """Stop containers and restore config. Idempotent."""
-    try:
-        compose.down()
-    except compose.ComposeError:
-        pass
-    config.restore()
+def _run(command: list[str]) -> None:
+    result = subprocess.run(command)
+    if result.returncode:
+        raise typer.Exit(result.returncode)
 
 
-@test_app.command(name="serve")
-def test_serve() -> None:
-    """Start the test-harness MCP server over stdio (for agents)."""
+def _require_environment(mode: state.EnvironmentMode | None = None) -> None:
+    environment_state, _ = environment.status()
+    if environment_state is None:
+        raise typer.BadParameter("No active environment for this worktree.")
+    if mode is not None and environment_state.mode != mode:
+        raise typer.BadParameter(
+            f"This command requires a {mode.value} environment, found {environment_state.mode.value}."
+        )
+
+
+@test_app.command()
+def serve() -> None:
+    """Start the test-harness MCP server over stdio."""
     serve_test()
 
 
-@test_app.command(name="up")
-def test_up(
-    port: Annotated[
-        int,
-        typer.Option(
-            "--port",
-            "-p",
-            help="Preferred port. 0 = auto-detect free port.",
-        ),
-    ] = 0,
+@test_app.command()
+def unit() -> None:
+    """Run unit tests without an environment."""
+    _run(["uv", "run", "pytest", "tests/unit"])
+
+
+@test_app.command()
+def integration() -> None:
+    """Run integration tests against the active test database."""
+    _require_environment()
+    _run(["uv", "run", "pytest", "-m", "integration"])
+
+
+@test_app.command()
+def e2e() -> None:
+    """Run E2E tests against the active Docker environment."""
+    _require_environment(state.EnvironmentMode.DOCKER)
+    _run(["uv", "run", "pytest", "-m", "e2e"])
+
+
+@test_app.command()
+def run(
+    command: Annotated[
+        list[str], typer.Argument(help="Command to run after environment startup.")
+    ],
+    mode: Annotated[
+        state.EnvironmentMode, typer.Option()
+    ] = state.EnvironmentMode.LOCAL,
 ) -> None:
-    """Spin up the test database. Ctrl+C to tear down."""
-    try:
-        config.validate()
-    except config.ConfigError as exc:
-        err_console.print(f"[bold red]{exc}[/bold red]")
-        raise typer.Exit(code=EXIT_USAGE) from exc
-
-    try:
-        chosen = ports.find_free_port(start=port or 5432)
-    except RuntimeError as exc:
-        err_console.print(f"[bold red]{exc}[/bold red]")
-        raise typer.Exit(code=EXIT_ERROR) from exc
-
-    config.backup()
-    config.patch_port(chosen)
-
-    try:
-        compose.up(chosen)
-    except compose.ComposeError as exc:
-        config.restore()
-        err_console.print(f"[bold red]{exc}[/bold red]")
-        raise typer.Exit(code=EXIT_ERROR) from exc
-
-    try:
-        compose.run_migrations()
-    except compose.ComposeError as exc:
-        err_console.print(f"[bold red]{exc}[/bold red]")
-        err_console.print(
-            "[yellow]Run 'menelao harness test down' to clean up.[/yellow]"
+    """Create an environment, run a command, and always tear it down."""
+    if state.read() is not None:
+        raise typer.BadParameter(
+            "Teardown the active environment before using test run."
         )
-        raise typer.Exit(code=EXIT_ERROR) from exc
-
-    err_console.print(
-        f"[green]Test database ready on localhost:{chosen} (db: backend_test)[/green]"
-    )
-    err_console.print("[cyan]Press Ctrl+C to tear down.[/cyan]")
-
-    shutdown = False
-
-    def _on_signal(*_args: object) -> None:
-        nonlocal shutdown
-        shutdown = True
-
-    signal.signal(signal.SIGINT, _on_signal)
-    signal.signal(signal.SIGTERM, _on_signal)
-
-    while not shutdown:
-        time.sleep(2)
-        if not compose.is_healthy():
-            err_console.print(
-                "\n[yellow]Test container stopped (someone ran 'down'?).[/yellow]"
-            )
-            config.restore()
-            raise typer.Exit(code=EXIT_OK)
-
-    err_console.print("\n[cyan]Tearing down...[/cyan]")
-    _teardown()
-    err_console.print("[green]Done.[/green]")
-
-
-@test_app.command(name="down")
-def test_down() -> None:
-    """Stop and remove test containers, restore config."""
-    _teardown()
-    err_console.print("[green]Containers stopped, config restored.[/green]")
-
-
-@test_app.command(name="status")
-def test_status() -> None:
-    """Show test container status."""
-    err_console.print(compose.status_text())
+    try:
+        environment.up(mode)
+        _run(command)
+    except environment.EnvironmentError as error:
+        err_console.print(f"[bold red]{error}[/bold red]")
+        raise typer.Exit(1) from error
+    finally:
+        try:
+            environment.teardown()
+        except environment.EnvironmentError as error:
+            err_console.print(f"[bold red]{error}[/bold red]")
