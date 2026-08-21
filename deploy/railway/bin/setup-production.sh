@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 PROJECT=""
+WORKSPACE="ShopCircleAI"
 ENVIRONMENT="production"
 SECRETS_FILE="$ROOT_DIR/deploy/railway/production/.env"
 WEB_SERVICE="MAWiki"
@@ -21,6 +22,7 @@ usage() {
 Usage: $0 --project <name-or-id> [options]
 
 Options:
+  --workspace <name-or-id>   Defaults to ShopCircleAI
   --secrets-file <path>      Defaults to deploy/railway/production/.env
   --web-service <name>       Defaults to MAWiki
   --database-service <name>  Defaults to Postgres
@@ -41,6 +43,7 @@ die() {
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --project) PROJECT="$2"; shift 2 ;;
+    --workspace) WORKSPACE="$2"; shift 2 ;;
     --secrets-file) SECRETS_FILE="$2"; shift 2 ;;
     --web-service) WEB_SERVICE="$2"; shift 2 ;;
     --database-service) DATABASE_SERVICE="$2"; shift 2 ;;
@@ -140,7 +143,7 @@ ensure_eu_region() {
   while IFS= read -r region; do
     [[ -z "$region" || "$region" == "$EU_REGION" ]] || regions+=("$region=0")
   done < <(service_regions "$service")
-  railway service scale --project "$PROJECT" --environment "$ENVIRONMENT" --service "$service" "${regions[@]}" >/dev/null
+  railway scale --project "$PROJECT" --environment "$ENVIRONMENT" --service "$service" "${regions[@]}" >/dev/null
 }
 
 wait_for_eu_region() {
@@ -230,7 +233,7 @@ for key in DATABASE__PASSWORD MIGRATOR__PASSWORD OPENWEBUI__PASSWORD AUTH_JWT_SE
   require_secret "$key"
 done
 
-railway link --project "$PROJECT" --environment "$ENVIRONMENT" >/dev/null
+railway link --workspace "$WORKSPACE" --project "$PROJECT" --environment "$ENVIRONMENT" --service "$WEB_SERVICE"
 
 web_existed="$(service_exists "$WEB_SERVICE")"
 database_existed="$(service_exists "$DATABASE_SERVICE")"

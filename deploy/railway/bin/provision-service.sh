@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 PROJECT=""
+WORKSPACE="ShopCircleAI"
 ENVIRONMENT="production"
 TYPE=""
 NAME=""
@@ -18,6 +19,7 @@ usage() {
 Usage: $0 --project <name-or-id> --type <cron|job> --name <name> [options]
 
 Options:
+  --workspace <name-or-id>
   --service <name>
   --web-service <name>
   --database-service <name>
@@ -34,6 +36,7 @@ die() {
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --project) PROJECT="$2"; shift 2 ;;
+    --workspace) WORKSPACE="$2"; shift 2 ;;
     --type) TYPE="$2"; shift 2 ;;
     --name) NAME="$2"; shift 2 ;;
     --service) SERVICE="$2"; shift 2 ;;
@@ -61,7 +64,7 @@ SERVICE="${SERVICE:-$TYPE-$NAME}"
 CONFIG_FILE="/deploy/railway/production/$DIRECTORY/$NAME/railway.toml"
 [[ -f "$ROOT_DIR${CONFIG_FILE}" ]] || die "Missing $CONFIG_FILE. Create and commit it before provisioning."
 
-railway link --project "$PROJECT" --environment "$ENVIRONMENT" >/dev/null
+railway link --workspace "$WORKSPACE" --project "$PROJECT" --environment "$ENVIRONMENT" --service "$WEB_SERVICE"
 if [[ "$(railway service list --json | python3 -c 'import json, sys; name = sys.argv[1]; print("true" if any(s["name"] == name for s in json.load(sys.stdin)) else "false")' "$SERVICE")" == "false" ]]; then
   railway add --service "$SERVICE" --json >/dev/null
 fi
@@ -78,7 +81,7 @@ scale=("$EU_REGION=1")
 for region in "${regions[@]}"; do
   [[ -z "$region" || "$region" == "$EU_REGION" ]] || scale+=("$region=0")
 done
-railway service scale --project "$PROJECT" --environment "$ENVIRONMENT" --service "$SERVICE" "${scale[@]}" >/dev/null
+railway scale --project "$PROJECT" --environment "$ENVIRONMENT" --service "$SERVICE" "${scale[@]}" >/dev/null
 
 private_domain='${{'$DATABASE_SERVICE'.RAILWAY_PRIVATE_DOMAIN}}'
 database_name='${{'$DATABASE_SERVICE'.PGDATABASE}}'
