@@ -81,7 +81,7 @@ scale=("$EU_REGION=1")
 for region in "${regions[@]}"; do
   [[ -z "$region" || "$region" == "$EU_REGION" ]] || scale+=("$region=0")
 done
-railway scale --project "$PROJECT" --environment "$ENVIRONMENT" --service "$SERVICE" "${scale[@]}" >/dev/null
+railway scale --service "$SERVICE" "${scale[@]}" >/dev/null
 
 private_domain='${{'$DATABASE_SERVICE'.RAILWAY_PRIVATE_DOMAIN}}'
 database_name='${{'$DATABASE_SERVICE'.PGDATABASE}}'
@@ -107,6 +107,6 @@ set_variable MIGRATOR__DB "$database_name"
 set_variable MIGRATOR__PASSWORD "$migrator_password"
 set_variable AUTH_JWT_SECRET "$jwt_secret"
 
-railway environment edit --project "$PROJECT" --environment "$ENVIRONMENT" --service-config "$SERVICE" configFile "$CONFIG_FILE" --message "Configure $SERVICE" >/dev/null
+railway environment edit --service-config "$SERVICE" configFile "$CONFIG_FILE" --message "Configure $SERVICE" >/dev/null
 railway service source connect --project "$PROJECT" --environment "$ENVIRONMENT" --service "$SERVICE" --repo "$REPOSITORY" --branch "$BRANCH" >/dev/null
 printf 'Provisioned %s.\n' "$SERVICE"

@@ -30,7 +30,6 @@ dockerfilePath = "Dockerfile"
 cronSchedule = $schedule_toml
 startCommand = $command_toml
 restartPolicyType = "NEVER"
-restartPolicyMaxRetries = 0
 multiRegionConfig = { "europe-west4-drams3a" = { numReplicas = 1 } }
 EOF
 

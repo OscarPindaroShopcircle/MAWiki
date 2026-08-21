@@ -11,7 +11,7 @@ fi
 
 NAME="$1"
 COMMAND="$2"
-TARGET_DIR="$ROOT_DIR/deploy/railway/production/job/$NAME"
+TARGET_DIR="$ROOT_DIR/deploy/railway/production/jobs/$NAME"
 
 [[ "$NAME" =~ ^[a-z0-9][a-z0-9-]*$ ]] || { printf '%s\n' 'Name must use lowercase letters, numbers, and hyphens' >&2; exit 1; }
 [[ ! -e "$TARGET_DIR" ]] || { printf 'Already exists: %s\n' "$TARGET_DIR" >&2; exit 1; }
@@ -27,7 +27,6 @@ dockerfilePath = "Dockerfile"
 [deploy]
 startCommand = $command_toml
 restartPolicyType = "NEVER"
-restartPolicyMaxRetries = 0
 multiRegionConfig = { "europe-west4-drams3a" = { numReplicas = 1 } }
 EOF
 

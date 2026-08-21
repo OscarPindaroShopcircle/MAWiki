@@ -13,6 +13,7 @@ BOOTSTRAP_SERVICE="database-bootstrap"
 REPOSITORY="OscarPindaroShopcircle/MAWiki"
 BRANCH="main"
 MIGRATE_REGION=false
+SKIP_VARIABLES=false
 EU_REGION="europe-west4-drams3a"
 
 declare -A SECRETS
@@ -32,6 +33,7 @@ Options:
   --repo <owner/repository>  Defaults to OscarPindaroShopcircle/MAWiki
   --branch <branch>          Defaults to main
   --migrate-region           Move existing services and attached volumes to EU West
+  --skip-variables           Reuse existing Railway variables without reading secrets
 EOF
 }
 
@@ -52,6 +54,7 @@ while [[ $# -gt 0 ]]; do
     --repo) REPOSITORY="$2"; shift 2 ;;
     --branch) BRANCH="$2"; shift 2 ;;
     --migrate-region) MIGRATE_REGION=true; shift ;;
+    --skip-variables) SKIP_VARIABLES=true; shift ;;
     --help|-h) usage; exit 0 ;;
     *) usage; die "Unknown option: $1" ;;
   esac
@@ -60,7 +63,9 @@ done
 [[ -n "$PROJECT" ]] || { usage; die "--project is required"; }
 command -v railway >/dev/null || die "railway CLI is required"
 command -v python3 >/dev/null || die "python3 is required"
-[[ -f "$SECRETS_FILE" ]] || die "Secrets file not found: $SECRETS_FILE"
+if [[ "$SKIP_VARIABLES" != true ]]; then
+  [[ -f "$SECRETS_FILE" ]] || die "Secrets file not found: $SECRETS_FILE"
+fi
 
 load_secrets() {
   local line key value
@@ -103,6 +108,19 @@ for service in json.load(sys.stdin):
 ' "$1"
 }
 
+railway_service_id() {
+  railway service list --json | python3 -c '
+import json, sys
+name = sys.argv[1]
+for service in json.load(sys.stdin):
+    if service["name"] == name:
+        print(service["id"])
+        break
+else:
+    raise SystemExit(f"Service not found: {name}")
+' "$1"
+}
+
 service_url() {
   railway service list --json | python3 -c '
 import json, sys
@@ -132,18 +150,20 @@ ensure_database() {
 }
 
 ensure_eu_region() {
-  local service="$1" existed="$2" region
+  local service="$1" existed="$2" region has_region=false
   local -a regions=("$EU_REGION=1")
   if [[ "$existed" == "true" && "$MIGRATE_REGION" != true ]]; then
     while IFS= read -r region; do
-      [[ -z "$region" || "$region" == "$EU_REGION" ]] || die "$service is in $region. Re-run with --migrate-region to move it to EU West."
+      [[ -z "$region" ]] && continue
+      has_region=true
+      [[ "$region" == "$EU_REGION" ]] || die "$service is in $region. Re-run with --migrate-region to move it to EU West."
     done < <(service_regions "$service")
-    return
+    [[ "$has_region" == true ]] && return
   fi
   while IFS= read -r region; do
     [[ -z "$region" || "$region" == "$EU_REGION" ]] || regions+=("$region=0")
   done < <(service_regions "$service")
-  railway scale --project "$PROJECT" --environment "$ENVIRONMENT" --service "$service" "${regions[@]}" >/dev/null
+  railway scale --service "$service" "${regions[@]}" >/dev/null
 }
 
 wait_for_eu_region() {
@@ -167,7 +187,7 @@ else:
 }
 
 ensure_volume() {
-  local service="$1" mount_path="$2"
+  local service="$1" mount_path="$2" service_id
   if railway service list --json | python3 -c '
 import json, sys
 service_name, mount_path = sys.argv[1:]
@@ -178,7 +198,8 @@ raise SystemExit(1)
 ' "$service" "$mount_path"; then
     return
   fi
-  railway volume add --project "$PROJECT" --environment "$ENVIRONMENT" --service "$service" --mount-path "$mount_path" --json >/dev/null
+  service_id="$(railway_service_id "$service")"
+  railway volume --service "$service_id" add --mount-path "$mount_path" --json >/dev/null
 }
 
 ensure_domain() {
@@ -200,12 +221,26 @@ ensure_domain() {
   die "Railway did not provide a domain for $service"
 }
 
+variable_exists() {
+  railway variable list --service "$2" --json | python3 -c '
+import json, sys
+key = sys.argv[1]
+data = json.load(sys.stdin)
+raise SystemExit(0 if key in data else 1)
+' "$1"
+}
+
 set_variable() {
-  railway variable set "$1=$2" --project "$PROJECT" --environment "$ENVIRONMENT" --service "$3" --skip-deploys >/dev/null
+  local key="$1" value="$2" service="$3"
+  if printf '%s' "$value" | railway variable set "$key" --stdin --project "$PROJECT" --environment "$ENVIRONMENT" --service "$service" --skip-deploys >/dev/null; then
+    return
+  fi
+  variable_exists "$key" "$service" || die "Failed to set $key on $service"
+  printf 'Railway stored %s despite a CLI response error\n' "$key" >&2
 }
 
 set_config_file() {
-  railway environment edit --project "$PROJECT" --environment "$ENVIRONMENT" --service-config "$1" configFile "$2" --message "Configure $1" >/dev/null
+  railway environment edit --service-config "$1" configFile "$2" --message "Configure $1" >/dev/null
 }
 
 connect_source() {
@@ -228,10 +263,12 @@ wait_for_deployment() {
   die "Timed out waiting for $service"
 }
 
-load_secrets
-for key in DATABASE__PASSWORD MIGRATOR__PASSWORD OPENWEBUI__PASSWORD AUTH_JWT_SECRET AUTH__BOOTSTRAP_ADMIN_EMAIL WEBUI_SECRET_KEY WEBUI_ADMIN_EMAIL WEBUI_ADMIN_PASSWORD ANTHROPIC_API_KEY; do
-  require_secret "$key"
-done
+if [[ "$SKIP_VARIABLES" != true ]]; then
+  load_secrets
+  for key in DATABASE__PASSWORD MIGRATOR__PASSWORD OPENWEBUI__PASSWORD AUTH_JWT_SECRET AUTH__BOOTSTRAP_ADMIN_EMAIL WEBUI_SECRET_KEY WEBUI_ADMIN_EMAIL WEBUI_ADMIN_PASSWORD ANTHROPIC_API_KEY; do
+    require_secret "$key"
+  done
+fi
 
 railway link --workspace "$WORKSPACE" --project "$PROJECT" --environment "$ENVIRONMENT" --service "$WEB_SERVICE"
 
@@ -274,59 +311,61 @@ wait_for_eu_region "$DATABASE_SERVICE"
 ensure_volume "$WEB_SERVICE" /data
 ensure_volume "$OPEN_WEBUI_SERVICE" /app/backend/data
 
-web_url="${SECRETS[WEB_PUBLIC_URL]:-$(ensure_domain "$WEB_SERVICE" 8000)}"
-open_webui_url="${SECRETS[OPEN_WEBUI_PUBLIC_URL]:-$(ensure_domain "$OPEN_WEBUI_SERVICE" 8080)}"
-private_domain='${{'$DATABASE_SERVICE'.RAILWAY_PRIVATE_DOMAIN}}'
-database_name='${{'$DATABASE_SERVICE'.PGDATABASE}}'
-database_port='${{'$DATABASE_SERVICE'.PGPORT}}'
-root_database_url='${{'$DATABASE_SERVICE'.DATABASE_URL}}'
+if [[ "$SKIP_VARIABLES" != true ]]; then
+  web_url="${SECRETS[WEB_PUBLIC_URL]:-$(ensure_domain "$WEB_SERVICE" 8000)}"
+  open_webui_url="${SECRETS[OPEN_WEBUI_PUBLIC_URL]:-$(ensure_domain "$OPEN_WEBUI_SERVICE" 8080)}"
+  private_domain='${{'$DATABASE_SERVICE'.RAILWAY_PRIVATE_DOMAIN}}'
+  database_name='${{'$DATABASE_SERVICE'.PGDATABASE}}'
+  database_port='${{'$DATABASE_SERVICE'.PGPORT}}'
+  root_database_url='${{'$DATABASE_SERVICE'.DATABASE_URL}}'
 
-set_variable ROOT_DATABASE_URL "$root_database_url" "$BOOTSTRAP_SERVICE"
-set_variable MIGRATOR_DB_USER migrator_user "$BOOTSTRAP_SERVICE"
-set_variable MIGRATOR_DB_PASSWORD "${SECRETS[MIGRATOR__PASSWORD]}" "$BOOTSTRAP_SERVICE"
-set_variable APP_DB_USER app_user "$BOOTSTRAP_SERVICE"
-set_variable APP_DB_PASSWORD "${SECRETS[DATABASE__PASSWORD]}" "$BOOTSTRAP_SERVICE"
-set_variable OPENWEBUI_DB_USER openwebui_user "$BOOTSTRAP_SERVICE"
-set_variable OPENWEBUI_DB_PASSWORD "${SECRETS[OPENWEBUI__PASSWORD]}" "$BOOTSTRAP_SERVICE"
-set_variable OPENWEBUI_DB openwebui "$BOOTSTRAP_SERVICE"
-set_variable APP_DB "$database_name" "$BOOTSTRAP_SERVICE"
+  set_variable ROOT_DATABASE_URL "$root_database_url" "$BOOTSTRAP_SERVICE"
+  set_variable MIGRATOR_DB_USER migrator_user "$BOOTSTRAP_SERVICE"
+  set_variable MIGRATOR_DB_PASSWORD "${SECRETS[MIGRATOR__PASSWORD]}" "$BOOTSTRAP_SERVICE"
+  set_variable APP_DB_USER app_user "$BOOTSTRAP_SERVICE"
+  set_variable APP_DB_PASSWORD "${SECRETS[DATABASE__PASSWORD]}" "$BOOTSTRAP_SERVICE"
+  set_variable OPENWEBUI_DB_USER openwebui_user "$BOOTSTRAP_SERVICE"
+  set_variable OPENWEBUI_DB_PASSWORD "${SECRETS[OPENWEBUI__PASSWORD]}" "$BOOTSTRAP_SERVICE"
+  set_variable OPENWEBUI_DB openwebui "$BOOTSTRAP_SERVICE"
+  set_variable APP_DB "$database_name" "$BOOTSTRAP_SERVICE"
 
-set_variable ENV production "$WEB_SERVICE"
-set_variable ENV_FILE /dev/null "$WEB_SERVICE"
-set_variable YAML_CONFIG_FILE deploy/railway/production/app/config.yaml "$WEB_SERVICE"
-set_variable DATABASE__HOST "$private_domain" "$WEB_SERVICE"
-set_variable DATABASE__PORT "$database_port" "$WEB_SERVICE"
-set_variable DATABASE__DB "$database_name" "$WEB_SERVICE"
-set_variable DATABASE__PASSWORD "${SECRETS[DATABASE__PASSWORD]}" "$WEB_SERVICE"
-set_variable MIGRATOR__HOST "$private_domain" "$WEB_SERVICE"
-set_variable MIGRATOR__PORT "$database_port" "$WEB_SERVICE"
-set_variable MIGRATOR__DB "$database_name" "$WEB_SERVICE"
-set_variable MIGRATOR__PASSWORD "${SECRETS[MIGRATOR__PASSWORD]}" "$WEB_SERVICE"
-set_variable AUTH_JWT_SECRET "${SECRETS[AUTH_JWT_SECRET]}" "$WEB_SERVICE"
-set_variable AUTH__BOOTSTRAP_ADMIN_EMAIL "${SECRETS[AUTH__BOOTSTRAP_ADMIN_EMAIL]}" "$WEB_SERVICE"
-set_variable AUTH__REDIRECT_URI "${web_url%/}/auth/callback" "$WEB_SERVICE"
-set_variable CORS_ORIGINS "[\"$web_url\"]" "$WEB_SERVICE"
+  set_variable ENV production "$WEB_SERVICE"
+  set_variable ENV_FILE /dev/null "$WEB_SERVICE"
+  set_variable YAML_CONFIG_FILE deploy/railway/production/app/config.yaml "$WEB_SERVICE"
+  set_variable DATABASE__HOST "$private_domain" "$WEB_SERVICE"
+  set_variable DATABASE__PORT "$database_port" "$WEB_SERVICE"
+  set_variable DATABASE__DB "$database_name" "$WEB_SERVICE"
+  set_variable DATABASE__PASSWORD "${SECRETS[DATABASE__PASSWORD]}" "$WEB_SERVICE"
+  set_variable MIGRATOR__HOST "$private_domain" "$WEB_SERVICE"
+  set_variable MIGRATOR__PORT "$database_port" "$WEB_SERVICE"
+  set_variable MIGRATOR__DB "$database_name" "$WEB_SERVICE"
+  set_variable MIGRATOR__PASSWORD "${SECRETS[MIGRATOR__PASSWORD]}" "$WEB_SERVICE"
+  set_variable AUTH_JWT_SECRET "${SECRETS[AUTH_JWT_SECRET]}" "$WEB_SERVICE"
+  set_variable AUTH__BOOTSTRAP_ADMIN_EMAIL "${SECRETS[AUTH__BOOTSTRAP_ADMIN_EMAIL]}" "$WEB_SERVICE"
+  set_variable AUTH__REDIRECT_URI "${web_url%/}/auth/callback" "$WEB_SERVICE"
+  set_variable CORS_ORIGINS "[\"$web_url\"]" "$WEB_SERVICE"
 
-set_variable ENV production "$OPEN_WEBUI_SERVICE"
-set_variable DATABASE_URL "postgresql://openwebui_user:${SECRETS[OPENWEBUI__PASSWORD]}@$private_domain:$database_port/openwebui" "$OPEN_WEBUI_SERVICE"
-set_variable WEBUI_URL "$open_webui_url" "$OPEN_WEBUI_SERVICE"
-set_variable WEBUI_SECRET_KEY "${SECRETS[WEBUI_SECRET_KEY]}" "$OPEN_WEBUI_SERVICE"
-set_variable WEBUI_ADMIN_EMAIL "${SECRETS[WEBUI_ADMIN_EMAIL]}" "$OPEN_WEBUI_SERVICE"
-set_variable WEBUI_ADMIN_PASSWORD "${SECRETS[WEBUI_ADMIN_PASSWORD]}" "$OPEN_WEBUI_SERVICE"
-set_variable ENABLE_PERSISTENT_CONFIG False "$OPEN_WEBUI_SERVICE"
-set_variable CORS_ALLOW_ORIGIN "$open_webui_url" "$OPEN_WEBUI_SERVICE"
-set_variable WEBUI_NAME Menelao "$OPEN_WEBUI_SERVICE"
-set_variable DEFAULT_USER_ROLE user "$OPEN_WEBUI_SERVICE"
-set_variable ENABLE_OLLAMA_API False "$OPEN_WEBUI_SERVICE"
-set_variable ENABLE_OPENAI_API True "$OPEN_WEBUI_SERVICE"
-set_variable ENABLE_IMAGE_GENERATION False "$OPEN_WEBUI_SERVICE"
-set_variable ENABLE_CODE_INTERPRETER False "$OPEN_WEBUI_SERVICE"
-set_variable ENABLE_CODE_EXECUTION False "$OPEN_WEBUI_SERVICE"
-set_variable ENABLE_AUTOCOMPLETE_GENERATION False "$OPEN_WEBUI_SERVICE"
-set_variable ENABLE_FOLLOW_UP_GENERATION False "$OPEN_WEBUI_SERVICE"
-set_variable ENABLE_RAG_WEB_SEARCH False "$OPEN_WEBUI_SERVICE"
-set_variable OPENAI_API_BASE_URLS https://api.anthropic.com/v1 "$OPEN_WEBUI_SERVICE"
-set_variable OPENAI_API_KEYS "${SECRETS[ANTHROPIC_API_KEY]}" "$OPEN_WEBUI_SERVICE"
+  set_variable ENV production "$OPEN_WEBUI_SERVICE"
+  set_variable DATABASE_URL "postgresql://openwebui_user:${SECRETS[OPENWEBUI__PASSWORD]}@$private_domain:$database_port/openwebui" "$OPEN_WEBUI_SERVICE"
+  set_variable WEBUI_URL "$open_webui_url" "$OPEN_WEBUI_SERVICE"
+  set_variable WEBUI_SECRET_KEY "${SECRETS[WEBUI_SECRET_KEY]}" "$OPEN_WEBUI_SERVICE"
+  set_variable WEBUI_ADMIN_EMAIL "${SECRETS[WEBUI_ADMIN_EMAIL]}" "$OPEN_WEBUI_SERVICE"
+  set_variable WEBUI_ADMIN_PASSWORD "${SECRETS[WEBUI_ADMIN_PASSWORD]}" "$OPEN_WEBUI_SERVICE"
+  set_variable ENABLE_PERSISTENT_CONFIG False "$OPEN_WEBUI_SERVICE"
+  set_variable CORS_ALLOW_ORIGIN "$open_webui_url" "$OPEN_WEBUI_SERVICE"
+  set_variable WEBUI_NAME Menelao "$OPEN_WEBUI_SERVICE"
+  set_variable DEFAULT_USER_ROLE user "$OPEN_WEBUI_SERVICE"
+  set_variable ENABLE_OLLAMA_API False "$OPEN_WEBUI_SERVICE"
+  set_variable ENABLE_OPENAI_API True "$OPEN_WEBUI_SERVICE"
+  set_variable ENABLE_IMAGE_GENERATION False "$OPEN_WEBUI_SERVICE"
+  set_variable ENABLE_CODE_INTERPRETER False "$OPEN_WEBUI_SERVICE"
+  set_variable ENABLE_CODE_EXECUTION False "$OPEN_WEBUI_SERVICE"
+  set_variable ENABLE_AUTOCOMPLETE_GENERATION False "$OPEN_WEBUI_SERVICE"
+  set_variable ENABLE_FOLLOW_UP_GENERATION False "$OPEN_WEBUI_SERVICE"
+  set_variable ENABLE_RAG_WEB_SEARCH False "$OPEN_WEBUI_SERVICE"
+  set_variable OPENAI_API_BASE_URLS https://api.anthropic.com/v1 "$OPEN_WEBUI_SERVICE"
+  set_variable OPENAI_API_KEYS "${SECRETS[ANTHROPIC_API_KEY]}" "$OPEN_WEBUI_SERVICE"
+fi
 
 set_config_file "$BOOTSTRAP_SERVICE" /deploy/railway/production/database-bootstrap/railway.toml
 set_config_file "$WEB_SERVICE" /deploy/railway/production/app/railway.toml
@@ -339,4 +378,8 @@ connect_source "$OPEN_WEBUI_SERVICE"
 wait_for_deployment "$WEB_SERVICE"
 wait_for_deployment "$OPEN_WEBUI_SERVICE"
 
-printf 'Menelao web: %s\nOpen WebUI: %s\n' "$web_url" "$open_webui_url"
+if [[ "$SKIP_VARIABLES" == true ]]; then
+  printf 'Railway variables were not changed.\n'
+else
+  printf 'Menelao web: %s\nOpen WebUI: %s\n' "$web_url" "$open_webui_url"
+fi
