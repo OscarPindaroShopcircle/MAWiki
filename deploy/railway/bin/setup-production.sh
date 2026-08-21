@@ -206,6 +206,7 @@ ensure_domain() {
   local service="$1" port="$2" url
   url="$(service_url "$service")"
   if [[ -n "$url" ]]; then
+    railway domain update "$url" --service "$service" --port "$port" --json >/dev/null
     printf '%s' "$url"
     return
   fi
@@ -330,6 +331,7 @@ if [[ "$SKIP_VARIABLES" != true ]]; then
   set_variable APP_DB "$database_name" "$BOOTSTRAP_SERVICE"
 
   set_variable ENV production "$WEB_SERVICE"
+  set_variable PORT 8000 "$WEB_SERVICE"
   set_variable ENV_FILE /dev/null "$WEB_SERVICE"
   set_variable YAML_CONFIG_FILE deploy/railway/production/app/config.yaml "$WEB_SERVICE"
   set_variable DATABASE__HOST "$private_domain" "$WEB_SERVICE"
