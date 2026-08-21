@@ -30,7 +30,6 @@ def _environment(environment_state: EnvironmentState) -> dict[str, str]:
         HARNESS_DB_PORT=str(environment_state.ports.database),
         HARNESS_BACKEND_PORT=str(environment_state.ports.backend or ""),
         HARNESS_OPENWEBUI_PORT=str(environment_state.ports.openwebui or ""),
-        HARNESS_ENV_FILE=str(environment_state.config.env),
         HARNESS_CONFIG_FILE=str(environment_state.config.docker),
         HARNESS_PROJECT=environment_state.compose_project,
     )
@@ -62,8 +61,9 @@ def _run(environment_state: EnvironmentState, *args: str) -> str:
 
 
 def up(environment_state: EnvironmentState) -> None:
+    _run(environment_state, "up", "--detach", "--wait", "db")
+    _run_migrations(environment_state)
     if environment_state.mode == EnvironmentMode.LOCAL:
-        _run(environment_state, "up", "--detach", "--wait")
         return
     _run(environment_state, "up", "--detach")
     assert environment_state.ports.backend is not None
@@ -76,6 +76,23 @@ def up(environment_state: EnvironmentState) -> None:
         f"http://127.0.0.1:{environment_state.ports.openwebui}/health",
         attempts=180,
     )
+
+
+def _run_migrations(environment_state: EnvironmentState) -> None:
+    process_environment = _environment(environment_state)
+    process_environment.update(
+        ENV_FILE=str(environment_state.config.env),
+        YAML_CONFIG_FILE=str(environment_state.config.local),
+    )
+    result = subprocess.run(
+        ["uv", "run", "alembic", "upgrade", "head"],
+        cwd=_REPO_ROOT,
+        capture_output=True,
+        text=True,
+        env=process_environment,
+    )
+    if result.returncode != 0:
+        raise ComposeError(f"Alembic migration failed:\n{result.stderr.strip()}")
 
 
 def down(environment_state: EnvironmentState) -> None:

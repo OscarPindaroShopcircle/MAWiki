@@ -61,8 +61,8 @@ SecretValue = Annotated[SecretStr, BeforeValidator(_resolve_secret_reference)]
 
 class BaseConfig(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
-        yaml_file="config.yaml",
+        env_file=os.environ.get("ENV_FILE", ".env"),
+        yaml_file=os.environ.get("YAML_CONFIG_FILE", "config.yaml"),
         extra="ignore",
         env_nested_delimiter="__",
         populate_by_name=True,
