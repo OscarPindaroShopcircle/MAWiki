@@ -1,6 +1,8 @@
 MA_wiki.zip
 ma_wiki/
 open-webui
+!deploy/railway/production/open-webui/
+!deploy/railway/production/open-webui/**
 data/uploads/
 
 # Byte-compiled / optimized / DLL files

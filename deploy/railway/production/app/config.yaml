@@ -1,0 +1,38 @@
+app_name: Menelao
+env: production
+
+database:
+  user: app_user
+  password:
+    env_var: DATABASE__PASSWORD
+  host: localhost
+  port: 5432
+  db: railway
+
+migrator:
+  user: migrator_user
+  password:
+    env_var: MIGRATOR__PASSWORD
+  host: localhost
+  port: 5432
+  db: railway
+
+auth:
+  jwt_secret:
+    env_var: AUTH_JWT_SECRET
+  cookie_secure: true
+
+mcp:
+  enabled: false
+  auth_enabled: true
+
+frontend:
+  enabled: true
+  components_dir: src/frontend/components
+  static_dir: src/frontend/static
+
+storage:
+  storage_root: /data/uploads
+
+cors_origins: []
+cors_allow_credentials: true

@@ -43,7 +43,9 @@ docs/
 !README.MD
 
 # Deployment files
-deploy/
+deploy/*
+!deploy/railway/
+!deploy/railway/**
 
 # Environment files
 .env

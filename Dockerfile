@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 RUN pip install --no-cache-dir "uv==$UV_VERSION"
 
 RUN groupadd -r appuser && useradd -r -g appuser -d /app appuser
-RUN mkdir -p /app && chown appuser:appuser /app
+RUN mkdir -p /app /data && chown -R appuser:appuser /app /data
 
 WORKDIR /app
 

@@ -1,0 +1,8 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "deploy/railway/production/database-bootstrap/Dockerfile"
+
+[deploy]
+restartPolicyType = "NEVER"
+restartPolicyMaxRetries = 0
+multiRegionConfig = { "europe-west4-drams3a" = { numReplicas = 1 } }
