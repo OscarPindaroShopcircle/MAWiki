@@ -35,6 +35,7 @@ def test_enabled_mcp_serves_oauth_discovery_routes() -> None:
             "database": {"user": "app", "password": "secret", "db": "app"},
             "migrator": {"user": "migrator", "password": "secret", "db": "app"},
             "frontend": {"enabled": False},
+            "auth": None,
             "mcp": {
                 "enabled": True,
                 "auth_enabled": True,

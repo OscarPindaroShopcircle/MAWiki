@@ -5,7 +5,7 @@ from starlette.requests import Request
 
 from src.backend.auth import tokens
 from src.backend.auth.dependencies import get_current_user, get_optional_user
-from src.backend.config import AppConfig
+from src.backend.config import AppConfig, AuthConfig
 from src.backend.db.enums import UserRole
 from src.backend.users.models import UserModel
 
@@ -25,9 +25,11 @@ async def test_dev_auto_login_authenticates_configured_user(
     await db_session.flush()
 
     config = app_config.model_copy(deep=True)
-    assert config.auth is not None
     config.env = "dev"
-    config.auth.dev_auto_login_email = user.email
+    config.auth = AuthConfig(
+        jwt_secret="test-jwt-secret-for-integration-tests",
+        dev_auto_login_email=user.email,
+    )
     monkeypatch.setattr(tokens, "_get_auth_config", lambda: config.auth)
 
     request = Request(
