@@ -33,6 +33,12 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+      - id: template-model-guard
+        name: Ban database models in template components
+        entry: uv run python -m pre_commits.template_model_guard
+        language: system
+        pass_filenames: false
+        always_run: true
       - id: session-commit-guard
         name: Ban direct database session commits
         entry: >-

@@ -68,6 +68,7 @@ services:
       - ./templates:/app/templates
       - ./alembic:/app/alembic
       - ./docs:/app/docs
+      - ./data:/app/data:ro
       - ./config.docker.yaml:/app/config.yaml:ro
     entrypoint: ["uv", "run", "--extra", "cpu"]
     command: ["uvicorn", "src.backend.server:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--reload"]

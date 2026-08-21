@@ -1,4 +1,6 @@
-{#def knowledge_base, current_user=None #}
+{#def knowledge_base, files, has_more=False, current_user=None #}
+{#css common/Tooltip.css #}
+{#js common/Tooltip.js #}
 <layout.Page :title="knowledge_base.name" current_user={{ current_user }} active="knowledge-bases">
   <div class="kb-detail">
     <header class="kb-detail-header">
@@ -12,6 +14,6 @@
       <pages.kb.UploadMenu knowledge_base_id={{ knowledge_base.id }} />
     </header>
 
-    <pages.kb.FilesTable knowledge_base_id={{ knowledge_base.id }} files={{ knowledge_base.files }} />
+    <pages.kb.FilesTable knowledge_base_id={{ knowledge_base.id }} files={{ files }} has_more={{ has_more }} />
   </div>
 </layout.Page>

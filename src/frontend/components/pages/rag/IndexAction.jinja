@@ -1,0 +1,14 @@
+{#def rag_id, is_converted=False, is_indexed=False, task=None, oob=False #}
+<div id="rag-index-action"{% if oob %} hx-swap-oob="outerHTML"{% endif %}>
+  <pages.rag.OperationStatus rag_id={{ rag_id }} operation="index"
+    task={{ task }} :ready="is_indexed" />
+  {% if is_converted %}
+  <common.Button type="button" variant="primary" size="md"
+    :hx-post="'/rag/' + rag_id|string + '/index'"
+    hx-target="#rag-index-status" hx-swap="outerHTML">
+    {{ "Reindex" if is_indexed else "Index" }}
+  </common.Button>
+  {% else %}
+  <common.Button type="button" variant="primary" size="md" disabled>Index</common.Button>
+  {% endif %}
+</div>

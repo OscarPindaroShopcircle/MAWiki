@@ -2,7 +2,10 @@ name: CI
 
 on:
   pull_request:
+    branches: [main]
   push:
+    branches: [main]
+
 
 permissions:
   contents: read
@@ -26,10 +29,14 @@ jobs:
         with:
           enable-cache: true
       - run: uv sync --frozen --extra cpu
-      - run: uv run pytest -m unit
+      - run: uv run pytest tests/unit
 
   integration-tests:
     runs-on: ubuntu-latest
+    env:
+      ENV_FILE: .env.test
+      YAML_CONFIG_FILE: config.test.yaml
+      HARNESS_DB_PORT: 5432
     steps:
       - uses: actions/checkout@v5
       - uses: astral-sh/setup-uv@v7
@@ -39,8 +46,8 @@ jobs:
       - name: Start test database
         run: |
           cp .env.test.example .env.test
-          HARNESS_PORT=5432 docker compose -f src/harness/test/compose.test.yml up --detach --wait
-          HARNESS_DB_URL=postgresql://migrator_user:migrator_password@localhost:5432/backend_test uv run alembic upgrade head
+          docker compose -f src/harness/test/compose.test.yml up --detach --wait
+          uv run alembic upgrade head
       - run: uv run pytest -m integration
       - name: Show database logs
         if: failure()

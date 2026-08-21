@@ -15,6 +15,7 @@ import zlib
 from datetime import UTC, datetime
 from functools import lru_cache
 from jinjax.catalog import Catalog
+from markdown_it import MarkdownIt
 from markupsafe import Markup
 
 import jinjax
@@ -97,6 +98,13 @@ def _time(value) -> str:
     return Markup(f'<time datetime="{iso}">{iso}</time>')
 
 
+_markdown_renderer = MarkdownIt("commonmark", {"html": False})
+
+
+def _markdown(value: str | None) -> Markup:
+    return Markup(_markdown_renderer.render(value or ""))
+
+
 @lru_cache(maxsize=1)
 def _build_templates(templates_dir: str):
     templates = Jinja2Templates(directory=templates_dir)
@@ -104,6 +112,7 @@ def _build_templates(templates_dir: str):
     templates.env.filters["money_precise"] = _money_precise
     templates.env.filters["metric_value"] = _metric_value
     templates.env.filters["time"] = _time
+    templates.env.filters["markdown"] = _markdown
     templates.env.globals["now"] = lambda: datetime.now(UTC)
     return templates
 
@@ -125,4 +134,5 @@ def get_catalog(
     catalog.add_folder(components_dir)
     catalog.jinja_env.filters["cat_index"] = _cat_index
     catalog.jinja_env.filters["time"] = _time
+    catalog.jinja_env.filters["markdown"] = _markdown
     return catalog

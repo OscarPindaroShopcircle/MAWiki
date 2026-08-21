@@ -1,7 +1,6 @@
 services:
   db:
     image: postgres:18
-    container_name: harness-test-db
     restart: "no"
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-backend_test}
@@ -15,7 +14,7 @@ services:
       OPENWEBUI_DB_PASSWORD: ${OPENWEBUI__PASSWORD:-openwebui_password}
       OPENWEBUI_DB: ${OPENWEBUI__DB:-openwebui}
     ports:
-      - "${HARNESS_PORT}:5432"
+      - "${HARNESS_DB_PORT:-5432}:5432"
     volumes:
       - ../../../deploy/init_db.sh:/docker-entrypoint-initdb.d/init_db.sh:z
       - ../../../deploy/init_db.sql:/opt/init_db.sql:z

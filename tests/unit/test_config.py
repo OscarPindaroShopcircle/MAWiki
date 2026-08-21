@@ -98,6 +98,48 @@ def test_dev_auto_login_is_rejected_outside_development() -> None:
         AppConfig(env="production", **values)
 
 
+def test_enabled_mcp_requires_secure_google_configuration() -> None:
+    values = {
+        "database": {"user": "app", "password": "secret", "db": "app"},
+        "migrator": {"user": "migrator", "password": "secret", "db": "app"},
+        "auth": {"jwt_secret": "secret", "dev_auto_login_email": None},
+    }
+
+    with pytest.raises(ValueError, match="requires public_url and google"):
+        AppConfig(env="dev", mcp={"enabled": True, "auth_enabled": True}, **values)
+    with pytest.raises(ValueError, match="requires jwt_signing_key"):
+        AppConfig(
+            env="dev",
+            mcp={
+                "enabled": True,
+                "auth_enabled": True,
+                "public_url": "http://localhost:8000",
+                "google": {
+                    "client_id": "client",
+                    "client_secret": "secret",
+                    "workspace_domain": "example.com",
+                },
+            },
+            **values,
+        )
+    with pytest.raises(ValueError, match="requires an HTTPS"):
+        AppConfig(
+            env="production",
+            mcp={
+                "enabled": True,
+                "auth_enabled": True,
+                "public_url": "http://localhost:8000",
+                "google": {
+                    "client_id": "client",
+                    "client_secret": "secret",
+                    "workspace_domain": "example.com",
+                },
+                "jwt_signing_key": "signing-secret",
+            },
+            **values,
+        )
+
+
 def test_get_app_config_hides_invalid_input(monkeypatch: pytest.MonkeyPatch) -> None:
     with pytest.raises(ValueError) as error:
         AuthConfig.model_validate({"jwt_secret": {"env_var": ""}})

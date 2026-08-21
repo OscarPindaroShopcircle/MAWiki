@@ -9,6 +9,8 @@ from .config import AppConfig, get_app_config
 from .db.db import DatabaseManager
 from .users.routes import router as users_router
 from .kb.routes import router as kb_router
+from .mcp.server import build_mcp_application
+from .rag.routes import router as rag_router
 from fastapi.staticfiles import StaticFiles
 
 
@@ -18,8 +20,17 @@ async def lifespan(app: FastAPI):
     if config is None:
         config = get_app_config()
     db_manager = DatabaseManager(config.database)
-    yield
-    await db_manager.close()
+    mcp_application = getattr(app.state, "mcp_application", None)
+    try:
+        if mcp_application is None:
+            yield
+        else:
+            async with mcp_application.app.router.lifespan_context(mcp_application.app):
+                yield
+    finally:
+        if mcp_application is not None:
+            await mcp_application.close()
+        await db_manager.close()
 
 
 def create_app(config: AppConfig | None = None) -> FastAPI:
@@ -31,6 +42,8 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     app.state.config = config
+    if config.mcp.enabled:
+        app.state.mcp_application = build_mcp_application(config)
 
     app.add_middleware(
         CORSMiddleware,
@@ -58,6 +71,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     app.include_router(auth_router)
     app.include_router(invitation_router)
     app.include_router(kb_router)
+    app.include_router(rag_router)
 
     # Importing the registry registers every model with Base.metadata so
     # DatabaseManager.initialize_tables() / alembic see all tables, including
@@ -69,11 +83,13 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
         from .auth.views import router as auth_views_router  # noqa: PLC0415
         from .users.views import router as users_views_router  # noqa: PLC0415
         from .kb.views import router as kb_views_router  # noqa: PLC0415
+        from .rag.views import router as rag_views_router  # noqa: PLC0415
         from .views import router as views_router  # noqa: PLC0415
 
         app.include_router(auth_views_router)
         app.include_router(users_views_router)
         app.include_router(kb_views_router)
+        app.include_router(rag_views_router)
         app.include_router(views_router)
 
         # Dev-only: mount the component showcase
@@ -86,6 +102,10 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     @app.get("/ping")
     async def ping():
         return {"status": "ok"}
+
+    mcp_application = getattr(app.state, "mcp_application", None)
+    if mcp_application is not None:
+        app.mount("/", mcp_application.app)
 
     return app
 

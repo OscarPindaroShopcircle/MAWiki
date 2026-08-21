@@ -33,12 +33,18 @@ dependencies = [
     "model2vec>=0.9.0",
     "nltk>=3.10.3",
     "mcp>=1.29.0",
-    "fastmcp>=3.4.7",
+    "fastmcp==4.0.0b3",
     "markdown-it-py>=4.2.0",
     "sentence-transformers-haystack>=0.1.1",
     "accelerate>=1.14.0",
     "rich>=13.0.0",
     "typer>=0.15.0",
+    "platformdirs==4.9.4",
+    "faiss-haystack==2.0.0",
+    "trafilatura==2.1.0",
+    "python-pptx==1.0.2",
+    "pandas==3.0.5",
+    "pyyaml==6.0.3",
 ]
 
 [project.scripts]

@@ -1,0 +1,22 @@
+{#def rag_id, files #}
+<div class="rag-file-list">
+  {% for file in files %}
+  <a class="rag-file-row" href="/rag/{{ rag_id }}/files/{{ file.id }}">
+    <span class="rag-file-name">
+      <common.Icon name="file" size=18 />
+      <span>{{ file.name }}</span>
+    </span>
+    <span class="rag-file-status {{ 'rag-file-status-converted' if file.is_converted else 'rag-file-status-pending' }}">
+      <common.Icon :name="'circle-check' if file.is_converted else 'circle-dashed'" size=18 />
+      {% if file.is_converted %}
+      {{ file.converted_files|length }} converted {{ "document" if file.converted_files|length == 1 else "documents" }}
+      {% else %}
+      Not converted
+      {% endif %}
+      <common.Icon name="chevron-right" size=16 />
+    </span>
+  </a>
+  {% else %}
+  <p>No source files.</p>
+  {% endfor %}
+</div>
