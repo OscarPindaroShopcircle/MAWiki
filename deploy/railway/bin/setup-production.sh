@@ -375,10 +375,10 @@ set_config_file "$OPEN_WEBUI_SERVICE" /deploy/railway/production/open-webui/rail
 
 connect_source "$BOOTSTRAP_SERVICE"
 wait_for_deployment "$BOOTSTRAP_SERVICE"
-connect_source "$WEB_SERVICE"
 connect_source "$OPEN_WEBUI_SERVICE"
-wait_for_deployment "$WEB_SERVICE"
+connect_source "$WEB_SERVICE"
 wait_for_deployment "$OPEN_WEBUI_SERVICE"
+wait_for_deployment "$WEB_SERVICE"
 
 if [[ "$SKIP_VARIABLES" == true ]]; then
   printf 'Railway variables were not changed.\n'

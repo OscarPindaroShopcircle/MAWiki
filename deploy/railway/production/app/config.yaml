@@ -19,12 +19,22 @@ migrator:
 
 auth:
   jwt_secret:
+    google:
+      client_id: "725515531820-g9jf7cinvj434pa68mq5hu7n2lo533ld.apps.googleusercontent.com"
+      client_secret: {env_var: "GOOGLE_CLIENT_SECRET"}
     env_var: AUTH_JWT_SECRET
   cookie_secure: true
 
 mcp:
-  enabled: false
+  enabled: true
   auth_enabled: true
+  public_url: "https://mawiki-production.up.railway.app/"
+  redirect_path: "https://mawiki-production.up.railway.app/auth/mcp/callback"
+  google:
+    client_id: "725515531820-2vg6tanqr9trl68c0i7ato2cd9fmqhbv.apps.googleusercontent.com"
+    client_secret: {env_var: "MCP_GOOGLE_CLIENT_SECRET"}
+    workspace_domain: "shopcircle.co"
+  jwt_signing_key: {env_var: "MCP_JWT_SIGNING_KEY"}
 
 frontend:
   enabled: true
