@@ -9,3 +9,11 @@ migrator:
   host: localhost
   port: 5432
   db: backend_test
+
+auth:
+  jwt_secret: e2e-test-jwt-secret
+  bootstrap_admin_email: e2e-admin@example.com
+  cookie_secure: false
+
+frontend:
+  enabled: true

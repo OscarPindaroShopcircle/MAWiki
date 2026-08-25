@@ -24,7 +24,7 @@ def up(
         return existing
     try:
         allocated = ports.allocate(mode, database_port, backend_port, openwebui_port)
-        active_config = config.prepare(root, allocated.database)
+        active_config = config.prepare(root, allocated.database, allocated.backend)
     except (config.ConfigError, RuntimeError) as error:
         raise EnvironmentError(str(error)) from error
     environment_state = state.EnvironmentState(

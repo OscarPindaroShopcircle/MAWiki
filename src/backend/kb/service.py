@@ -199,7 +199,7 @@ async def upload_files_to_knowledge_base(
             "Upload complete",
             kb_id=str(knowledge_base_id),
             file_count=len(staged),
-            total_bytes=sum(f.size or 0 for f, _ in staged),
+            total_bytes=total_bytes,
         )
         return knowledge_base
     except Exception as exc:

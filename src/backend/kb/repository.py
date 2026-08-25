@@ -55,6 +55,7 @@ class KnowledgeBaseRepository:
             name=data.name,
             created_by=created_by,
             created_by_id=created_by_id,
+            files=[],
             shared_with=await self._get_users(data.shared_with),
         )
         self.db.add(knowledge_base)

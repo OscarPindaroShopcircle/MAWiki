@@ -59,10 +59,14 @@ def _load(path: Path, env_file: Path) -> None:
         raise ConfigError(f"Test configuration is invalid:\n{error}") from error
 
 
-def prepare(root: Path, database_port: int) -> state.ConfigState:
+def prepare(
+    root: Path, database_port: int, backend_port: int | None = None
+) -> state.ConfigState:
     validate(root)
     if state.read(root) is not None:
-        raise ConfigError("An environment is already active for this worktree.")
+        raise ConfigError(
+            "An active test environment already exists for this worktree."
+        )
     env_file, config_file = _paths(root)
     source = yaml.safe_load(config_file.read_text())
     local = deepcopy(source)
@@ -70,6 +74,9 @@ def prepare(root: Path, database_port: int) -> state.ConfigState:
     for key in ("database", "migrator"):
         local[key].update(host="localhost", port=database_port)
         docker[key].update(host="db", port=5432)
+    if backend_port is not None:
+        local.update(backend_host="127.0.0.1", backend_port=backend_port)
+        docker.update(backend_host="0.0.0.0", backend_port=8000)
 
     directory = state.state_dir(root)
     backup = directory / "config.test.yaml.backup"
