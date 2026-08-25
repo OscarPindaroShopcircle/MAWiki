@@ -23,6 +23,7 @@ migrator:
 auth:
   jwt_secret:
       env_var: AUTH_JWT_SECRET
+  bootstrap_admin_email: oscar@shopcircle.co
   google:
     client_id: "725515531820-g9jf7cinvj434pa68mq5hu7n2lo533ld.apps.googleusercontent.com"
     client_secret:

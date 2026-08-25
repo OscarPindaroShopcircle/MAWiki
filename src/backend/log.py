@@ -21,7 +21,8 @@ auto-serialized via ``.model_dump(mode="json")``::
 
 Extra fields appear in the JSON output (or appended in text mode).
 
-Uvicorn's own access logs are left untouched (it configures its own loggers).
+Uvicorn manages its own ``uvicorn.access`` and ``uvicorn.error`` loggers — we
+don't touch them. Access logs appear as uvicorn's native format.
 """
 
 from __future__ import annotations
@@ -177,21 +178,11 @@ def setup_logging(
     root.addHandler(console)
 
     # Quiet down noisy third-party loggers that aren't useful at INFO.
+    # uvicorn.access is NOT silenced — HTTP access logs are useful in production.
     _NOISY = (
         "httpx",
         "httpcore",
         "watchfiles",
-        "sqlalchemy.engine",
-        "sqlalchemy.engine.Engine",
     )
     for name in _NOISY:
         logging.getLogger(name).setLevel(logging.WARNING)
-
-    # Patch uvicorn's access-log format when in json mode so the access log
-    # entries stay on one line and are easier to parse.
-    if json_mode:
-        uvicorn_access = logging.getLogger("uvicorn.access")
-        if not uvicorn_access.handlers:
-            uvicorn_access.addHandler(logging.StreamHandler())
-        for h in uvicorn_access.handlers:
-            h.setFormatter(_JsonFormatter())

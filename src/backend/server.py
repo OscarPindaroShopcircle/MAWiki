@@ -41,7 +41,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     setup_logging(config.logging.level, json_mode=config.logging.json_mode)
 
     app = FastAPI(
-        title="Fantasy Backend",
+        title="Menelao",
         lifespan=lifespan,
     )
     app.state.config = config
