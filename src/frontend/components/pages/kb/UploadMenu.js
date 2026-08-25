@@ -3,6 +3,7 @@
   window.__circeusKbUpload = true;
 
   var MAX_ATTEMPTS = 3;
+  var CACHE_PREFIX = 'menelao:kb-upload:';
 
   function wait(milliseconds) {
     return new Promise(function (resolve) {
@@ -10,21 +11,74 @@
     });
   }
 
+  function loadCache(form) {
+    try {
+      return JSON.parse(localStorage.getItem(CACHE_PREFIX + form.action)) || {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function saveCache(form, cache) {
+    try {
+      localStorage.setItem(CACHE_PREFIX + form.action, JSON.stringify(cache));
+    } catch (_) {}
+  }
+
+  function fingerprint(file) {
+    return [file.webkitRelativePath || file.name, file.size, file.lastModified].join('\u0000');
+  }
+
+  function prepareFiles(files, maxBytes, cache) {
+    var ready = [];
+    var cached = 0;
+    var oversized = 0;
+    files.forEach(function (file) {
+      var key = fingerprint(file);
+      var entry = cache[key];
+      if (entry && entry.uploaded) {
+        cached += 1;
+        return;
+      }
+      if (file.size > maxBytes) {
+        oversized += 1;
+        return;
+      }
+      if (!entry || !entry.id) {
+        entry = { id: crypto.randomUUID(), uploaded: false };
+        cache[key] = entry;
+      }
+      ready.push({ file: file, id: entry.id, key: key });
+    });
+    return { files: ready, cached: cached, oversized: oversized };
+  }
+
   function batches(files, maxFiles, maxBytes) {
     var result = [];
     var batch = [];
     var bytes = 0;
-    files.forEach(function (file) {
-      if (batch.length && (batch.length === maxFiles || bytes + file.size > maxBytes)) {
+    files.forEach(function (item) {
+      if (batch.length && (batch.length === maxFiles || bytes + item.file.size > maxBytes)) {
         result.push(batch);
         batch = [];
         bytes = 0;
       }
-      batch.push({ file: file, id: crypto.randomUUID() });
-      bytes += file.size;
+      batch.push(item);
+      bytes += item.file.size;
     });
     if (batch.length) result.push(batch);
     return result;
+  }
+
+  function fileCount(count) {
+    return count + ' file' + (count === 1 ? '' : 's');
+  }
+
+  function completionMessage(state) {
+    var parts = ['Uploaded ' + fileCount(state.uploaded) + '.'];
+    if (state.cached) parts.push('Skipped ' + fileCount(state.cached) + ' already uploaded.');
+    if (state.oversized) parts.push('Skipped ' + fileCount(state.oversized) + ' over the size limit.');
+    return parts.join(' ');
   }
 
   function setBusy(form, busy) {
@@ -44,16 +98,16 @@
   async function uploadBatch(form, files) {
     var lastError;
     for (var attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
-      var body = new FormData();
+      var data = new FormData();
       files.forEach(function (item) {
-        body.append('files', item.file);
-        body.append('file_ids', item.id);
+        data.append('files', item.file);
+        data.append('file_ids', item.id);
       });
       var response;
       try {
         response = await fetch(form.action, {
           method: 'POST',
-          body: body,
+          body: data,
           credentials: 'same-origin',
         });
       } catch (error) {
@@ -62,7 +116,10 @@
       if (response && response.ok) return;
       if (response && response.status !== 429 && response.status < 500) {
         var detail = '';
-        try { var body = await response.json(); detail = body.detail || ''; } catch (_) {}
+        try {
+          var errorBody = await response.json();
+          detail = errorBody.detail || '';
+        } catch (_) {}
         throw new Error(detail || ('Upload rejected with status ' + response.status));
       }
       if (response) lastError = new Error('Upload failed with status ' + response.status);
@@ -95,11 +152,15 @@
         );
         return;
       }
+      batch.forEach(function (item) {
+        state.cache[item.key].uploaded = true;
+      });
+      saveCache(form, state.cache);
       state.uploaded += batch.length;
       state.index += 1;
     }
     setBusy(form, false);
-    setStatus(form, 'Uploaded ' + state.total + ' files.', false);
+    setStatus(form, completionMessage(state), false);
     form.querySelector('[data-kb-upload-input]').value = '';
     form._uploadState = null;
     htmx.trigger(document.body, 'kb-files-refresh');
@@ -109,12 +170,18 @@
     var input = event.target.closest('[data-kb-upload-input]');
     if (!input || !input.files.length) return;
     var form = input.closest('[data-kb-upload-form]');
-    var files = Array.from(input.files);
+    var maxBytes = Number(form.dataset.maxBytes);
+    var cache = loadCache(form);
+    var prepared = prepareFiles(Array.from(input.files), maxBytes, cache);
+    saveCache(form, cache);
     form._uploadState = {
-      batches: batches(files, Number(form.dataset.maxFiles), Number(form.dataset.maxBytes)),
+      batches: batches(prepared.files, Number(form.dataset.maxFiles), maxBytes),
+      cache: cache,
+      cached: prepared.cached,
+      oversized: prepared.oversized,
       index: 0,
       uploaded: 0,
-      total: files.length
+      total: prepared.files.length,
     };
     var menu = form.querySelector('[data-menu]');
     if (menu && menu.matches(':popover-open')) menu.hidePopover();

@@ -22,12 +22,25 @@ def e2e_client(backend_url: str) -> Generator[httpx.Client, None, None]:
         yield client
 
 
-def test_knowledge_base_file_upload_endpoint(e2e_client: httpx.Client) -> None:
-    registration = RegisterRequest(
+@pytest.fixture
+def registration() -> RegisterRequest:
+    return RegisterRequest(
         name="E2E Admin",
         email="e2e-admin@example.com",
         password="e2e-password",
     )
+
+
+@pytest.fixture
+def knowledge_base() -> KnowledgeBaseCreate:
+    return KnowledgeBaseCreate(name="Upload E2E")
+
+
+def test_knowledge_base_file_upload_endpoint(
+    e2e_client: httpx.Client,
+    registration: RegisterRequest,
+    knowledge_base: KnowledgeBaseCreate,
+) -> None:
     response = e2e_client.post(
         "/auth/register",
         json=registration.model_dump(mode="json"),
@@ -42,7 +55,6 @@ def test_knowledge_base_file_upload_endpoint(e2e_client: httpx.Client) -> None:
 
     tokens = TokenResponse.model_validate(response.json())
     headers = {"Authorization": f"Bearer {tokens.access_token}"}
-    knowledge_base = KnowledgeBaseCreate(name=f"Upload E2E {uuid.uuid4()}")
     response = e2e_client.post(
         "/api/knowledge-bases/",
         json=knowledge_base.model_dump(mode="json", by_alias=True),
