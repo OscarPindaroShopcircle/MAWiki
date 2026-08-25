@@ -51,13 +51,19 @@
       });
       var response;
       try {
-        response = await fetch(form.action, { method: 'POST', body: body });
+        response = await fetch(form.action, {
+          method: 'POST',
+          body: body,
+          credentials: 'same-origin',
+        });
       } catch (error) {
         lastError = error;
       }
       if (response && response.ok) return;
       if (response && response.status !== 429 && response.status < 500) {
-        throw new Error('Upload rejected with status ' + response.status);
+        var detail = '';
+        try { var body = await response.json(); detail = body.detail || ''; } catch (_) {}
+        throw new Error(detail || ('Upload rejected with status ' + response.status));
       }
       if (response) lastError = new Error('Upload failed with status ' + response.status);
       if (attempt + 1 < MAX_ATTEMPTS) await wait(500 * Math.pow(2, attempt));

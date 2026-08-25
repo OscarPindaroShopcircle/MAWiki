@@ -36,8 +36,8 @@ class KnowledgeBaseFileNotFoundException(HTTPException):
 
 
 class FileUploadException(HTTPException):
-    def __init__(self):
+    def __init__(self, detail: str = "Unable to store one or more uploaded files"):
         super().__init__(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Unable to store one or more uploaded files",
+            detail=detail,
         )

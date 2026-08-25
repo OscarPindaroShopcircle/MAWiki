@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..db.enums import UserRole
 from ..files.models import FileModel, StorageType
 from ..filesystem.base import FileSystem
+from ..log import get_logger
 from ..users.schemas import User
 from .constants import MAX_UPLOAD_BATCH_BYTES, MAX_UPLOAD_BATCH_FILES
 from .exception import (
@@ -20,6 +21,8 @@ from .exception import (
 from .models import KnowledgeBaseModel
 from .repository import KnowledgeBaseRepository
 from .schemas import KnowledgeBaseCreate, KnowledgeBaseUpdate
+
+logger = get_logger(__name__)
 
 
 def _is_admin(user: User) -> bool:
@@ -126,16 +129,30 @@ async def upload_files_to_knowledge_base(
     )
     if not _is_admin(user) and knowledge_base.created_by_id != user.id:
         raise KnowledgeBaseAccessDeniedException(knowledge_base_id)
+    logger.info(
+        "Upload started",
+        kb_id=str(knowledge_base_id),
+        user_id=str(user.id),
+        file_count=len(uploads),
+        total_bytes=sum(u.size or 0 for u in uploads),
+    )
     staged: list[tuple[FileModel, str]] = []
     try:
-        if (
-            not uploads
-            or len(uploads) > MAX_UPLOAD_BATCH_FILES
-            or sum(upload.size or 0 for upload in uploads) > MAX_UPLOAD_BATCH_BYTES
-            or file_ids is not None
-            and (len(file_ids) != len(uploads) or len(set(file_ids)) != len(file_ids))
+        total_bytes = sum(upload.size or 0 for upload in uploads)
+        if not uploads:
+            raise FileUploadException("No files provided")
+        if len(uploads) > MAX_UPLOAD_BATCH_FILES:
+            raise FileUploadException(
+                f"Too many files: {len(uploads)} (max {MAX_UPLOAD_BATCH_FILES})"
+            )
+        if total_bytes > MAX_UPLOAD_BATCH_BYTES:
+            raise FileUploadException(
+                f"Upload too large: {total_bytes} bytes (max {MAX_UPLOAD_BATCH_BYTES})"
+            )
+        if file_ids is not None and (
+            len(file_ids) != len(uploads) or len(set(file_ids)) != len(file_ids)
         ):
-            raise FileUploadException()
+            raise FileUploadException("file_ids count mismatch or duplicate ids")
 
         ids = file_ids or [uuid.uuid4() for _ in uploads]
         linked_ids: set[uuid.UUID] = set()
@@ -144,14 +161,18 @@ async def upload_files_to_knowledge_base(
                 db
             ).get_existing_file_ids(knowledge_base_id, file_ids)
             if existing_ids != linked_ids:
-                raise FileUploadException()
+                raise FileUploadException(
+                    "Some file_ids do not belong to this knowledge base"
+                )
 
         for upload, file_id in zip(uploads, ids, strict=True):
             if file_id in linked_ids:
                 continue
             filename = Path(upload.filename or "").name
-            if not filename or filename in {".", ".."} or len(filename) > 255:
-                raise FileUploadException()
+            if not filename or filename in {".", ".."}:
+                raise FileUploadException(f"Invalid filename: {filename!r}")
+            if len(filename) > 255:
+                raise FileUploadException(f"Filename too long: {len(filename)} chars")
 
             location = f"knowledge-bases/{knowledge_base.id}/{file_id}"
             await upload.seek(0)
@@ -174,6 +195,12 @@ async def upload_files_to_knowledge_base(
             db.add(file)
             knowledge_base.files.append(file)
         await db.flush()
+        logger.info(
+            "Upload complete",
+            kb_id=str(knowledge_base_id),
+            file_count=len(staged),
+            total_bytes=sum(f.size or 0 for f, _ in staged),
+        )
         return knowledge_base
     except Exception as exc:
         for _, location in staged:
@@ -182,7 +209,15 @@ async def upload_files_to_knowledge_base(
             except Exception:
                 pass
         if isinstance(exc, FileUploadException):
+            logger.error(
+                "Upload rejected", kb_id=str(knowledge_base_id), reason=exc.detail
+            )
             raise
+        logger.error(
+            "Upload failed",
+            kb_id=str(knowledge_base_id),
+            error=str(exc),
+        )
         raise FileUploadException() from exc
     finally:
         for upload in uploads:
