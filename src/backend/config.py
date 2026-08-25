@@ -173,7 +173,14 @@ class LoggingConfig(BaseModel):
     """
 
     level: str = Field(default="INFO", alias="LOGGING__LEVEL")
-    dir: str = Field(default="logs", alias="LOGGING__DIR")
+    json_mode: bool = Field(
+        default=False,
+        description="Emit log records as JSON (one object per line) for log aggregators",
+    )
+    db_echo: bool = Field(
+        default=False,
+        description="Enable SQLAlchemy echo (SQL statement logging). Noisy — off by default.",
+    )
 
 
 class GoogleSSOConfig(BaseModel):

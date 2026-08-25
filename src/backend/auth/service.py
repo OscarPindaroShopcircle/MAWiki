@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import AppConfig
 from ..db.enums import UserRole
+from ..log import get_logger
 from ..users.models import UserModel
 from .models import (
     InvitationModel,
@@ -21,6 +22,17 @@ from .exceptions import (
 )
 from .password import hash_password, verify_password
 from .schemas import InvitationCreate, RegisterRequest
+
+logger = get_logger(__name__)
+
+
+def _mask_email(email: str) -> str:
+    """Return a partially masked email: ``osc***@shopcircle.co``."""
+    local, _, domain = email.partition("@")
+    if not domain:
+        return email
+    visible = min(3, len(local))
+    return f"{local[:visible]}{'*' * max(0, len(local) - visible)}@{domain}"
 
 
 async def find_by_provider(
@@ -111,6 +123,12 @@ async def create_invitation(
     db.add(invitation)
     await db.flush()
     await db.refresh(invitation)
+    logger.info(
+        "Invitation created",
+        email=_mask_email(body.email),
+        role=body.role.value,
+        invited_by=str(invited_by),
+    )
     return invitation
 
 
@@ -135,9 +153,17 @@ async def login_with_provider(
        If neither, raise ``NotInvitedException``.
     4. Create the user + provider link.
     """
+    masked = _mask_email(openid.email)
+
     # 1. Already linked?
     user = await find_by_provider(db, provider, openid.id)
     if user:
+        logger.info(
+            "SSO login: existing provider link",
+            email=masked,
+            user_id=str(user.id),
+            provider=provider,
+        )
         return user
 
     # 2. Existing user via email from another provider?
@@ -149,6 +175,12 @@ async def login_with_provider(
             )
         )
         await db.flush()
+        logger.info(
+            "SSO login: linked new provider to existing user",
+            email=masked,
+            user_id=str(user.id),
+            provider=provider,
+        )
         return user
 
     # 3. No user — check invitation or bootstrap admin
@@ -157,11 +189,14 @@ async def login_with_provider(
         bootstrap_email = config.auth.bootstrap_admin_email if config.auth else None
         if bootstrap_email and openid.email == bootstrap_email:
             role = UserRole.ADMIN
+            logger.info("SSO login: bootstrap admin", email=masked)
         else:
+            logger.error("SSO login: not invited", email=masked)
             raise NotInvitedException(openid.email)
     else:
         role = invitation.role
         invitation.accepted_at = datetime.now(UTC)
+        logger.info("SSO login: accepted invitation", email=masked, role=role.value)
 
     # 4. Create user
     user = UserModel(
@@ -179,6 +214,13 @@ async def login_with_provider(
         )
     )
     await db.flush()
+    logger.info(
+        "SSO login: user created",
+        email=masked,
+        user_id=str(user.id),
+        role=role.value,
+        provider=provider,
+    )
     return user
 
 
@@ -190,8 +232,10 @@ async def register_with_password(
     Gated by a pending invitation or the bootstrap admin email — no open
     self-registration. If the email already has a user, raises ``AuthException``.
     """
+    masked = _mask_email(body.email)
     existing = await find_by_email(db, body.email)
     if existing is not None:
+        logger.error("Registration failed: email already exists", email=masked)
         raise AuthException("A user with that email already exists")
 
     invitation = await find_pending_invitation(db, body.email)
@@ -199,11 +243,14 @@ async def register_with_password(
         bootstrap_email = config.auth.bootstrap_admin_email if config.auth else None
         if bootstrap_email and body.email == bootstrap_email:
             role = UserRole.ADMIN
+            logger.info("Registration: bootstrap admin", email=masked)
         else:
+            logger.error("Registration failed: not invited", email=masked)
             raise NotInvitedException(body.email)
     else:
         role = invitation.role
         invitation.accepted_at = datetime.now(UTC)
+        logger.info("Registration: accepted invitation", email=masked, role=role.value)
 
     user = UserModel(name=body.name, email=body.email, role=role)
     db.add(user)
@@ -216,6 +263,9 @@ async def register_with_password(
         )
     )
     await db.flush()
+    logger.info(
+        "Registration successful", email=masked, user_id=str(user.id), role=role.value
+    )
     return user
 
 
@@ -225,10 +275,13 @@ async def login_with_password(db: AsyncSession, email: str, password: str) -> Us
     Raises ``InvalidCredentialsException`` if the user doesn't exist, has no password
     set, or the password doesn't match.
     """
+    masked = _mask_email(email)
     user = await find_by_email(db, email)
     if user is None:
+        logger.error("Login failed: no user found", email=masked)
         raise InvalidCredentialsException()
     if not user.is_active:
+        logger.error("Login failed: user inactive", email=masked, user_id=str(user.id))
         raise InvalidCredentialsException("User is inactive")
 
     result = await db.execute(
@@ -236,5 +289,10 @@ async def login_with_password(db: AsyncSession, email: str, password: str) -> Us
     )
     pwd = result.scalar_one_or_none()
     if pwd is None or not verify_password(password, pwd.password_hash):
+        logger.error("Login failed: wrong password", email=masked, user_id=str(user.id))
         raise InvalidCredentialsException()
+
+    logger.info(
+        "Login successful", email=masked, user_id=str(user.id), role=user.role.value
+    )
     return user

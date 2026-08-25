@@ -50,8 +50,9 @@ class Base(AsyncAttrs, DeclarativeBase):
 class DatabaseManager:
     """Manages database engines and session makers."""
 
-    def __init__(self, db_settings: DatabaseSettingsProtocol):
+    def __init__(self, db_settings: DatabaseSettingsProtocol, *, echo: bool = False):
         self.postgres_settings = db_settings
+        self._echo = echo
         self._async_engine: AsyncEngine | None = None
         self._sync_engine: Engine | None = None
         self._async_session_maker: async_sessionmaker[AsyncSession] | None = None
@@ -63,7 +64,7 @@ class DatabaseManager:
         if self._async_engine is None:
             self._async_engine = create_async_engine(
                 self.postgres_settings.async_url,
-                echo=True,
+                echo=self._echo,
             )
         return self._async_engine
 
@@ -73,7 +74,7 @@ class DatabaseManager:
         if self._sync_engine is None:
             self._sync_engine = create_engine(
                 self.postgres_settings.sync_url,
-                echo=True,
+                echo=self._echo,
             )
         return self._sync_engine
 

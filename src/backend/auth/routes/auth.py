@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...config import AppConfig, get_app_config
 from ...db.enums import UserRole
 from ...dependencies import get_db_session
+from ...log import get_logger
 from ...users.models import UserModel
 from ..exceptions import (
     AuthException,
@@ -31,6 +32,7 @@ from ..tokens import (
     set_auth_cookies,
 )
 
+logger = get_logger(__name__)
 router = APIRouter(tags=["auth"])
 
 
@@ -75,19 +77,26 @@ async def auth_refresh(
     try:
         payload = decode_token(body.refresh_token)
     except jwt.ExpiredSignatureError:
+        logger.error("Token refresh failed: expired")
         raise InvalidTokenException("Refresh token has expired")
     except jwt.InvalidTokenError:
+        logger.error("Token refresh failed: invalid token")
         raise InvalidTokenException("Invalid refresh token")
 
     if payload.get("type") != "refresh":
+        logger.error(
+            "Token refresh failed: wrong token type", token_type=payload.get("type")
+        )
         raise InvalidTokenException("Not a refresh token")
 
     user_id = int(payload["sub"])
     result = await db.execute(select(UserModel).where(UserModel.id == user_id))
     user = result.scalar_one_or_none()
     if user is None:
+        logger.error("Token refresh failed: user not found", user_id=user_id)
         raise InvalidTokenException("User not found")
     if not user.is_active:
+        logger.error("Token refresh failed: user inactive", user_id=user_id)
         raise InvalidTokenException("User is inactive")
 
     new_access = create_access_token(user.id, user.email, user.role)
@@ -126,9 +135,11 @@ async def auth_callback(
     async with sso:
         openid = await sso.verify_and_process(request)
     if openid is None:
+        logger.error("Google callback: no OpenID payload returned")
         raise AuthException("Login failed — no OpenID payload returned")
 
     user = await login_with_provider(db, "google", openid, config)
+    logger.info("Google callback: login complete", user_id=str(user.id))
     access_token = create_access_token(user.id, user.email, user.role)
     refresh_token = create_refresh_token(user.id)
 
@@ -279,7 +290,9 @@ async def auth_dev_login(
             bootstrap_email = config.auth.bootstrap_admin_email if config.auth else None
             if bootstrap_email and email == bootstrap_email:
                 role = UserRole.ADMIN
+                logger.info("Dev login: bootstrap admin auto-created", email=email)
             else:
+                logger.error("Dev login failed: no user or invitation", email=email)
                 raise HTTPException(
                     status_code=404,
                     detail=f"No user or invitation found for {email}",
@@ -287,10 +300,17 @@ async def auth_dev_login(
         else:
             role = invitation.role
             invitation.accepted_at = datetime.now(UTC)
+            logger.info("Dev login: accepted invitation", email=email, role=role.value)
 
         user = UserModel(name=email, email=email, role=role)
         db.add(user)
         await db.flush()
+        logger.info(
+            "Dev login: user created",
+            email=email,
+            user_id=str(user.id),
+            role=role.value,
+        )
 
     access_token = create_access_token(user.id, user.email, user.role)
     refresh_token = create_refresh_token(user.id)

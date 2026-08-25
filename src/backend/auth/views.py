@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import AppConfig, get_app_config
 from ..dependencies import get_catalog_dep, get_db_session
+from ..log import get_logger
 from .dependencies import get_current_user
 from .exceptions import AuthException, InvalidCredentialsException, NotInvitedException
 from .schemas import LoginRequest, RegisterRequest
@@ -11,6 +12,7 @@ from .service import login_with_password, register_with_password
 from .sso import build_google_sso
 from .tokens import create_access_token, create_refresh_token, set_auth_cookies
 
+logger = get_logger(__name__)
 router = APIRouter(tags=["auth-views"])
 
 
@@ -44,6 +46,7 @@ async def login_form(
         return RedirectResponse(
             url="/login?error=Invalid email or password", status_code=303
         )
+    logger.info("Form login successful", user_id=str(user.id), role=user.role.value)
     access_token = create_access_token(user.id, user.email, user.role)
     refresh_token = create_refresh_token(user.id)
     response = RedirectResponse(url="/", status_code=303)
@@ -69,6 +72,9 @@ async def register_form(
         return RedirectResponse(
             url=f"/login?mode=register&error={e.detail}", status_code=303
         )
+    logger.info(
+        "Form registration successful", user_id=str(user.id), role=user.role.value
+    )
     access_token = create_access_token(user.id, user.email, user.role)
     refresh_token = create_refresh_token(user.id)
     response = RedirectResponse(url="/", status_code=303)

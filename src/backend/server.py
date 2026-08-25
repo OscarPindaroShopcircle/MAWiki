@@ -2,16 +2,17 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from .auth.routes.auth import router as auth_router
 from .auth.routes.invitations import router as invitation_router
 from .config import AppConfig, get_app_config
 from .db.db import DatabaseManager
+from .log import setup_logging
 from .users.routes import router as users_router
 from .kb.routes import router as kb_router
 from .mcp.server import build_mcp_application
 from .rag.routes import router as rag_router
-from fastapi.staticfiles import StaticFiles
 
 
 @asynccontextmanager
@@ -19,7 +20,7 @@ async def lifespan(app: FastAPI):
     config = getattr(app.state, "config", None)
     if config is None:
         config = get_app_config()
-    db_manager = DatabaseManager(config.database)
+    db_manager = DatabaseManager(config.database, echo=config.logging.db_echo)
     mcp_application = getattr(app.state, "mcp_application", None)
     try:
         if mcp_application is None:
@@ -36,6 +37,8 @@ async def lifespan(app: FastAPI):
 def create_app(config: AppConfig | None = None) -> FastAPI:
     if config is None:
         config = get_app_config()
+
+    setup_logging(config.logging.level, json_mode=config.logging.json_mode)
 
     app = FastAPI(
         title="Fantasy Backend",
