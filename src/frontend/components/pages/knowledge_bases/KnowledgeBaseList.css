@@ -1,0 +1,25 @@
+.vstack.kb-page {
+  gap: var(--sp-8);
+}
+
+.hstack.kb-header {
+  justify-content: space-between;
+}
+
+.kb-header h1 {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+}
+
+@media (max-width: 48rem) {
+  .hstack.kb-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: var(--sp-4);
+  }
+
+  .kb-header .btn {
+    justify-content: center;
+    width: 100%;
+  }
+}

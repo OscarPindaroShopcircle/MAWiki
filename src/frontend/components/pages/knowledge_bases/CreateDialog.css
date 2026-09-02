@@ -1,0 +1,8 @@
+.vstack.kb-create-form {
+  gap: var(--sp-4);
+}
+
+.hstack.kb-create-actions {
+  justify-content: flex-end;
+  margin-top: var(--sp-2);
+}

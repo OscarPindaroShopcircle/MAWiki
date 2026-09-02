@@ -1,5 +1,5 @@
 {#def users, current_user=None #}
-{#css common/Alert.css, common/Avatar.css, common/Button.css, common/Card.css, common/Dialog.css, common/Divider.css, common/Field.css, common/Menu.css, common/Pill.css, common/Table.css, common/Tooltip.css, layout/Page.css, layout/Sidebar.css, layout/UserMenu.css #}
+{#css common/Alert.css, common/Avatar.css, common/Button.css, common/Card.css, common/Dialog.css, common/Divider.css, common/Field.css, common/HStack.css, common/Menu.css, common/Pill.css, common/Table.css, common/Tooltip.css, common/VStack.css, layout/Page.css, layout/Sidebar.css, layout/UserMenu.css #}
 <layout.Page title="Design Kit" current_user={{ current_user }} active="showcase">
 <div class="showcase">
     <h1>
@@ -73,6 +73,32 @@
             <span class="showcase-label">sp-12</span>
             <div class="showcase-space-swatch" style="width: var(--sp-12);">
             </div>
+        </div>
+    </section>
+    <section class="showcase-section">
+        <h2>
+            Stacks
+        </h2>
+        <p class="showcase-note">
+            HStack and VStack arrange direct children with a consistent token gap.
+        </p>
+        <div class="showcase-grid-2">
+            <common.HStack>
+            <div class="showcase-demo-box">
+                One
+            </div>
+            <div class="showcase-demo-box">
+                Two
+            </div>
+            </common.HStack>
+            <common.VStack>
+            <div class="showcase-demo-box">
+                One
+            </div>
+            <div class="showcase-demo-box">
+                Two
+            </div>
+            </common.VStack>
         </div>
     </section>
     <section class="showcase-section">

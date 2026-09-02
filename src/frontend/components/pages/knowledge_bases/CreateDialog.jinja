@@ -1,7 +1,7 @@
 {#def sources, error=None, name="", source_id="" #}
 {#css common/Alert.css, common/Button.css, common/Dialog.css, common/Field.css, common/Tooltip.css #}
 <common.Dialog title="New knowledge base">
-<form class="kb-create-form"
+<form class="vstack kb-create-form"
       hx-post="/knowledge-bases"
       hx-target="#knowledge-base-grid"
       hx-swap="innerHTML"
@@ -14,7 +14,7 @@
     {% else %}
         <common.Alert variant="info">Create a data source before creating a knowledge base.</common.Alert>
     {% endif %}
-    <div class="kb-create-actions">
+    <div class="hstack kb-create-actions">
         <common.Button type="button" variant="secondary" size="md" onclick="this.closest('dialog').close()">Cancel</common.Button>
         {% if sources %}
             <common.Button type="submit" variant="primary" size="md">Create</common.Button>
