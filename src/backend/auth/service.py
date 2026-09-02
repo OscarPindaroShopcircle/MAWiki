@@ -126,7 +126,7 @@ async def create_invitation(
     logger.info(
         "Invitation created",
         email=_mask_email(body.email),
-        role=body.role.value,
+        role=body.role,
         invited_by=str(invited_by),
     )
     return invitation
