@@ -1,4 +1,5 @@
 {#def current_user=None #}
+{#css common/Avatar.css, common/Button.css, common/Menu.css #}
 <div class="user-menu" id="user-menu">
     <common.Button variant="primary" size="md" block type="button" id="user-menu-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="user-menu-popover" popovertarget="user-menu-popover">
     <common.Avatar name={{ current_user.name }} size=32 />
