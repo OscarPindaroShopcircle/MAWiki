@@ -1,13 +1,10 @@
-  {#def icon=None, label, target, variant="primary" #}
+{#def icon=None, label, target, variant="primary" #}
 {# A menu trigger button: icon (optional), label text, and a chevron that rotates 180°
    when the linked popover is open. Pass target as the menu's id attribute. #}
-<common.Button :variant="variant" size="md" type="button"
-               :id="target + '-trigger'"
-               aria-haspopup="menu" aria-expanded="false"
-               :aria-controls="target"
-               :popovertarget="target"
-               {{ attrs.render() }}>
-  {% if icon %}<common.Icon :name="icon" size=16 />{% endif %}
-  {{ label }}
-  <common.Icon name="chevron-down" size=16 class="menu-trigger-chevron" />
+<common.Button :variant="variant" size="md" type="button" :id="target + '-trigger'" aria-haspopup="menu" aria-expanded="false" :aria-controls="target" :popovertarget="target" {{ attrs.render() }}>
+{% if icon %}
+    <common.Icon :name="icon" size=16 />
+{% endif %}
+{{ label }}
+<common.Icon name="chevron-down" size=16 class="menu-trigger-chevron" />
 </common.Button>

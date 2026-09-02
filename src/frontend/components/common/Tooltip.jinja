@@ -1,4 +1,6 @@
 {#def text, position="top" #}
-<span {{ attrs.render(class="tooltip") }} data-tooltip="{{ text }}" data-tooltip-position="{{ position }}">
-  {{ content }}
+<span {{ attrs.render(class="tooltip") }}
+      data-tooltip="{{ text }}"
+      data-tooltip-position="{{ position }}">
+    {{ content }}
 </span>

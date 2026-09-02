@@ -20,7 +20,7 @@ from ..db.mixins import TimestampMixin, UUIDv7PrimaryKeyMixin
 
 
 class McpToolName(str, Enum):
-    LIST_RAGS = "list_rags"
+    LIST_KNOWLEDGE_BASES = "list_knowledge_bases"
     SEARCH = "search"
     FETCH_FILE = "fetch_file"
 
@@ -32,7 +32,6 @@ class McpUserModel(Base, UUIDv7PrimaryKeyMixin, TimestampMixin):
     last_seen_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
-
     __table_args__ = (
         UniqueConstraint(
             "provider", "provider_subject", name="uq_mcp_user_provider_subject"
@@ -53,14 +52,15 @@ class McpToolCallModel(Base, UUIDv7PrimaryKeyMixin, TimestampMixin):
     tool: Mapped[McpToolName] = mapped_column(
         SAEnum(McpToolName, name="mcp_tool_name"), nullable=False
     )
-    rag_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("rags.id", ondelete="SET NULL"), nullable=True
+    knowledge_base_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("knowledge_bases.id", ondelete="SET NULL"),
+        nullable=True,
     )
     source_file_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("files.id", ondelete="SET NULL"), nullable=True
     )
     query: Mapped[str | None] = mapped_column(Text, nullable=True)
-
     __table_args__ = (
         Index("ix_mcp_tool_calls_session_created_at", "session_id", "created_at"),
     )

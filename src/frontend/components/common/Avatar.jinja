@@ -3,6 +3,9 @@
 {% set words = name.strip().split() %}
 {% set initials = ((words[0][:2] + words[-1][0]) if words | length >= 2 else (words[0][:3] if words | length == 1 else "???")) | upper %}
 {% set idx = (color_index | int) if color_index is not none else (name | cat_index) %}
-<span class="avatar cat-{{ idx }}" style="width: {{ size }}px; height: {{ size }}px; font-size: {{ (size * 0.4) | round }}px;">
-  {{ initials }}
+<span class="avatar cat-{{ idx }}"
+      style="width: {{ size }}px;
+             height: {{ size }}px;
+             font-size: {{ (size * 0.4) | round }}px">
+    {{ initials }}
 </span>

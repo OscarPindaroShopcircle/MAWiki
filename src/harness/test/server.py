@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import asyncio
+
 from fastmcp import FastMCP
 from pydantic import Field
 
 from . import environment, runner, state
+from .browser import ScreenshotResult, capture_screenshots as _capture_screenshots
 
 server = FastMCP(
     "harness-test",
@@ -108,6 +111,21 @@ async def test_e2e(
 ) -> runner.TestResult | str:
     """Run E2E tests against the active Docker test environment."""
     return await _run_tests(runner.TestSuite.E2E, selectors, options)
+
+
+@server.tool()
+async def capture_page_screenshots(
+    path: str,
+    email: str,
+    name: str | None = None,
+) -> ScreenshotResult | str:
+    """Capture authenticated desktop and phone screenshots for one path."""
+    try:
+        return await asyncio.to_thread(
+            _capture_screenshots, path, email=email, name=name
+        )
+    except (OSError, RuntimeError, ValueError) as error:
+        return str(error)
 
 
 @server.resource("info://test_instructions")

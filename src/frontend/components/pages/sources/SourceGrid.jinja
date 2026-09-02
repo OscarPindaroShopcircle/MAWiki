@@ -1,0 +1,20 @@
+{#def sources #}
+<div class="source-grid">
+    {% for source in sources %}
+        <a href="/sources/{{ source.id }}" class="source-card-link"><common.Card variant="outlined" class="source-card">
+            <div class="source-card-icon">
+                <common.Icon name="database" size=24 />
+            </div>
+            <h3 class="source-card-title">
+                {{ source.name }}
+            </h3>
+            <p class="source-card-meta">
+                {{ source.files|length if source.files is not none else 0 }} files · by {{ source.created_by.name }}
+            </p>
+        </common.Card></a>
+    {% else %}
+        <p class="source-empty">
+            No data sources yet.
+        </p>
+    {% endfor %}
+</div>

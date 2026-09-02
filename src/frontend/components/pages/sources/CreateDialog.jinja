@@ -1,0 +1,16 @@
+{#def error=None, name="" #}
+<common.Dialog title="New data source">
+<form class="source-create-form"
+      hx-post="/sources"
+      hx-target="#source-grid"
+      hx-swap="innerHTML"
+      hx-on::after-request="if(event.detail.successful) this.closest('dialog').close()">
+    {% if error %}
+        <common.Alert variant="danger">{{ error }}</common.Alert>
+    {% endif %}
+    <common.Field label="Name" name="name" placeholder="Engineering Docs" required :value="name" />
+    <div class="source-create-actions">
+        <common.Button type="button" variant="secondary" size="md" onclick="this.closest('dialog').close()">Cancel</common.Button><common.Button type="submit" variant="primary" size="md">Create</common.Button>
+    </div>
+</form>
+</common.Dialog>

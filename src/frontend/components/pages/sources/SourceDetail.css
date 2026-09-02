@@ -1,0 +1,62 @@
+.source-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--sp-8);
+}
+
+.source-detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--text-sm);
+  color: var(--clr-text-secondary);
+  margin-bottom: var(--sp-2);
+}
+
+.source-detail-back:hover {
+  color: var(--clr-text);
+}
+
+.source-detail-header h1 {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+}
+
+.source-file-name {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.source-file-name > svg {
+  flex-shrink: 0;
+}
+
+/* File type icon colours */
+.source-file-name .lucide-file-image    { color: var(--cat-3); }
+.source-file-name .lucide-file-audio    { color: var(--cat-4); }
+.source-file-name .lucide-file-video    { color: var(--cat-3); }
+.source-file-name .lucide-file-archive  { color: var(--cat-6); }
+.source-file-name .lucide-file-spreadsheet { color: var(--cat-0); }
+.source-file-name .lucide-presentation  { color: var(--cat-4); }
+.source-file-name .lucide-file-code     { color: var(--cat-7); }
+.source-file-name .lucide-file-text     { color: var(--cat-2); }
+.source-file-name .lucide-file          { color: var(--clr-text-muted); }
+
+/* Action icon colours */
+.source-detail-back svg        { color: var(--clr-accent); }
+.source-file-actions .lucide   { color: var(--clr-accent); }
+
+.source-file-label {
+  color: var(--clr-text);
+}
+
+.source-file-actions {
+  text-align: right;
+}
+
+.source-files-empty,
+.source-files-loader {
+  color: var(--clr-text-secondary);
+}

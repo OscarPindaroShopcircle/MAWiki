@@ -1,9 +1,9 @@
-  {#def title, current_user=None, active=None #}
+{#def title, current_user=None, active=None #}
 {# Pass values through with `:prop="expr"`. A quoted "{{ title }}" is handed to
    the child component as that literal string, not as the variable's value. #}
 <layout.BlankPage :title="title">
-  <layout.Sidebar :current_user="current_user" :active="active" />
-  <main class="page-main">
+<layout.Sidebar :current_user="current_user" :active="active" />
+<main class="page-main">
     {{ content }}
-  </main>
+</main>
 </layout.BlankPage>

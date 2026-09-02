@@ -1,16 +1,13 @@
 {#def title="Confirm", message, confirm_label="Confirm", cancel_label="Cancel", confirm_variant="danger", hx_delete=None #}
 <common.Dialog :title="title">
-  <p style="color: var(--clr-text-secondary); font-size: var(--text-sm);">{{ message }}</p>
-  <div style="display: flex; gap: var(--sp-3); justify-content: flex-end;">
-    <common.Button type="button" variant="secondary" size="md"
-                   onclick="this.closest('dialog').close()">{{ cancel_label }}</common.Button>
-    <common.Button type="button" :variant="confirm_variant" size="md"
-                   :hx-delete="hx_delete"
-                   hx-target="#invitations-table"
-                   hx-swap="outerHTML"
-                   hx-on::after-request="if(event.detail.successful) this.closest('dialog').close()">
-      <common.Icon name="trash-2" size=16 />
-      {{ confirm_label }}
+<p style="color: var(--clr-text-secondary); font-size: var(--text-sm);">
+    {{ message }}
+</p>
+<div style="display: flex; gap: var(--sp-3); justify-content: flex-end;">
+    <common.Button type="button" variant="secondary" size="md" onclick="this.closest('dialog').close()">{{ cancel_label }}</common.Button>
+    <common.Button type="button" :variant="confirm_variant" size="md" :hx-delete="hx_delete" hx-target="#invitations-table" hx-swap="outerHTML" hx-on::after-request="if(event.detail.successful) this.closest('dialog').close()">
+    <common.Icon name="trash-2" size=16 />
+    {{ confirm_label }}
     </common.Button>
-  </div>
+</div>
 </common.Dialog>

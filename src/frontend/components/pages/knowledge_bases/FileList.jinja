@@ -1,0 +1,17 @@
+{#def knowledge_base_id, files #}
+<div class="knowledge-base-file-list">
+    {% for file in files %}
+        <a class="knowledge-base-file-row"
+           href="/knowledge-bases/{{ knowledge_base_id }}/files/{{ file.id }}"><span class="knowledge-base-file-name"><common.Icon name="file" size=18 /><span>{{ file.name }}</span></span><span class="knowledge-base-file-status {{ 'knowledge-base-file-status-converted' if file.is_converted else 'knowledge-base-file-status-pending' }}"><common.Icon :name="'circle-check' if file.is_converted else 'circle-dashed'" size=18 />
+            {% if file.is_converted %}
+                {{ file.converted_files|length }} converted {{ "document" if file.converted_files|length == 1 else "documents" }}
+            {% else %}
+                Not converted
+            {% endif %}
+        <common.Icon name="chevron-right" size=16 /></span></a>
+    {% else %}
+        <p>
+            No source files.
+        </p>
+    {% endfor %}
+</div>

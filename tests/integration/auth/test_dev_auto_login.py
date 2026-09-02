@@ -5,6 +5,7 @@ from starlette.requests import Request
 
 from src.backend.auth import tokens
 from src.backend.auth.dependencies import get_current_user, get_optional_user
+from src.backend.auth.views import dev_login_form
 from src.backend.config import AppConfig, AuthConfig
 from src.backend.db.enums import UserRole
 from src.backend.users.models import UserModel
@@ -71,3 +72,33 @@ async def test_optional_user_ignores_refresh_cookie_without_auth_config(
     )
 
     assert await get_optional_user(request, Response(), db_session, config) is None
+
+
+@pytest.mark.integration
+async def test_dev_login_form_creates_bootstrap_admin_and_sets_cookies(
+    db_session: AsyncSession, app_config: AppConfig
+) -> None:
+    assert app_config.auth is not None
+
+    async def receive():
+        return {
+            "type": "http.request",
+            "body": b'{"email": "e2e-admin@example.com"}',
+        }
+
+    config = app_config.model_copy(deep=True)
+    config.env = "dev"
+    config.auth.bootstrap_admin_email = "e2e-admin@example.com"
+    response = await dev_login_form(
+        Request({"type": "http", "method": "POST", "headers": []}, receive),
+        db_session,
+        config,
+    )
+
+    assert response.status_code == 204
+    assert response.headers["hx-redirect"] == "/"
+    cookies = [
+        value.decode() for key, value in response.raw_headers if key == b"set-cookie"
+    ]
+    assert any(cookie.startswith("access_token=") for cookie in cookies)
+    assert any(cookie.startswith("refresh_token=") for cookie in cookies)

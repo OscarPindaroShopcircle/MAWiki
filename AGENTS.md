@@ -60,6 +60,14 @@ Unit testing is rarely useful for API development since most API calls are a cha
 - **E2E (s–min):** Test complete workflows as a black box without mocks.
 - **Fuzzy/performance (min+):** Add these when robustness or load behavior matters.
 
+### Test Harness
+
+Use the `menelao-test-harness` MCP tools when available. Otherwise use `uv run menelao harness`. Do not manually start Uvicorn or modify `config.test.yaml` for testing: the harness manages isolated environments, configuration, and dynamic ports.
+
+- Unit: `test_unit` or `uv run menelao harness test unit`
+- Integration: `env_up(mode="local")`, then `test_integration`, then `env_teardown`
+- E2E: `env_up(mode="docker")`, then `test_e2e`, then `env_teardown`
+
 ## New Feature Workflow
 
 Work in small increments: implement one layer, test it, then move on. Do not write the whole feature in one pass.

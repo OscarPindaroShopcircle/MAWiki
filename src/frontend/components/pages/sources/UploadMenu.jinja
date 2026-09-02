@@ -1,0 +1,20 @@
+{#def source_id #}
+<div class="source-upload-menu" id="source-upload-menu">
+    <common.MenuTrigger icon="upload" label="Upload" target="source-upload-popover" />
+    <form action="/sources/{{ source_id }}/files"
+          method="post"
+          enctype="multipart/form-data"
+          data-source-upload-form
+          data-max-files="5"
+          data-max-bytes="26214400">
+        <common.Menu id="source-upload-popover" labelledby="source-upload-popover-trigger" placement="bottom-start" class="source-upload-popover"><common.MenuItem icon="file-plus" label="Upload file" onclick="var input=this.form.querySelector('[data-source-upload-input]'); input.removeAttribute('webkitdirectory'); input.value=''; input.click();" /><common.MenuItem icon="folder-plus" label="Upload folder" onclick="var input=this.form.querySelector('[data-source-upload-input]'); input.setAttribute('webkitdirectory', ''); input.value=''; input.click();" /></common.Menu>
+        <input type="file" name="files" data-source-upload-input multiple hidden>
+        <div class="source-upload-status"
+             data-source-upload-status
+             role="status"
+             aria-live="polite"
+             hidden>
+            <span data-source-upload-message></span><common.Button type="button" variant="secondary" size="sm" data-source-upload-retry hidden>Retry</common.Button>
+            </div>
+        </form>
+    </div>

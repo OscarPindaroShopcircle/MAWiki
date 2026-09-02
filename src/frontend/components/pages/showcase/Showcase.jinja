@@ -1,276 +1,445 @@
 {#def users, current_user=None #}
 <layout.Page title="Design Kit" current_user={{ current_user }} active="home">
-  <div class="showcase">
-    <h1>Design Kit</h1>
-    <p class="showcase-subtitle">Every value reads from tokens. No raw hex or px in components.</p>
-
+<div class="showcase">
+    <h1>
+        Design Kit
+    </h1>
+    <p class="showcase-subtitle">
+        Every value reads from tokens. No raw hex or px in components.
+    </p>
     <section class="showcase-section">
-      <h2>Typography</h2>
-      <p class="showcase-note">7 sizes, 3 weights, 2 line-heights.</p>
-      <div class="showcase-type-row"><span class="showcase-label">text-3xl</span><span style="font-size: var(--text-3xl); font-weight: var(--weight-bold);">Aa</span></div>
-      <div class="showcase-type-row"><span class="showcase-label">text-2xl</span><span style="font-size: var(--text-2xl); font-weight: var(--weight-bold);">Aa</span></div>
-      <div class="showcase-type-row"><span class="showcase-label">text-xl</span><span style="font-size: var(--text-xl); font-weight: var(--weight-bold);">Aa</span></div>
-      <div class="showcase-type-row"><span class="showcase-label">text-lg</span><span style="font-size: var(--text-lg); font-weight: var(--weight-medium);">Aa</span></div>
-      <div class="showcase-type-row"><span class="showcase-label">text-base</span><span style="font-size: var(--text-base);">Aa</span></div>
-      <div class="showcase-type-row"><span class="showcase-label">text-sm</span><span style="font-size: var(--text-sm);">Aa</span></div>
-      <div class="showcase-type-row"><span class="showcase-label">text-xs</span><span style="font-size: var(--text-xs); color: var(--clr-text-muted);">Aa</span></div>
+        <h2>
+            Typography
+        </h2>
+        <p class="showcase-note">
+            7 sizes, 3 weights, 2 line-heights.
+        </p>
+        <div class="showcase-type-row">
+            <span class="showcase-label">text-3xl</span><span style="font-size: var(--text-3xl); font-weight: var(--weight-bold);">Aa</span>
+        </div>
+        <div class="showcase-type-row">
+            <span class="showcase-label">text-2xl</span><span style="font-size: var(--text-2xl); font-weight: var(--weight-bold);">Aa</span>
+        </div>
+        <div class="showcase-type-row">
+            <span class="showcase-label">text-xl</span><span style="font-size: var(--text-xl); font-weight: var(--weight-bold);">Aa</span>
+        </div>
+        <div class="showcase-type-row">
+            <span class="showcase-label">text-lg</span><span style="font-size: var(--text-lg); font-weight: var(--weight-medium);">Aa</span>
+        </div>
+        <div class="showcase-type-row">
+            <span class="showcase-label">text-base</span><span style="font-size: var(--text-base);">Aa</span>
+        </div>
+        <div class="showcase-type-row">
+            <span class="showcase-label">text-sm</span><span style="font-size: var(--text-sm);">Aa</span>
+        </div>
+        <div class="showcase-type-row">
+            <span class="showcase-label">text-xs</span><span style="font-size: var(--text-xs); color: var(--clr-text-muted);">Aa</span>
+        </div>
     </section>
-
     <section class="showcase-section">
-      <h2>Spacing</h2>
-      <p class="showcase-note">4px base unit.</p>
-      <div class="showcase-space-row"><span class="showcase-label">sp-1</span><div class="showcase-space-swatch" style="width: var(--sp-1);"></div></div>
-      <div class="showcase-space-row"><span class="showcase-label">sp-2</span><div class="showcase-space-swatch" style="width: var(--sp-2);"></div></div>
-      <div class="showcase-space-row"><span class="showcase-label">sp-4</span><div class="showcase-space-swatch" style="width: var(--sp-4);"></div></div>
-      <div class="showcase-space-row"><span class="showcase-label">sp-6</span><div class="showcase-space-swatch" style="width: var(--sp-6);"></div></div>
-      <div class="showcase-space-row"><span class="showcase-label">sp-8</span><div class="showcase-space-swatch" style="width: var(--sp-8);"></div></div>
-      <div class="showcase-space-row"><span class="showcase-label">sp-12</span><div class="showcase-space-swatch" style="width: var(--sp-12);"></div></div>
+        <h2>
+            Spacing
+        </h2>
+        <p class="showcase-note">
+            4px base unit.
+        </p>
+        <div class="showcase-space-row">
+            <span class="showcase-label">sp-1</span>
+            <div class="showcase-space-swatch" style="width: var(--sp-1);">
+            </div>
+        </div>
+        <div class="showcase-space-row">
+            <span class="showcase-label">sp-2</span>
+            <div class="showcase-space-swatch" style="width: var(--sp-2);">
+            </div>
+        </div>
+        <div class="showcase-space-row">
+            <span class="showcase-label">sp-4</span>
+            <div class="showcase-space-swatch" style="width: var(--sp-4);">
+            </div>
+        </div>
+        <div class="showcase-space-row">
+            <span class="showcase-label">sp-6</span>
+            <div class="showcase-space-swatch" style="width: var(--sp-6);">
+            </div>
+        </div>
+        <div class="showcase-space-row">
+            <span class="showcase-label">sp-8</span>
+            <div class="showcase-space-swatch" style="width: var(--sp-8);">
+            </div>
+        </div>
+        <div class="showcase-space-row">
+            <span class="showcase-label">sp-12</span>
+            <div class="showcase-space-swatch" style="width: var(--sp-12);">
+            </div>
+        </div>
     </section>
-
     <section class="showcase-section">
-      <h2>Radius and shadow</h2>
-      <div class="showcase-grid-2">
+        <h2>
+            Radius and shadow
+        </h2>
+        <div class="showcase-grid-2">
+            <div class="showcase-row">
+                <div class="showcase-demo-box" style="border-radius: var(--radius-sm);">
+                    sm
+                </div>
+                <div class="showcase-demo-box" style="border-radius: var(--radius-md);">
+                    md
+                </div>
+                <div class="showcase-demo-box" style="border-radius: var(--radius-lg);">
+                    lg
+                </div>
+                <div class="showcase-demo-box" style="border-radius: var(--radius-full);">
+                    full
+                </div>
+            </div>
+            <div class="showcase-row">
+                <div class="showcase-demo-box"
+                     style="box-shadow: var(--shadow-sm);
+                            border-color: transparent">
+                    sm
+                </div>
+                <div class="showcase-demo-box"
+                     style="box-shadow: var(--shadow-md);
+                            border-color: transparent">
+                    md
+                </div>
+                <div class="showcase-demo-box"
+                     style="box-shadow: var(--shadow-lg);
+                            border-color: transparent">
+                    lg
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="showcase-section">
+        <h2>
+            Status tokens
+        </h2>
+        <p class="showcase-note">
+            Fixed vocabulary — success, danger, warning, info, neutral.
+        </p>
         <div class="showcase-row">
-          <div class="showcase-demo-box" style="border-radius: var(--radius-sm);">sm</div>
-          <div class="showcase-demo-box" style="border-radius: var(--radius-md);">md</div>
-          <div class="showcase-demo-box" style="border-radius: var(--radius-lg);">lg</div>
-          <div class="showcase-demo-box" style="border-radius: var(--radius-full);">full</div>
+            <common.Pill variant="success">Success</common.Pill>
+            <common.Pill variant="danger">Danger</common.Pill>
+            <common.Pill variant="warning">Warning</common.Pill>
+            <common.Pill variant="info">Info</common.Pill>
+            <common.Pill variant="neutral">Neutral</common.Pill>
+            <common.Pill variant="accent">Accent</common.Pill>
+        </div>
+        <div class="showcase-row" style="margin-top: var(--sp-3);">
+            <div class="showcase-swatch" style="background: var(--status-success);">
+                success
+            </div>
+            <div class="showcase-swatch" style="background: var(--status-danger);">
+                danger
+            </div>
+            <div class="showcase-swatch"
+                 style="background: var(--status-warning);
+                        color: var(--clr-text)">
+                warning
+            </div>
+            <div class="showcase-swatch" style="background: var(--status-info);">
+                info
+            </div>
+            <div class="showcase-swatch" style="background: var(--status-neutral);">
+                neutral
+            </div>
+        </div>
+    </section>
+    <section class="showcase-section">
+        <h2>
+            Role tokens
+        </h2>
+        <p class="showcase-note">
+            Fixed, meaningful set — Admin, Dev, Member. Distinct from status and category.
+        </p>
+        <div class="showcase-row">
+            <common.Pill variant="role-admin">Admin</common.Pill>
+            <common.Pill variant="role-dev">Dev</common.Pill>
+            <common.Pill variant="role-member">Member</common.Pill>
+        </div>
+    </section>
+    <section class="showcase-section">
+        <h2>
+            Category tokens
+        </h2>
+        <p class="showcase-note">
+            One array. Every entry same visual weight, never overlaps a status hue.
+        </p>
+        <div class="showcase-row">
+            <div class="showcase-swatch" style="background: var(--cat-0);">
+                0
+            </div>
+            <div class="showcase-swatch" style="background: var(--cat-1);">
+                1
+            </div>
+            <div class="showcase-swatch" style="background: var(--cat-2);">
+                2
+            </div>
+            <div class="showcase-swatch" style="background: var(--cat-3);">
+                3
+            </div>
+            <div class="showcase-swatch" style="background: var(--cat-4);">
+                4
+            </div>
+            <div class="showcase-swatch" style="background: var(--cat-5);">
+                5
+            </div>
+            <div class="showcase-swatch" style="background: var(--cat-6);">
+                6
+            </div>
+            <div class="showcase-swatch" style="background: var(--cat-7);">
+                7
+            </div>
+        </div>
+    </section>
+    <section class="showcase-section">
+        <h2>
+            Avatars
+        </h2>
+        <p class="showcase-note">
+            Color is deterministic from name via <code>cat_index</code> filter, or pass <code>color_index</code> explicitly.
+        </p>
+        <div class="showcase-row">
+            <common.Avatar name="Aaron Cole" size="36" color_index="0" />
+            <common.Avatar name="Bella Quinn" size="36" color_index="1" />
+            <common.Avatar name="Caleb Voss" size="36" color_index="2" />
+            <common.Avatar name="Dara Wells" size="36" color_index="3" />
+            <common.Avatar name="Ezra Black" size="36" color_index="4" />
+            <common.Avatar name="Freya Stone" size="36" color_index="5" />
+            <common.Avatar name="Gideon Marsh" size="36" color_index="6" />
+            <common.Avatar name="Hazel Croft" size="36" color_index="7" />
+        </div>
+        <div class="showcase-row" style="margin-top: var(--sp-3);">
+            <common.Avatar name="Oscar Pindaro" size=32 />
+            <common.Avatar name="Alice Smith" size=32 />
+            <common.Avatar name="Bob Jones" size=32 />
+            <common.Avatar name="Charlie Brown" size=32 />
+            <common.Avatar name="Diana Prince" size=32 />
+            <common.Avatar name="Emma Watson" size=32 />
+            <common.Avatar name="Frank Garcia" size=32 />
+            <common.Avatar name="Grace Lee" size=32 />
+        </div>
+    </section>
+    <section class="showcase-section">
+        <h2>
+            Buttons
+        </h2>
+        <div class="showcase-row">
+            <common.Button variant="primary" size="sm">Small Primary</common.Button>
+            <common.Button variant="primary" size="md">Primary</common.Button>
+            <common.Button variant="primary" size="lg">Large Primary</common.Button>
         </div>
         <div class="showcase-row">
-          <div class="showcase-demo-box" style="box-shadow: var(--shadow-sm); border-color: transparent;">sm</div>
-          <div class="showcase-demo-box" style="box-shadow: var(--shadow-md); border-color: transparent;">md</div>
-          <div class="showcase-demo-box" style="box-shadow: var(--shadow-lg); border-color: transparent;">lg</div>
+            <common.Button variant="secondary" size="md">Secondary</common.Button>
+            <common.Button variant="danger" size="md">Danger</common.Button>
+            <common.Button variant="primary" size="md" disabled>Disabled</common.Button>
         </div>
-      </div>
     </section>
-
     <section class="showcase-section">
-      <h2>Status tokens</h2>
-      <p class="showcase-note">Fixed vocabulary — success, danger, warning, info, neutral.</p>
-      <div class="showcase-row">
-        <common.Pill variant="success">Success</common.Pill>
-        <common.Pill variant="danger">Danger</common.Pill>
-        <common.Pill variant="warning">Warning</common.Pill>
-        <common.Pill variant="info">Info</common.Pill>
-        <common.Pill variant="neutral">Neutral</common.Pill>
-        <common.Pill variant="accent">Accent</common.Pill>
-      </div>
-      <div class="showcase-row" style="margin-top: var(--sp-3);">
-        <div class="showcase-swatch" style="background: var(--status-success);">success</div>
-        <div class="showcase-swatch" style="background: var(--status-danger);">danger</div>
-        <div class="showcase-swatch" style="background: var(--status-warning); color: var(--clr-text);">warning</div>
-        <div class="showcase-swatch" style="background: var(--status-info);">info</div>
-        <div class="showcase-swatch" style="background: var(--status-neutral);">neutral</div>
-      </div>
+        <h2>
+            Icons
+        </h2>
+        <div class="showcase-row">
+            <common.Icon name="home" size=24 />
+            <common.Icon name="shield" size=24 />
+            <common.Icon name="user-plus" size=24 />
+            <common.Icon name="arrow-right" size=24 />
+            <common.Icon name="panel-left-close" size=24 />
+            <common.Icon name="check" size=24 />
+            <common.Icon name="x" size=24 />
+            <common.Icon name="mail" size=24 />
+        </div>
     </section>
-
     <section class="showcase-section">
-      <h2>Role tokens</h2>
-      <p class="showcase-note">Fixed, meaningful set — Admin, Dev, Member. Distinct from status and category.</p>
-      <div class="showcase-row">
-        <common.Pill variant="role-admin">Admin</common.Pill>
-        <common.Pill variant="role-dev">Dev</common.Pill>
-        <common.Pill variant="role-member">Member</common.Pill>
-      </div>
-    </section>
-
-    <section class="showcase-section">
-      <h2>Category tokens</h2>
-      <p class="showcase-note">One array. Every entry same visual weight, never overlaps a status hue.</p>
-      <div class="showcase-row">
-        <div class="showcase-swatch" style="background: var(--cat-0);">0</div>
-        <div class="showcase-swatch" style="background: var(--cat-1);">1</div>
-        <div class="showcase-swatch" style="background: var(--cat-2);">2</div>
-        <div class="showcase-swatch" style="background: var(--cat-3);">3</div>
-        <div class="showcase-swatch" style="background: var(--cat-4);">4</div>
-        <div class="showcase-swatch" style="background: var(--cat-5);">5</div>
-        <div class="showcase-swatch" style="background: var(--cat-6);">6</div>
-        <div class="showcase-swatch" style="background: var(--cat-7);">7</div>
-      </div>
-    </section>
-
-    <section class="showcase-section">
-      <h2>Avatars</h2>
-      <p class="showcase-note">Color is deterministic from name via <code>cat_index</code> filter, or pass <code>color_index</code> explicitly.</p>
-      <div class="showcase-row">
-        <common.Avatar name="Aaron Cole" size="36" color_index="0" />
-        <common.Avatar name="Bella Quinn" size="36" color_index="1" />
-        <common.Avatar name="Caleb Voss" size="36" color_index="2" />
-        <common.Avatar name="Dara Wells" size="36" color_index="3" />
-        <common.Avatar name="Ezra Black" size="36" color_index="4" />
-        <common.Avatar name="Freya Stone" size="36" color_index="5" />
-        <common.Avatar name="Gideon Marsh" size="36" color_index="6" />
-        <common.Avatar name="Hazel Croft" size="36" color_index="7" />
-      </div>
-      <div class="showcase-row" style="margin-top: var(--sp-3);">
-        <common.Avatar name="Oscar Pindaro" size=32 />
-        <common.Avatar name="Alice Smith" size=32 />
-        <common.Avatar name="Bob Jones" size=32 />
-        <common.Avatar name="Charlie Brown" size=32 />
-        <common.Avatar name="Diana Prince" size=32 />
-        <common.Avatar name="Emma Watson" size=32 />
-        <common.Avatar name="Frank Garcia" size=32 />
-        <common.Avatar name="Grace Lee" size=32 />
-      </div>
-    </section>
-
-    <section class="showcase-section">
-      <h2>Buttons</h2>
-      <div class="showcase-row">
-        <common.Button variant="primary" size="sm">Small Primary</common.Button>
-        <common.Button variant="primary" size="md">Primary</common.Button>
-        <common.Button variant="primary" size="lg">Large Primary</common.Button>
-      </div>
-      <div class="showcase-row">
-        <common.Button variant="secondary" size="md">Secondary</common.Button>
-        <common.Button variant="danger" size="md">Danger</common.Button>
-        <common.Button variant="primary" size="md" disabled>Disabled</common.Button>
-      </div>
-    </section>
-
-    <section class="showcase-section">
-      <h2>Icons</h2>
-      <div class="showcase-row">
-        <common.Icon name="home" size=24 />
-        <common.Icon name="shield" size=24 />
-        <common.Icon name="user-plus" size=24 />
-        <common.Icon name="arrow-right" size=24 />
-        <common.Icon name="panel-left-close" size=24 />
-        <common.Icon name="check" size=24 />
-        <common.Icon name="x" size=24 />
-        <common.Icon name="mail" size=24 />
-      </div>
-    </section>
-
-    <section class="showcase-section">
-      <h2>Menus</h2>
-      <p class="showcase-note">M3 vertical menu with shared positioning, focus, and keyboard navigation.</p>
-      <common.MenuTrigger label="Open menu" target="showcase-menu" variant="secondary" />
-      <common.Menu id="showcase-menu" labelledby="showcase-menu-trigger">
+        <h2>
+            Menus
+        </h2>
+        <p class="showcase-note">
+            M3 vertical menu with shared positioning, focus, and keyboard navigation.
+        </p>
+        <common.MenuTrigger label="Open menu" target="showcase-menu" variant="secondary" />
+        <common.Menu id="showcase-menu" labelledby="showcase-menu-trigger">
         <common.MenuItem icon="pencil" label="Rename" />
         <common.MenuItem icon="trash-2" label="Delete" variant="danger" />
-      </common.Menu>
+        </common.Menu>
     </section>
-
     <section class="showcase-section">
-      <h2>Tooltips</h2>
-      <p class="showcase-note">M3 plain tooltips describe icon-only actions on hover or keyboard focus.</p>
-      <div class="showcase-row">
-        <common.Tooltip text="Download">
-          <common.Button variant="secondary" size="sm" aria-label="Download">
+        <h2>
+            Tooltips
+        </h2>
+        <p class="showcase-note">
+            M3 plain tooltips describe icon-only actions on hover or keyboard focus.
+        </p>
+        <div class="showcase-row">
+            <common.Tooltip text="Download">
+            <common.Button variant="secondary" size="sm" aria-label="Download">
             <common.Icon name="download" size=16 />
-          </common.Button>
-        </common.Tooltip>
-        <common.Tooltip text="Delete" position="bottom">
-          <common.Button variant="danger" size="sm" aria-label="Delete">
+            </common.Button>
+            </common.Tooltip>
+            <common.Tooltip text="Delete" position="bottom">
+            <common.Button variant="danger" size="sm" aria-label="Delete">
             <common.Icon name="trash-2" size=16 />
-          </common.Button>
-        </common.Tooltip>
-      </div>
-    </section>
-
-    <section class="showcase-section">
-      <h2>Dividers</h2>
-      <p class="showcase-note">M3 dividers — full width and labeled (centered text).</p>
-      <div style="display: flex; flex-direction: column; gap: var(--sp-4); max-width: 480px;">
-        <div>
-          <span style="font-size: var(--text-sm); color: var(--clr-text-secondary);">Above</span>
-          <common.Divider />
-          <span style="font-size: var(--text-sm); color: var(--clr-text-secondary);">Below</span>
+            </common.Button>
+            </common.Tooltip>
         </div>
-        <common.Divider label="or" />
-      </div>
     </section>
-
     <section class="showcase-section">
-      <h2>Alerts</h2>
-      <p class="showcase-note">Status message blocks — the block-level sibling of Pills. Same status token vocabulary.</p>
-      <div style="display: flex; flex-direction: column; gap: var(--sp-3); max-width: 480px;">
-        <common.Alert variant="danger">Invalid email or password.</common.Alert>
-        <common.Alert variant="warning">Your session expires in 5 minutes.</common.Alert>
-        <common.Alert variant="info">Check your email for the invitation link.</common.Alert>
-        <common.Alert variant="success">Account created successfully.</common.Alert>
-      </div>
-    </section>
-
-    <section class="showcase-section">
-      <h2>Cards</h2>
-      <p class="showcase-note">M3 cards — elevated (default), outlined, filled. Flexible containers for grouped content.</p>
-      <div class="showcase-row" style="align-items: flex-start; gap: var(--sp-4);">
-        <common.Card variant="elevated" max_width={{ 240 }}>
-          <h3 style="font-size: var(--text-lg); font-weight: var(--weight-bold); margin-bottom: var(--sp-2);">Elevated</h3>
-          <p style="font-size: var(--text-sm); color: var(--clr-text-secondary);">Shadow + surface bg. Default for dialogs and focused content.</p>
-        </common.Card>
-        <common.Card variant="outlined" max_width={{ 240 }}>
-          <h3 style="font-size: var(--text-lg); font-weight: var(--weight-bold); margin-bottom: var(--sp-2);">Outlined</h3>
-          <p style="font-size: var(--text-sm); color: var(--clr-text-secondary);">Border + surface bg. Subtle separation in dense layouts.</p>
-        </common.Card>
-        <common.Card variant="filled" max_width={{ 240 }}>
-          <h3 style="font-size: var(--text-lg); font-weight: var(--weight-bold); margin-bottom: var(--sp-2);">Filled</h3>
-          <p style="font-size: var(--text-sm); color: var(--clr-text-secondary);">Tinted bg, no border or shadow. For grouped content in a page.</p>
-        </common.Card>
-      </div>
-    </section>
-
-    <section class="showcase-section">
-      <h2>Fields</h2>
-      <p class="showcase-note">M3 text fields — outlined (default) and filled. Label, input, supporting text, and error state.</p>
-      <div class="showcase-row" style="align-items: flex-start; gap: var(--sp-4);">
-        <div style="display: flex; flex-direction: column; gap: var(--sp-3); width: 240px;">
-          <common.Field label="Name" name="demo-name" placeholder="Jane Doe" helper="As it appears on your ID" />
-          <common.Field label="Email" name="demo-email" type="email" placeholder="jane@example.com" />
-          <common.Field label="Password" name="demo-pw" type="password" placeholder="At least 8 characters" error="Too short — minimum 8 characters" />
+        <h2>
+            Dividers
+        </h2>
+        <p class="showcase-note">
+            M3 dividers — full width and labeled (centered text).
+        </p>
+        <div style="display: flex;
+                    flex-direction: column;
+                    gap: var(--sp-4);
+                    max-width: 480px">
+            <div>
+                <span style="font-size: var(--text-sm); color: var(--clr-text-secondary);">Above</span>
+                <common.Divider />
+                <span style="font-size: var(--text-sm); color: var(--clr-text-secondary);">Below</span>
+            </div>
+            <common.Divider label="or" />
         </div>
-        <div style="display: flex; flex-direction: column; gap: var(--sp-3); width: 240px;">
-          <common.Field label="Name" name="demo-name-filled" variant="filled" placeholder="Jane Doe" />
-          <common.Field label="Email" name="demo-email-filled" type="email" variant="filled" placeholder="jane@example.com" helper="We won't share it." />
-          <common.Field label="Code" name="demo-code-filled" variant="filled" placeholder="6-digit code" error="Invalid code" />
-        </div>
-      </div>
     </section>
-
     <section class="showcase-section">
-      <h2>Composed: table using all layers</h2>
-      <common.Table headers={{ ["Name", "Email", "Role", "Status"] }}>
+        <h2>
+            Alerts
+        </h2>
+        <p class="showcase-note">
+            Status message blocks — the block-level sibling of Pills. Same status token vocabulary.
+        </p>
+        <div style="display: flex;
+                    flex-direction: column;
+                    gap: var(--sp-3);
+                    max-width: 480px">
+            <common.Alert variant="danger">Invalid email or password.</common.Alert>
+            <common.Alert variant="warning">Your session expires in 5 minutes.</common.Alert>
+            <common.Alert variant="info">Check your email for the invitation link.</common.Alert>
+            <common.Alert variant="success">Account created successfully.</common.Alert>
+        </div>
+    </section>
+    <section class="showcase-section">
+        <h2>
+            Cards
+        </h2>
+        <p class="showcase-note">
+            M3 cards — elevated (default), outlined, filled. Flexible containers for grouped content.
+        </p>
+        <div class="showcase-row"
+             style="align-items: flex-start;
+                    gap: var(--sp-4)">
+            <common.Card variant="elevated" max_width={{ 240 }}>
+            <h3 style="font-size: var(--text-lg);
+                       font-weight: var(--weight-bold);
+                       margin-bottom: var(--sp-2)">
+                Elevated
+            </h3>
+            <p style="font-size: var(--text-sm); color: var(--clr-text-secondary);">
+                Shadow + surface bg. Default for dialogs and focused content.
+            </p>
+            </common.Card>
+            <common.Card variant="outlined" max_width={{ 240 }}>
+            <h3 style="font-size: var(--text-lg);
+                       font-weight: var(--weight-bold);
+                       margin-bottom: var(--sp-2)">
+                Outlined
+            </h3>
+            <p style="font-size: var(--text-sm); color: var(--clr-text-secondary);">
+                Border + surface bg. Subtle separation in dense layouts.
+            </p>
+            </common.Card>
+            <common.Card variant="filled" max_width={{ 240 }}>
+            <h3 style="font-size: var(--text-lg);
+                       font-weight: var(--weight-bold);
+                       margin-bottom: var(--sp-2)">
+                Filled
+            </h3>
+            <p style="font-size: var(--text-sm); color: var(--clr-text-secondary);">
+                Tinted bg, no border or shadow. For grouped content in a page.
+            </p>
+            </common.Card>
+        </div>
+    </section>
+    <section class="showcase-section">
+        <h2>
+            Fields
+        </h2>
+        <p class="showcase-note">
+            M3 text fields — outlined (default) and filled. Label, input, supporting text, and error state.
+        </p>
+        <div class="showcase-row"
+             style="align-items: flex-start;
+                    gap: var(--sp-4)">
+            <div style="display: flex;
+                        flex-direction: column;
+                        gap: var(--sp-3);
+                        width: 240px">
+                <common.Field label="Name" name="demo-name" placeholder="Jane Doe" helper="As it appears on your ID" />
+                <common.Field label="Email" name="demo-email" type="email" placeholder="jane@example.com" />
+                <common.Field label="Password" name="demo-pw" type="password" placeholder="At least 8 characters" error="Too short — minimum 8 characters" />
+            </div>
+            <div style="display: flex;
+                        flex-direction: column;
+                        gap: var(--sp-3);
+                        width: 240px">
+                <common.Field label="Name" name="demo-name-filled" variant="filled" placeholder="Jane Doe" />
+                <common.Field label="Email" name="demo-email-filled" type="email" variant="filled" placeholder="jane@example.com" helper="We won't share it." />
+                <common.Field label="Code" name="demo-code-filled" variant="filled" placeholder="6-digit code" error="Invalid code" />
+            </div>
+        </div>
+    </section>
+    <section class="showcase-section">
+        <h2>
+            Composed: table using all layers
+        </h2>
+        <common.Table headers={{ ["Name", "Email", "Role", "Status"] }}>
         {% for user in users %}
-        <tr>
-          <td>{{ user.name }}</td>
-          <td>{{ user.email }}</td>
-          <td>
-            {% if user.role == 'admin' %}
-            <common.Pill variant="role-admin">Admin</common.Pill>
-            {% else %}
-            <common.Pill variant="role-member">Member</common.Pill>
-            {% endif %}
-          </td>
-          <td>
-            {% if user.is_active %}
-            <common.Pill variant="success">Active</common.Pill>
-            {% else %}
-            <common.Pill variant="danger">Inactive</common.Pill>
-            {% endif %}
-          </td>
-        </tr>
+            <tr>
+                <td>
+                    {{ user.name }}
+                </td>
+                <td>
+                    {{ user.email }}
+                </td>
+                <td>
+                    {% if user.role == 'admin' %}
+                        <common.Pill variant="role-admin">Admin</common.Pill>
+                    {% else %}
+                        <common.Pill variant="role-member">Member</common.Pill>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if user.is_active %}
+                        <common.Pill variant="success">Active</common.Pill>
+                    {% else %}
+                        <common.Pill variant="danger">Inactive</common.Pill>
+                    {% endif %}
+                </td>
+            </tr>
         {% endfor %}
-      </common.Table>
+        </common.Table>
     </section>
-
     <section class="showcase-section">
-      <h2>Dialog</h2>
-      <p class="showcase-note">M3 Dialog — modal overlay. Uses the native <code>&lt;dialog&gt;</code> element.</p>
-      <common.Button variant="secondary" size="md"
-                     onclick="document.getElementById('showcase-dialog').showModal()">
+        <h2>
+            Dialog
+        </h2>
+        <p class="showcase-note">
+            M3 Dialog — modal overlay. Uses the native <code>&lt;dialog&gt;</code> element.
+        </p>
+        <common.Button variant="secondary" size="md" onclick="document.getElementById('showcase-dialog').showModal()">
         Open dialog
-      </common.Button>
-      <common.Dialog title="Showcase dialog" id="showcase-dialog">
+        </common.Button>
+        <common.Dialog title="Showcase dialog" id="showcase-dialog">
         <p style="color: var(--clr-text-secondary); font-size: var(--text-sm);">
-          This is a dialog. It can contain forms, alerts, or any content.
+            This is a dialog. It can contain forms, alerts, or any content.
         </p>
         <div style="display: flex; gap: var(--sp-3); justify-content: flex-end;">
-          <common.Button type="button" variant="secondary" size="md"
-                         onclick="this.closest('dialog').close()">Close</common.Button>
+            <common.Button type="button" variant="secondary" size="md" onclick="this.closest('dialog').close()">Close</common.Button>
         </div>
-      </common.Dialog>
+        </common.Dialog>
     </section>
-  </div>
+</div>
 </layout.Page>

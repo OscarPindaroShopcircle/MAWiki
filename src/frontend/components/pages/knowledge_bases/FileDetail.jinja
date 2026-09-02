@@ -1,0 +1,96 @@
+{#def knowledge_base, file, chunks=[], current_user=None #}
+{#css pages/sources/SourceDetail.css, pages/knowledge_bases/KnowledgeBaseDetail.css #}
+<layout.Page :title="file.name" current_user={{ current_user }} active="knowledge-bases">
+<div class="kb-detail knowledge-base-detail">
+    <header class="kb-detail-header">
+        <div>
+            <a href="/knowledge-bases/{{ knowledge_base.id }}"
+               class="kb-detail-back"><common.Icon name="arrow-left" size=16 />{{ knowledge_base.name }}</a>
+            <h1>
+                {{ file.name }}
+            </h1>
+            <p class="knowledge-base-source">
+                {{ file.mime_type or "Unknown file type" }}
+            </p>
+        </div>
+        <common.Pill :variant="'success' if file.is_converted else 'neutral'">{{ "Converted" if file.is_converted else "Not converted" }}</common.Pill>
+    </header>
+    <common.Card variant="outlined" class="knowledge-base-pipeline-panel">
+    <section>
+        <div class="knowledge-base-operation-heading">
+            <common.Icon name="file-text" size=22 />
+            <h2>
+                Converted documents
+            </h2>
+        </div>
+        {% if file.converted_files %}
+            <div class="knowledge-base-output-list">
+                {% for output in file.converted_files %}
+                    <article class="knowledge-base-document" data-knowledge-base-document>
+                        <header class="knowledge-base-document-header">
+                            <div>
+                                <h3>
+                                    {{ output.name }}
+                                </h3>
+                                <span>Output {{ output.output_index + 1 }}</span>
+                            </div>
+                            <div class="knowledge-base-view-toggle"
+                                 role="group"
+                                 aria-label="Document view">
+                                <button type="button" data-knowledge-base-mode="rendered" aria-pressed="true">
+                                    Rendered
+                                </button>
+                                <button type="button" data-knowledge-base-mode="source" aria-pressed="false">
+                                    Source
+                                </button>
+                            </div>
+                        </header>
+                        <div class="knowledge-base-document-content knowledge-base-document-rendered"
+                             data-knowledge-base-rendered>
+                            {{ output.content | markdown }}
+                        </div>
+                        <pre class="knowledge-base-document-content knowledge-base-document-source"
+                             data-knowledge-base-source
+                             hidden>{{ output.content }}</pre>
+                        <div hidden>
+                            {% for chunk in chunks %}
+                                {% if chunk.output_index == output.output_index %}
+                                    <span data-knowledge-base-chunk
+                                          data-start="{{ chunk.split_idx_start }}"
+                                          data-end="{{ chunk.split_idx_end }}"
+                                          data-color="{{ chunk.color_index }}"
+                                          data-label="Chunk {{ loop.index }}"></span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="knowledge-base-operation-message">
+                This file has no converted output.
+            </p>
+        {% endif %}
+    </section>
+    <common.Divider />
+    <details class="knowledge-base-files-section" open>
+        <summary>
+            <span><common.Icon name="layers-3" size=20 />Chunk map</span><common.Icon name="chevron-down" size=18 />
+            </summary>
+            <div class="knowledge-base-files-content">
+                {% if chunks %}
+                    <pages.knowledge_bases.ChunkList chunks={{ chunks }} />
+                {% elif knowledge_base.is_indexed and file.is_converted %}
+                    <p>
+                        No indexed chunks were found for this file.
+                    </p>
+                {% else %}
+                    <p>
+                        Index this knowledge base to color the document by chunk.
+                    </p>
+                {% endif %}
+            </div>
+        </details>
+        </common.Card>
+    </div>
+    </layout.Page>

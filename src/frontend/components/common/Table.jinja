@@ -1,15 +1,17 @@
 {#def headers #}
 <div class="table-wrapper">
-  <table class="table">
-    <thead>
-      <tr>
-        {% for header in headers %}
-        <th>{{ header }}</th>
-        {% endfor %}
-      </tr>
-    </thead>
-    <tbody>
-      {{ content }}
-    </tbody>
-  </table>
+    <table class="table">
+        <thead>
+            <tr>
+                {% for header in headers %}
+                    <th>
+                        {{ header }}
+                    </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {{ content }}
+        </tbody>
+    </table>
 </div>

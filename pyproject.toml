@@ -1,7 +1,7 @@
 [project]
 name = "menelao"
 version = "0.1.0"
-description = "Menelao is a mcp + fe + be for managing knowledge bases"
+description = "Menelao manages data sources and knowledge bases"
 authors = [
     { name = "Oscar Pindaro", email = "oscar@shopcircle.co" }
 ]
@@ -63,6 +63,7 @@ gpu = [
 [dependency-groups]
 dev = [
     "httpx>=0.28.0",
+    "playwright==1.62.0",
     "pre-commit>=4.5.1",
     "pytest>=9.0.2",
     "pytest-asyncio>=1.3.0",
@@ -107,6 +108,11 @@ module-name = "backend"
 
 [tool.ruff.lint]
 select = ["E402", "PLC0415"]
+
+[tool.djlint]
+profile = "jinja"
+format_attribute_template_tags = true
+line_break_after_multiline_tag = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -62,14 +62,14 @@ async def record_mcp_tool_call(
     session: McpSessionModel,
     tool: McpToolName,
     *,
-    rag_id: uuid.UUID | None = None,
+    knowledge_base_id: uuid.UUID | None = None,
     source_file_id: uuid.UUID | None = None,
     query: str | None = None,
 ) -> McpToolCallModel:
     call = McpToolCallModel(
         session_id=session.id,
         tool=tool,
-        rag_id=rag_id,
+        knowledge_base_id=knowledge_base_id,
         source_file_id=source_file_id,
         query=query,
     )

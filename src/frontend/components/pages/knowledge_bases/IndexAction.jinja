@@ -1,0 +1,12 @@
+{#def knowledge_base_id, is_converted=False, is_indexed=False, task=None, oob=False #}
+<div id="knowledge-base-index-action"
+     {% if oob %}
+         hx-swap-oob="outerHTML"
+     {% endif %}>
+    <pages.knowledge_bases.OperationStatus knowledge_base_id={{ knowledge_base_id }} operation="index" task={{ task }} :ready="is_indexed" />
+    {% if is_converted %}
+        <common.Button type="button" variant="primary" size="md" :hx-post="'/knowledge-bases/' + knowledge_base_id|string + '/index'" hx-target="#knowledge-base-index-status" hx-swap="outerHTML">{{ "Reindex" if is_indexed else "Index" }}</common.Button>
+    {% else %}
+        <common.Button type="button" variant="primary" size="md" disabled>Index</common.Button>
+    {% endif %}
+</div>

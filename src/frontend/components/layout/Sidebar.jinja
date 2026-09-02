@@ -1,43 +1,37 @@
-  {#def current_user=None, active=None, badges=None #}
+{#def current_user=None, active=None, badges=None #}
 <aside class="sidebar" id="sidebar">
-  <div class="sidebar-header">
-    <span class="sidebar-brand-name">{{ app_name }}</span>
-    <common.Tooltip text="Toggle sidebar (Shift + Left/Right)" position="bottom">
-      <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
-        <common.Icon name="panel-left-close" size=18 />
-      </button>
-    </common.Tooltip>
-  </div>
-  <nav class="sidebar-nav" tabindex="0">
-    <layout.SidebarSection>
-      <layout.SidebarItem href="/" icon="home" label="Home" :active="active" match="home" />
-      <layout.SidebarItem href="/knowledge-bases" icon="database" label="Knowledge Bases"
-                          :active="active" match="knowledge-bases" />
-      <layout.SidebarItem href="/rag" icon="blocks" label="RAG Models"
-                          :active="active" match="rag" />
-    </layout.SidebarSection>
-
-    {% if current_user is admin %}
-    <layout.SidebarSection label="Admin">
-      {% if badges and badges.get('admin') %}
-      <layout.SidebarItem href="/admin/users" icon="users" label="Users"
-                          :active="active" match="admin-users"
-                          :badge="badges['admin']" />
-      {% else %}
-      <layout.SidebarItem href="/admin/users" icon="users" label="Users"
-                          :active="active" match="admin-users" />
-      {% endif %}
-
-      {% if env is dev %}
-      <layout.SidebarItem href="/components" icon="palette" label="Showcase"
-                          :active="active" match="showcase" />
-      {% endif %}
-    </layout.SidebarSection>
-    {% endif %}
-  </nav>
-  <div class="sidebar-footer">
-    {% if current_user %}
-    <layout.UserMenu current_user={{ current_user }} />
-    {% endif %}
-  </div>
+    <div class="sidebar-header">
+        <span class="sidebar-brand-name">{{ app_name }}</span>
+        <common.Tooltip text="Toggle sidebar (Shift + Left/Right)" position="bottom">
+        <button class="sidebar-toggle"
+                id="sidebar-toggle"
+                aria-label="Toggle sidebar">
+            <common.Icon name="panel-left-close" size=18 />
+        </button>
+        </common.Tooltip>
+    </div>
+    <nav class="sidebar-nav" tabindex="0">
+        <layout.SidebarSection>
+        <layout.SidebarItem href="/" icon="home" label="Home" :active="active" match="home" />
+        <layout.SidebarItem href="/sources" icon="database" label="Data Sources" :active="active" match="sources" />
+        <layout.SidebarItem href="/knowledge-bases" icon="blocks" label="Knowledge Bases" :active="active" match="knowledge-bases" />
+        </layout.SidebarSection>
+        {% if current_user is admin %}
+            <layout.SidebarSection label="Admin">
+            {% if badges and badges.get('admin') %}
+                <layout.SidebarItem href="/admin/users" icon="users" label="Users" :active="active" match="admin-users" :badge="badges['admin']" />
+            {% else %}
+                <layout.SidebarItem href="/admin/users" icon="users" label="Users" :active="active" match="admin-users" />
+            {% endif %}
+            {% if env is dev %}
+                <layout.SidebarItem href="/components" icon="palette" label="Showcase" :active="active" match="showcase" />
+            {% endif %}
+            </layout.SidebarSection>
+        {% endif %}
+    </nav>
+    <div class="sidebar-footer">
+        {% if current_user %}
+            <layout.UserMenu current_user={{ current_user }} />
+        {% endif %}
+    </div>
 </aside>

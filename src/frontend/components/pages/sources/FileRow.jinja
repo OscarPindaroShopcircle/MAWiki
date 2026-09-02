@@ -1,0 +1,14 @@
+{#def file, source_id #}
+<tr>
+    <td>
+        <div class="source-file-name">
+        <pages.sources.FileIcon :name="file.name" :mime_type="file.mime_type" /><span class="source-file-label">{{ file.name }}</span>
+    </div>
+</td>
+<td>
+    {{ file.created_at | time }}
+</td>
+<td class="source-file-actions">
+    <common.Tooltip text="Download"><common.Button variant="secondary" size="sm" icon=True :href="'/api/sources/' + source_id|string + '/files/' + file.id|string + '/download'" :aria-label="'Download ' + file.name" download><common.Icon name="download" size=16 /></common.Button></common.Tooltip>
+</td>
+</tr>

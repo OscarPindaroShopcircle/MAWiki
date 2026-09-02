@@ -1,0 +1,12 @@
+.source-create-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.source-create-actions {
+  display: flex;
+  gap: var(--sp-3);
+  justify-content: flex-end;
+  margin-top: var(--sp-2);
+}

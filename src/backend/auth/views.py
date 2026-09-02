@@ -1,19 +1,34 @@
-from fastapi import APIRouter, Depends, Query
-from fastapi.responses import HTMLResponse, RedirectResponse
+import json
+from datetime import UTC, datetime
+
+from fastapi import APIRouter, Depends, Query, Request
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import AppConfig, get_app_config
+from ..db.enums import UserRole
 from ..dependencies import get_catalog_dep, get_db_session
 from ..log import get_logger
+from ..users.models import UserModel
 from .dependencies import get_current_user
 from .exceptions import AuthException, InvalidCredentialsException, NotInvitedException
 from .schemas import LoginRequest, RegisterRequest
-from .service import login_with_password, register_with_password
+from .service import (
+    find_pending_invitation,
+    login_with_password,
+    register_with_password,
+)
 from .sso import build_google_sso
 from .tokens import create_access_token, create_refresh_token, set_auth_cookies
 
 logger = get_logger(__name__)
 router = APIRouter(tags=["auth-views"])
+
+
+def _htmx_redirect(url: str) -> Response:
+    location = RedirectResponse(url).headers["location"]
+    return Response(status_code=204, headers={"HX-Redirect": location})
 
 
 @router.get("/login", response_class=HTMLResponse)
@@ -78,6 +93,47 @@ async def register_form(
     access_token = create_access_token(user.id, user.email, user.role)
     refresh_token = create_refresh_token(user.id)
     response = RedirectResponse(url="/", status_code=303)
+    set_auth_cookies(response, access_token, refresh_token, config)
+    return response
+
+
+@router.post("/auth/dev-login-form")
+async def dev_login_form(
+    request: Request,
+    db: AsyncSession = Depends(get_db_session, scope="function"),
+    config: AppConfig = Depends(get_app_config),
+):
+    """Sign in an invited or bootstrap user without a password in development."""
+    if config.env != "dev":
+        return _htmx_redirect("/login?error=Dev login is disabled")
+
+    try:
+        email = json.loads(await request.body()).get("email", "").strip()
+    except AttributeError, json.JSONDecodeError:
+        email = ""
+    if not email:
+        return _htmx_redirect("/login?error=Email is required")
+
+    user = await db.scalar(select(UserModel).where(UserModel.email == email))
+    if user is None:
+        invitation = await find_pending_invitation(db, email)
+        if invitation is None:
+            bootstrap_email = config.auth.bootstrap_admin_email if config.auth else None
+            if email != bootstrap_email:
+                return _htmx_redirect(
+                    f"/login?error=No user or invitation found for {email}"
+                )
+            role = UserRole.ADMIN
+        else:
+            role = invitation.role
+            invitation.accepted_at = datetime.now(UTC)
+        user = UserModel(name=email, email=email, role=role)
+        db.add(user)
+        await db.flush()
+
+    access_token = create_access_token(user.id, user.email, user.role)
+    refresh_token = create_refresh_token(user.id)
+    response = _htmx_redirect("/")
     set_auth_cookies(response, access_token, refresh_token, config)
     return response
 

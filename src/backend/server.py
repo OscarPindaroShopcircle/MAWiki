@@ -10,9 +10,9 @@ from .config import AppConfig, get_app_config
 from .db.db import DatabaseManager
 from .log import setup_logging
 from .users.routes import router as users_router
-from .kb.routes import router as kb_router
+from .knowledge_bases.routes import router as knowledge_bases_router
 from .mcp.server import build_mcp_application
-from .rag.routes import router as rag_router
+from .sources.routes import router as sources_router
 
 
 @asynccontextmanager
@@ -73,8 +73,8 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     app.include_router(users_router)
     app.include_router(auth_router)
     app.include_router(invitation_router)
-    app.include_router(kb_router)
-    app.include_router(rag_router)
+    app.include_router(sources_router)
+    app.include_router(knowledge_bases_router)
 
     # Importing the registry registers every model with Base.metadata so
     # DatabaseManager.initialize_tables() / alembic see all tables, including
@@ -85,14 +85,14 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     if config.frontend and config.frontend.enabled:
         from .auth.views import router as auth_views_router  # noqa: PLC0415
         from .users.views import router as users_views_router  # noqa: PLC0415
-        from .kb.views import router as kb_views_router  # noqa: PLC0415
-        from .rag.views import router as rag_views_router  # noqa: PLC0415
+        from .knowledge_bases.views import router as knowledge_bases_views_router  # noqa: PLC0415
+        from .sources.views import router as sources_views_router  # noqa: PLC0415
         from .views import router as views_router  # noqa: PLC0415
 
         app.include_router(auth_views_router)
         app.include_router(users_views_router)
-        app.include_router(kb_views_router)
-        app.include_router(rag_views_router)
+        app.include_router(sources_views_router)
+        app.include_router(knowledge_bases_views_router)
         app.include_router(views_router)
 
         # Dev-only: mount the component showcase

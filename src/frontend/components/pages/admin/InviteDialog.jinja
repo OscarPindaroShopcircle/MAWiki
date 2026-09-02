@@ -1,22 +1,18 @@
 {#def current_user=None, roles=[], error=None, email="", role="member" #}
 <common.Dialog title="Invite user">
-  <form class="invite-form"
-        hx-post="/admin/users/invite"
-        hx-target="#invitations-table"
-        hx-swap="outerHTML"
-        hx-on::after-request="if(event.detail.successful) this.closest('dialog').close()">
+<form class="invite-form"
+      hx-post="/admin/users/invite"
+      hx-target="#invitations-table"
+      hx-swap="outerHTML"
+      hx-on::after-request="if(event.detail.successful) this.closest('dialog').close()">
     {% if error %}
-    <common.Alert variant="danger">{{ error }}</common.Alert>
+        <common.Alert variant="danger">{{ error }}</common.Alert>
     {% endif %}
-    <common.Field label="Email" name="email" type="email" placeholder="jane@example.com"
-                  required :value="email" />
-    <common.Field label="Role" name="role" type="select"
-                  :options="roles"
-                  :value="role" />
+    <common.Field label="Email" name="email" type="email" placeholder="jane@example.com" required :value="email" />
+    <common.Field label="Role" name="role" type="select" :options="roles" :value="role" />
     <div class="invite-actions">
-      <common.Button type="button" variant="secondary" size="md"
-                     onclick="this.closest('dialog').close()">Cancel</common.Button>
-      <common.Button type="submit" variant="primary" size="md">Send invite</common.Button>
+        <common.Button type="button" variant="secondary" size="md" onclick="this.closest('dialog').close()">Cancel</common.Button>
+        <common.Button type="submit" variant="primary" size="md">Send invite</common.Button>
     </div>
-  </form>
+</form>
 </common.Dialog>

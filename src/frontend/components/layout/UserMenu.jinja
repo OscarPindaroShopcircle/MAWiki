@@ -1,22 +1,14 @@
 {#def current_user=None #}
 <div class="user-menu" id="user-menu">
-  <common.Button variant="primary" size="md" block
-                  type="button"
-                  id="user-menu-trigger"
-                  aria-haspopup="menu"
-                  aria-expanded="false"
-                  aria-controls="user-menu-popover"
-                  popovertarget="user-menu-popover">
+    <common.Button variant="primary" size="md" block type="button" id="user-menu-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="user-menu-popover" popovertarget="user-menu-popover">
     <common.Avatar name={{ current_user.name }} size=32 />
     <span class="user-menu-info">
-      <span class="user-menu-name">{{ current_user.name }}</span>
-      <span class="user-menu-email">{{ current_user.email }}</span>
+        <span class="user-menu-name">{{ current_user.name }}</span>
+        <span class="user-menu-email">{{ current_user.email }}</span>
     </span>
     <common.Icon name="chevron-up" size=16 />
-  </common.Button>
-  <common.Menu id="user-menu-popover" labelledby="user-menu-trigger"
-               placement="top-start" class="user-menu-popover">
-    <common.MenuItem icon="log-out" label="Logout" href="/auth/logout-view"
-                     variant="danger" class="user-menu-item user-menu-item-danger" />
-  </common.Menu>
+    </common.Button>
+    <common.Menu id="user-menu-popover" labelledby="user-menu-trigger" placement="top-start" class="user-menu-popover">
+    <common.MenuItem icon="log-out" label="Logout" href="/auth/logout-view" variant="danger" class="user-menu-item user-menu-item-danger" />
+    </common.Menu>
 </div>

@@ -1,7 +1,7 @@
 # Google Drive Integration
 
 Goal: let users pick files/folders from Google Drive and import them into a
-knowledge base. The backend downloads files one by one in the background.
+Data Source. The backend downloads files one by one in the background.
 
 ## Architecture decision: user-based vs centralized
 
@@ -54,7 +54,7 @@ renders a file/folder tree. Users only see what the service account can see.
 
 ## Recommendation
 
-For a knowledge base that should pull from a shared org Drive (not personal
+For a Data Source that should pull from a shared org Drive (not personal
 Drives), **Option B + server-side file browser** is the simpler, safer choice.
 The service account's permissions *are* the access control — give it access to
 the M&A folder and nothing else.
@@ -71,8 +71,8 @@ the M&A folder and nothing else.
      as JSON/HTML), `POST /drive/import` (receives file IDs, queues downloads).
 4. **Frontend**: a JinjaX component that renders the folder tree with checkboxes.
    Selecting a folder selects all children. htmx drives the tree expansion.
-5. **Storage**: downloaded files become `FileModel` rows, linked to the KB via
-   the existing `knowledge_base_files` table.
+5. **Storage**: downloaded files become `FileModel` rows, linked to the Data
+   Source via the existing `source_files` table.
 6. **Sync**: optionally, a background task that periodically checks for new
    files in the Drive folder and imports them.
 

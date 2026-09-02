@@ -1,0 +1,24 @@
+{#def source, files, has_more=False, current_user=None #}
+{#css common/Tooltip.css #}
+{#js common/Tooltip.js #}
+<layout.Page :title="source.name" current_user={{ current_user }} active="sources">
+<div class="source-detail">
+    <header class="source-detail-header">
+        <div>
+            <a href="/sources?origin={{ source.origin }}" class="source-detail-back"><common.Icon name="arrow-left" size=16 />Data Sources</a>
+            <h1>
+                {{ source.name }}
+            </h1>
+            {% if source.origin == "SYSTEM" %}
+                <p>
+                    System-generated
+                </p>
+            {% endif %}
+        </div>
+        {% if source.origin == "USER" %}
+            <pages.sources.UploadMenu source_id={{ source.id }} />
+        {% endif %}
+    </header>
+    <pages.sources.FilesTable source_id={{ source.id }} files={{ files }} has_more={{ has_more }} />
+</div>
+</layout.Page>

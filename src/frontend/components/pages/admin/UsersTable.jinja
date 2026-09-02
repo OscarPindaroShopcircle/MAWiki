@@ -1,23 +1,27 @@
 {#def users #}
 <common.Table headers={{ ["Name", "Email", "Role", "Status"] }}>
-  {% for user in users %}
-  <tr>
-    <td>{{ user.name }}</td>
-    <td>{{ user.email }}</td>
-    <td>
-      {% if user.role == 'admin' %}
-      <common.Pill variant="role-admin">Admin</common.Pill>
-      {% else %}
-      <common.Pill variant="role-member">Member</common.Pill>
-      {% endif %}
-    </td>
-    <td>
-      {% if user.is_active %}
-      <common.Pill variant="success">Active</common.Pill>
-      {% else %}
-      <common.Pill variant="danger">Inactive</common.Pill>
-      {% endif %}
-    </td>
-  </tr>
-  {% endfor %}
+{% for user in users %}
+    <tr>
+        <td>
+            {{ user.name }}
+        </td>
+        <td>
+            {{ user.email }}
+        </td>
+        <td>
+            {% if user.role == 'admin' %}
+                <common.Pill variant="role-admin">Admin</common.Pill>
+            {% else %}
+                <common.Pill variant="role-member">Member</common.Pill>
+            {% endif %}
+        </td>
+        <td>
+            {% if user.is_active %}
+                <common.Pill variant="success">Active</common.Pill>
+            {% else %}
+                <common.Pill variant="danger">Inactive</common.Pill>
+            {% endif %}
+        </td>
+    </tr>
+{% endfor %}
 </common.Table>

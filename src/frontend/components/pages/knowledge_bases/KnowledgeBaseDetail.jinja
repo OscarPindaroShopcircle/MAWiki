@@ -1,0 +1,75 @@
+{#def knowledge_base, current_user=None #}
+{#css pages/sources/SourceDetail.css, pages/knowledge_bases/KnowledgeBaseDetail.css #}
+<layout.Page :title="knowledge_base.name" current_user={{ current_user }} active="knowledge-bases">
+<div class="kb-detail knowledge-base-detail">
+    <header class="kb-detail-header">
+        <div>
+            <a href="/knowledge-bases" class="kb-detail-back"><common.Icon name="arrow-left" size=16 />Knowledge Bases</a>
+            <h1>
+                {{ knowledge_base.name }}
+            </h1>
+            <p class="knowledge-base-source">
+                Data source: <a href="/sources/{{ knowledge_base.source_id }}">{{ knowledge_base.source_name }}</a>
+            </p>
+        </div>
+    </header>
+    <common.Card variant="outlined" class="knowledge-base-pipeline-panel">
+    <div class="knowledge-base-pipeline-header">
+        <div>
+            <h2>
+                Pipeline
+            </h2>
+            <p>
+                Convert source files, inspect outputs, and build the search index.
+            </p>
+        </div>
+    </div>
+    <section class="knowledge-base-stage">
+        <div class="knowledge-base-stage-copy">
+            <div class="knowledge-base-operation-heading">
+                <common.Icon name="file-text" size=22 />
+                <h3>
+                    Conversion
+                </h3>
+            </div>
+            <p>
+                Convert supported source files into Markdown documents.
+            </p>
+            <pages.knowledge_bases.OperationStatus knowledge_base_id={{ knowledge_base.id }} operation="conversion" task={{ knowledge_base.conversion_task }} :ready="knowledge_base.is_converted" />
+        </div>
+        <common.Button type="button" variant="primary" size="md" :hx-post="'/knowledge-bases/' + knowledge_base.id|string + '/conversion'" hx-target="#knowledge-base-conversion-status" hx-swap="outerHTML">{{ "Reconvert" if knowledge_base.is_converted else "Convert" }}</common.Button>
+    </section>
+    <common.Divider />
+    <section class="knowledge-base-stage">
+        <div class="knowledge-base-stage-copy">
+            <div class="knowledge-base-operation-heading">
+                <common.Icon name="scan-search" size=22 />
+                <h3>
+                    Indexing
+                </h3>
+            </div>
+            <p>
+                Split converted documents and build the FAISS index.
+            </p>
+        </div>
+        <pages.knowledge_bases.IndexAction knowledge_base_id={{ knowledge_base.id }} :is-converted="knowledge_base.is_converted" :is-indexed="knowledge_base.is_indexed" task={{ knowledge_base.indexing_task }} />
+    </section>
+    <common.Divider />
+    <details class="knowledge-base-files-section"
+             hx-get="/knowledge-bases/{{ knowledge_base.id }}/files"
+             hx-trigger="toggle once"
+             hx-target="#knowledge-base-files-content"
+             hx-swap="innerHTML">
+        <summary>
+            <span><common.Icon name="files" size=20 />Files</span><common.Icon name="chevron-down" size=18 />
+            </summary>
+            <div id="knowledge-base-files-content"
+                 class="knowledge-base-files-content">
+                <p>
+                    Loading files&hellip;
+                </p>
+            </div>
+        </details>
+        </common.Card>
+    </div>
+    </layout.Page>

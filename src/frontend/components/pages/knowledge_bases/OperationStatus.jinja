@@ -1,0 +1,36 @@
+{#def knowledge_base_id, operation, task=None, ready=False #}
+{% set status = task.status.value if task and task.status.value is defined else task.status if task else none %}{% set variant = "success" if status == "SUCCESS" else "danger" if status == "FAILED" else "info" if status in ["WAITING", "IN_PROGRESS"] else "success" if ready else "neutral" %}
+<div id="knowledge-base-{{ operation }}-status"
+     {% if status in ["WAITING", "IN_PROGRESS"] %}
+         hx-get="/knowledge-bases/{{ knowledge_base_id }}/{{ operation }}/status" hx-trigger="load delay:1s" hx-swap="outerHTML"
+     {% endif %}>
+    <common.Pill :variant="variant">
+    {% if status %}
+        {{ status|lower|replace('_', ' ') }}
+    {% elif ready %}
+        ready
+    {% else %}
+        not started
+    {% endif %}
+    </common.Pill>
+    {% if task and operation == "conversion" %}
+        <div class="knowledge-base-progress">
+            <progress max="100"
+                      {% if task.completion > 0 or status in ["SUCCESS", "FAILED"] %}
+                          value="{{ task.completion }}"
+                      {% endif %}></progress>
+            <span>
+                {% if task.completion > 0 %}
+                    {{ task.completion|round|int }}%
+                {% else %}
+                    Working&hellip;
+                {% endif %}
+            </span>
+        </div>
+    {% endif %}
+    {% if task and task.message %}
+        <p class="knowledge-base-operation-message">
+            {{ task.message }}
+        </p>
+    {% endif %}
+</div>
