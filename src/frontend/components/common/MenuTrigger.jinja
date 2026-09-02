@@ -1,4 +1,5 @@
 {#def icon=None, label, target, variant="primary" #}
+{#css common/Button.css #}
 {# A menu trigger button: icon (optional), label text, and a chevron that rotates 180°
    when the linked popover is open. Pass target as the menu's id attribute. #}
 <common.Button :variant="variant" size="md" type="button" :id="target + '-trigger'" aria-haspopup="menu" aria-expanded="false" :aria-controls="target" :popovertarget="target" {{ attrs.render() }}>

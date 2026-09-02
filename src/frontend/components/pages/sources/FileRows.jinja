@@ -1,4 +1,5 @@
 {#def source_id, files, page=1, page_size=50, has_more=False #}
+{#css common/Button.css, common/Tooltip.css #}
 {% for file in files %}
     <pages.sources.FileRow file={{ file }} source_id={{ source_id }} />
 {% else %}

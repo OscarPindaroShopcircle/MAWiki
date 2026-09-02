@@ -1,4 +1,5 @@
 {#def knowledge_base_id, operation, task=None, ready=False #}
+{#css common/Pill.css #}
 {% set status = task.status.value if task and task.status.value is defined else task.status if task else none %}{% set variant = "success" if status == "SUCCESS" else "danger" if status == "FAILED" else "info" if status in ["WAITING", "IN_PROGRESS"] else "success" if ready else "neutral" %}
 <div id="knowledge-base-{{ operation }}-status"
      {% if status in ["WAITING", "IN_PROGRESS"] %}

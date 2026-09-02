@@ -56,3 +56,9 @@ repos:
         entry: uv run python -m pre_commits.exception_name_guard
         language: system
         files: \.py$
+      - id: jinjax-css-dependencies
+        name: Sync JinjaX CSS component dependencies
+        entry: uv run python -m pre_commits.jinjax_css_dependencies
+        language: system
+        pass_filenames: false
+        always_run: true

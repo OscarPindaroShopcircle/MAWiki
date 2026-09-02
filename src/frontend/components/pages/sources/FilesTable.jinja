@@ -1,4 +1,5 @@
 {#def source_id, files, has_more=False #}
+{#css common/Button.css, common/Table.css, common/Tooltip.css #}
 <div id="source-files-table"
      hx-get="/sources/{{ source_id }}/files"
      hx-trigger="source-files-refresh from:body"
