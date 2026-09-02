@@ -30,7 +30,7 @@
         </td>
         <td>
             {% if not inv.accepted_at %}
-                <common.Button variant="danger" size="sm" :hx-get="'/admin/users/invitations/' + inv.id|string + '/revoke'" hx-target="#confirm-dialog" hx-swap="innerHTML" :hx-on::after-request="'if(event.detail.successful){document.querySelector(\'#confirm-dialog dialog\').showModal(); lucide.createIcons();}'">
+                <common.Button variant="danger" size="sm" :hx-get="'/admin/users/invitations/' + inv.id|string + '/revoke'" hx-target="#confirm-dialog" hx-swap="innerHTML" :hx-on::after-request="'if(event.detail.successful){document.querySelector(\'#confirm-dialog dialog\').showModal();}'">
                 <common.Icon name="trash-2" size=16 />
                 Revoke
                 </common.Button>

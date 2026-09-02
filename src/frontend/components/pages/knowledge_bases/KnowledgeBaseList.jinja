@@ -6,7 +6,7 @@
         <h1>
             Knowledge Bases
         </h1>
-        <common.Button variant="primary" size="md" hx-get="/knowledge-bases/new" hx-target="#knowledge-base-create-dialog" hx-swap="innerHTML" hx-on::after-request="if(event.detail.successful) { document.querySelector('#knowledge-base-create-dialog dialog').showModal(); lucide.createIcons(); }"><common.Icon name="plus" size=16 />New Knowledge Base</common.Button>
+        <common.Button variant="primary" size="md" hx-get="/knowledge-bases/new" hx-target="#knowledge-base-create-dialog" hx-swap="innerHTML" hx-on::after-request="if(event.detail.successful) { document.querySelector('#knowledge-base-create-dialog dialog').showModal(); }"><common.Icon name="plus" size=16 />New Knowledge Base</common.Button>
     </header>
     <div id="knowledge-base-grid">
         <pages.knowledge_bases.KnowledgeBaseGrid knowledge_bases={{ knowledge_bases }} />

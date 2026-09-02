@@ -25,7 +25,7 @@ def register_command(app: typer.Typer) -> None:
         output_dir: Annotated[
             Path,
             typer.Option("--output-dir", help="Directory for generated PNG files."),
-        ] = Path("artifacts/screenshots"),
+        ] = Path("harness-artifacts"),
         click: Annotated[
             str | None,
             typer.Option(

@@ -111,7 +111,7 @@ def capture_screenshots(
     *,
     email: str,
     name: str | None = None,
-    output_dir: Path = Path("artifacts/screenshots"),
+    output_dir: Path = Path("harness-artifacts"),
     click: str | None = None,
     hover: str | None = None,
     expect_visible: str | None = None,

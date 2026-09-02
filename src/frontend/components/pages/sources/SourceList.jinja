@@ -10,7 +10,7 @@
             <a href="/sources?origin=USER">User-created</a> · <a href="/sources?origin=SYSTEM">System-generated</a>
         </div>
         {% if not origin or origin == "USER" %}
-            <common.Button variant="primary" size="md" hx-get="/sources/new" hx-target="#source-create-dialog" hx-swap="innerHTML" hx-on::after-request="if(event.detail.successful) { document.querySelector('#source-create-dialog dialog').showModal(); lucide.createIcons(); }"><common.Icon name="plus" size=16 />New Data Source</common.Button>
+            <common.Button variant="primary" size="md" hx-get="/sources/new" hx-target="#source-create-dialog" hx-swap="innerHTML" hx-on::after-request="if(event.detail.successful) { document.querySelector('#source-create-dialog dialog').showModal(); }"><common.Icon name="plus" size=16 />New Data Source</common.Button>
         {% endif %}
     </header>
     <div id="source-grid">
