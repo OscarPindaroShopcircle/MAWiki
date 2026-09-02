@@ -1,4 +1,4 @@
-{#def error=None, mode="login", google_enabled=False #}
+{#def error=None, mode="login", google_enabled=False, dev_login_email="" #}
 <layout.BlankPage title="Sign in">
 <div class="login-page">
     <common.Card variant="elevated" max_width={{ 400 }}>
@@ -71,7 +71,7 @@
             <p class="login-subtitle">
                 Dev mode — enter your email to sign in without a password.
             </p>
-            <common.Field label="Email" name="email" type="email" placeholder="e2e-admin@example.com" required autocomplete="email" />
+            <common.Field label="Email" name="email" type="email" required autocomplete="email" :value="dev_login_email" />
             <common.Button type="submit" variant="secondary" size="md" block>Dev sign in</common.Button>
         </form>
     {% endif %}

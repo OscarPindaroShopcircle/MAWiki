@@ -1,3 +1,4 @@
+import re
 import uuid
 from datetime import datetime, timezone
 
@@ -60,3 +61,18 @@ def test_sidebar_hides_showcase_for_non_admin_regardless_of_env() -> None:
         assert 'href="/components"' not in html, (
             f"components link leaked for MEMBER in {env}"
         )
+
+
+@pytest.mark.integration
+def test_showcase_marks_its_sidebar_item_active() -> None:
+    catalog = get_catalog(COMPONENTS_DIR, env="dev")
+    html = catalog.render(
+        "pages.showcase.Showcase",
+        users=[],
+        current_user=_make_user(UserRole.ADMIN),
+    )
+
+    assert re.search(
+        r'href="/components"\s+class="sidebar-link sidebar-link-active"', html
+    )
+    assert not re.search(r'href="/"\s+class="sidebar-link sidebar-link-active"', html)

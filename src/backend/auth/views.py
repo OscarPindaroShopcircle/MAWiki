@@ -45,6 +45,7 @@ async def login_page(
         mode=mode,
         error=error,
         google_enabled=google_enabled,
+        dev_login_email=config.auth.bootstrap_admin_email if config.auth else "",
     )
 
 

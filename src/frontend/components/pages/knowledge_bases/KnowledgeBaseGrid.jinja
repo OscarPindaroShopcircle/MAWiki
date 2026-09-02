@@ -1,7 +1,8 @@
 {#def knowledge_bases #}
 <div class="kb-grid">
     {% for knowledge_base in knowledge_bases %}
-        <a href="/knowledge-bases/{{ knowledge_base.id }}" class="kb-card-link"><common.Card variant="outlined" class="kb-card">
+        <a href="/knowledge-bases/{{ knowledge_base.id }}" class="kb-card-link">
+            <common.Card variant="outlined" class="kb-card">
             <div class="kb-card-icon">
                 <common.Icon name="blocks" size=24 />
             </div>
@@ -14,7 +15,8 @@
             <div>
                 <common.Pill :variant="'success' if knowledge_base.is_indexed else 'neutral'">{{ "Indexed" if knowledge_base.is_indexed else "Not indexed" }}</common.Pill>
             </div>
-        </common.Card></a>
+            </common.Card>
+        </a>
     {% else %}
         <p class="kb-empty">
             No knowledge bases yet. Create one to get started.
