@@ -1,287 +1,183 @@
-# FastAPI Template
+# Menelao
+Menelao is a RAG solution that solves two distinct problems:
+1. Creating and managing Knowledge Bases (KBs).
+2. Serving the content of knowledge bases through MCP and agentic interfaces.
 
-An opinionated FastAPI template with a structured approach to building backend applications. This template incorporates best practices from personal experience and the FastAPI community, heavily inspired by [this excellent repository](https://github.com/zhanymkanov/fastapi-best-practices).
+While this project is initially being used for managing post-acquisition documents, it also has the ambition to become the de facto tool for managing knowledge bases of any type.
+RAG applications are pretty straightforward and general. We will provide a set of shared components that can work in any domain.
+At the same time, specific components will be provided for specific file types: for example, if churn Excel files have a predictable structure, rather than simply parsing an Excel file, we can handle it in a specific way, compute metrics, and provide this information in the converted text.
 
-## Philosophy
-The idea is to give both human and coding agents a set of "good practices to follows". I put in this template the knowledge I gathered while working on my projects. This knowledge comes from direct experimentation and knowledge sharing with other people.
+## Installation
+To install all dependencies, run:
+```bash
+bash setup.sh
+```
+This repository ships a harness that can be installed as an MCP tool for your favourite agentic tool.
+If you are interested, run:
+```
+bash setup.sh --harness
+```
+While the installation process is Unix-based, the harness can also work on Windows.
+The harness provides agents with a systematic way to create containers, run tests, and take screenshots of the application.
 
-The core ideas behind this template are:
+If you are a Windows developer, let's work together to create an equivalent `setup.bat` script. The application can still be run and developed with the help of Docker, but I think it is valuable to have access to a pure development environment.
 
-### Strong Typing
 
-Use Pydantic models everywhere; never use dictionaries. Strong typing conventions make it clearer to developers which data they are manipulating and provide a lot of information about the state of the system.
+## Structure of the solution
+This repository hosts the code for different components:
+1. A FastAPI backend under `/api/`.
+2. A [JinjaX](https://jinjax.scaletti.dev/guides/) frontend at the root of the application.
+3. An MCP server.
 
-### SQLAlchemy and Alembic
+The FastAPI backend follows what I would call a traditional module structure: every module has a specific responsibility, with the following files:
+- `exceptions.py`: contains exceptions.
+- `schemas.py`: contains schemas for the routes.
+- `models.py`: contains database models.
+- `repository.py`: contains more or less complex CRUD operations.
+- `service.py`: links multiple repositories and functionalities, performs checks, and contains functionality that can be used in multiple parts of the application: views, routes, and MCP.
+- `routes.py`: FastAPI JSON routes.
+- `views.py`: JinjaX routes that serve HTML.
 
-I worked on a repository with pure SQL strings; this will **not** happen again. SQLAlchemy provides a clear description of the database, eliminates the need for constant synchronization between code and documentation, and means that LLMs do not have to read the history of migrations to understand which columns are in the `projects` table.
+The frontend is written with JinjaX.
+It is an HTML templating language that allows developers to write HTML, CSS, and JavaScript code with the same reusable-component ideas as React, without the full React complexity.
+I am a big fan of server-side rendering for a variety of reasons:
+1. I understand React at a very high level, but I find JavaScript code very hard to parse.
+2. I can read HTML code quite fluently.
+3. I find modern JavaScript setups very complex, and I am not knowledgeable enough to use them properly.
+4. JinjaX adds the *component* idea on top of HTML development. It is very intuitive, and the state is managed by the backend, in a language and framework with which I am very knowledgeable.
+5. This setup has zero frontend build time, which is infinitely better than running `docker` + `npm install`.
+6. I do not have to serve and manage a separate frontend container.
+7. It is more fun to create components and learn new things.
 
-### Static Checks
+Here is the structure of the frontend package:
+- **`common/`** — Reusable primitives: Button, Card, Field, Dialog, Alert, Divider, Pill, Table, Icon, Avatar.
+- **`layout/`** — Page shells: BlankPage (bare HTML), Page (with sidebar), Sidebar (M3 navigation drawer).
+- **`pages/`** — Full pages composed from common and layout: admin dashboard, home, login, showcase.
 
-Some properties of code can be inferred and enforced before running it. Pre-commit hooks can be used to ensure consistent formatting and linting, avoid committing secrets, and require developers to use predefined variables and systems. If your project has a convention that can be enforced automatically, write a pre-commit hook.
+I am aware that this setup is controversial and that it has some drawbacks, but I believe I am presenting good arguments that show JinjaX is the right tool.
 
-### Testing
+## Agentic Coding Philosophy
+At the time of writing, I still think it is important that both humans and AI understand code.
+The JinjaX setup, the opinionated FastAPI setup, and the different harnesses that can also be used via the CLI by humans all work toward this goal.
+The hope is to have an application that is easy to maintain in six months, rather than speed-running the first 24 hours.
 
-Unit, integration, end-to-end, and fuzz tests—you name it. Define clear rules for what each type of test can do and how long it can run. Make tests easy to run locally, either on the system or in Docker, and include them in a GitHub CI pipeline. Software should be written to be testable: do not put random global configuration variables in a module; otherwise, tests will have to mock half of the modules.
+Code quality is enforced automatically whenever possible with `pre-commit` hooks. Formatting and Linting for sure, but even automatic import generation, checks on JinjaX templates, and much more.
+
+In my experience, very long, complex and convoluted prompts generate very verbose code. I prefer to give some decent examples in the repository and then
 
 ### Conceptual Integrity
 
-Bugs happen because code is not tested. They also happen because the underlying domain changes, and what made sense six months ago no longer does. Change is inevitable, but we should write software that is easy to change: it should be easy to understand where things are, and changes made in one place should not have repercussions in another, far-away place.
+Bugs happen because code is not tested. They also happen because the underlying domain changes, and what made sense six months ago no longer does. Change is inevitable, but we should write software that is easy to change: it should be easy to understand where things are, and changes made in one place should not have repercussions in another, distant place. This holds for humans and AI alike.
 
-## Prepackaged Functionalities
+## Development
+### Local development
 
-The current template can spin up an application with working user management. The application supports SSO with google or usernam and password authentication. User can join only via invitations.
-On the frontend side, there are already some jinjax components for common necessities, like Buttons, Avatars, Sidebar and so on.
+The application configuration is split into two pieces:
+1. A versioned YAML file for values that are not secrets, such as hosts, ports, and enabled features.
+2. A local `.env` file for passwords, API keys, and other secrets.
 
-## Environment & Package Management
+For normal local development, these files are `config.yaml` and `.env`. Docker uses `config.docker.yaml` instead, because containers reach PostgreSQL at `db` rather than `localhost`. Environment variables take precedence over YAML, so a value can be overridden without changing the versioned configuration.
 
-This repository uses `uv` for fast package and environment management. The structure is compatible with Poetry, but requires adjustments to `pyproject.toml`. I chose UV because it's blazing fast.
+Start by creating `.env` from `.env.example`. Add `AUTH__JWT_SECRET`, which is required by the backend, and add `ANTHROPIC_API_KEY` if you want Open WebUI to call Anthropic.
 
-The application is packaged as the `backend` module. You can customize both the folder name and package parameters in `pyproject.toml`.
+### Docker Compose
 
-## Project Structure
+The simplest way to run the whole application is:
 
-```
-fastapi-template/
-├── alembic/                    # Database migrations
-├── deploy/                     # Deployment configurations
-│   ├── docker-compose.yaml
-│   ├── init_db.sh
-│   └── init_db.sql
-├── docs/                       # Developer and LLM documentation
-│   ├── testing.md             # Testing strategy
-│   ├── user.md                # User and auth model
-│   ├── clients.md             # External service client patterns
-│   ├── database_migrations.md # Migration workflows and security model
-│   └── new_feature_workflow.md # Step-by-step feature creation guide
-├── src/
-│   ├── backend/               # Main application package
-│   │   ├── auth/              # Authentication: SSO, JWT, invitations, password
-│   │   │   ├── routes/       # API routes (auth, invitations)
-│   │   │   ├── service.py    # Auth business logic
-│   │   │   ├── schemas.py    # Auth Pydantic models
-│   │   │   ├── dependencies.py # get_current_user, get_current_admin_user
-│   │   │   ├── exceptions.py  # Auth-specific HTTP exceptions
-│   │   │   ├── tokens.py      # JWT creation/verification
-│   │   │   ├── password.py    # Password hashing/verification
-│   │   │   └── sso.py         # Google OAuth/OpenID
-│   │   ├── users/             # User management feature
-│   │   │   ├── routes.py     # API endpoints
-│   │   │   ├── views.py      # HTML/htmx endpoints (admin pages)
-│   │   │   ├── schemas.py    # Pydantic models
-│   │   │   ├── service.py    # Business logic
-│   │   │   ├── repository.py # Data access layer
-│   │   │   └── exceptions.py # Feature-specific exceptions
-│   │   ├── showcase/          # Component showcase (living style guide)
-│   │   ├── agents/            # AI agents and agentic workflows
-│   │   ├── clients/           # External service integrations
-│   │   ├── tasks/             # Async task management
-│   │   ├── files/             # File storage models
-│   │   ├── db/                # Database layer
-│   │   │   ├── db.py         # Base class and DatabaseManager
-│   │   │   ├── mixins.py     # Reusable model mixins
-│   │   │   ├── registry.py   # Central SQLAlchemy model registry
-│   │   │   └── enums.py      # Shared database enums
-│   │   ├── config.py          # Application configuration
-│   │   ├── dependencies.py    # Shared dependencies (e.g., get_db_session)
-│   │   ├── jinja.py           # JinjaX catalog + Jinja filters
-│   │   ├── views.py           # Top-level HTML routes (home, login)
-│   │   ├── schemas.py         # Base Pydantic models
-│   │   └── server.py          # FastAPI app creation
-│   └── frontend/              # JinjaX components and static assets
-│       ├── components/        # Server-rendered UI components
-│       │   ├── common/       # Reusable M3 primitives (Button, Card, Field, Dialog, …)
-│       │   ├── layout/       # Page shells (BlankPage, Page, Sidebar)
-│       │   └── pages/        # Full pages (admin, home, login, showcase)
-│       └── static/           # CSS tokens, JS utilities, icons
-├── config.yaml                 # Application configuration
-├── pyproject.toml             # Project dependencies
-└── alembic.ini                # Alembic configuration
+```bash
+docker compose up --build
 ```
 
-### Feature Organization
+This starts PostgreSQL, runs Alembic migrations, then starts the backend at `http://localhost:8001` and Open WebUI at `http://localhost:3000`.
 
-Features are organized into self-contained modules under `src/backend/`. Each feature contains:
-- `routes.py` - JSON API endpoints
-- `views.py` - HTML/htmx endpoints (server-rendered pages and fragments)
-- `schemas.py` - Pydantic models for request/response validation
-- `service.py` - Business logic (all SQLAlchemy queries live here, never in routes/views)
-- `repository.py` (optional) - Object-oriented data access layer
-- `exceptions.py` - Feature-specific HTTP exceptions
-- `models.py` - sqlalchemy models
+It is also possible to start only PostgreSQL and run the backend from the host:
 
-API routes (`routes.py`) and HTML views (`views.py`) share the same service layer, ensuring functionality parity between JSON and htmx interfaces.
+```bash
+docker compose up -d db
+DATABASE__PORT=5434 MIGRATOR__PORT=5434 uv run alembic upgrade head
+DATABASE__PORT=5434 uv run uvicorn src.backend.server:create_app --factory --reload
+```
 
-### Frontend
+There is also a `uv` Compose service for one-off commands in the container environment. For commands that need the application configuration, such as migrations, use the configured `migrate` service instead:
 
-The frontend uses [JinjaX](https://jinjax.scaletti.dev/) for server-rendered components and [htmx](https://htmx.org/) for dynamic interactions — no client-side framework. The [`json-enc`](https://github.com/bigskysoftware/htmx-extensions/blob/main/src/json-enc/README.md) htmx extension encodes form submissions as JSON payloads. Components live in `src/frontend/components/` and follow Material Design 3-inspired patterns with CSS custom-property design tokens.
+```bash
+docker compose run --rm migrate
+docker compose run --rm migrate alembic current
+docker compose run --rm migrate alembic revision --autogenerate -m "add a table"
+```
 
-- **`common/`** — Reusable primitives: Button, Card, Field, Dialog, Alert, Divider, Pill, Table, Icon, Avatar
-- **`layout/`** — Page shells: BlankPage (bare HTML), Page (with sidebar), Sidebar (M3 navigation drawer)
-- **`pages/`** — Full pages composed from common + layout: admin dashboard, home, login, showcase
+The first command runs the configured `alembic upgrade head` migration command. The `uv` service is useful for generic commands that do not need the application configuration.
 
-The showcase at `/components` is the living style guide — every `common.*` component must be added there with all variants visible. See `docs/jinjax.md` for component conventions, htmx patterns, and asset loading rules.
+### Menelao harness
 
-**Why Server Side Rendering**: In general I'm a one man band that has to gather requirements, develop the application, test it and host it. I know python very well, I am able to read html and css, i am very much not proficient in javascript. This setup has for me some important advantages:
-- JinjaX uses a component approach, and therefore it looks more like class composition that random html tags.
-- I can deploy a single container that hosts both API and frontend
-- I don't have to learn React, Javascript, plus all the very fragmented ecosystem around these technologies
-- htmx exposes almost a pure html experience, which is very easy to read to me
-- i don't care about fancy animations
-- In the last 20 years, servers got superpowerful. Using only a very small amount of power, we can create a very light frontend that instantly reacts to changes, without having to ship
+The harness creates isolated test environments. It is useful for agents and automated tests, rather than as the usual way to develop the application:
 
+```bash
+uv run menelao harness env up --mode docker
+uv run menelao harness env teardown
+```
 
-## Documentation
-
-The `docs/` folder contains comprehensive documentation for developers and LLMs:
-
-- **`fastapi.md`** - FastAPI conventions, route patterns, and service layer guidelines
-- **`schemas.md`** - Pydantic schema conventions and validation patterns
-- **`sqlalchemy.md`** - SQLAlchemy model conventions and available mixins
-- **`jinjax.md`** - JinjaX component system, htmx patterns, and frontend conventions
-- **`testing.md`** - Testing strategy and test types
-- **`user.md`** - User model, roles, and authentication flow
-- **`clients.md`** - External service client patterns and best practices
-- **`database_migrations.md`** - Database architecture, security model, and migration workflows
-- **`new_feature_workflow.md`** - Complete checklist for adding new features
-
-Documentation follows the same modular structure as the backend code.
-
-## Configuration
-
-The template includes a flexible configuration system that supports YAML files:
-
-- Application settings can be defined in `config.yaml` with comments
-- Secret fields are protected by pre-commit hooks and cannot be committed in YAML files
-- Store secrets in `.env` files or your environment manager (e.g., Railway, AWS Secrets Manager)
-
-**Example deployment workflow:**
-1. Point your deployment to a specific `config.yaml` file
-2. Load secrets through the platform's environment variable system
+The `docker` mode starts a database, backend, and Open WebUI on available local ports. The `local` mode starts only an isolated PostgreSQL database. The harness uses `.env.test` and temporarily adapts `config.test.yaml`, rather than the normal local `.env` and `config.yaml`.
 
 ## Testing Philosophy
 
-This template follows a testing drawn from experience.
-In general, unit testing is not really useful for API development, since most of the API calls are a chaining of simple operations.
+This template follows a testing philosophy drawn from experience.
+In general, unit testing is not very useful for API development, since most API calls are a chain of simple operations.
 I personally despise mocks, but I understand their use cases.
 
 ### Unit Tests
-**Runtime:** Milliseconds
-**Purpose:** Test isolated, pure functions / classes without external dependencies
+**Runtime:** Milliseconds.
+**Purpose:** Test isolated, pure functions/classes without external dependencies.
 
-- Test simple, self-contained components (e.g., string validators, calculators)
-- Avoid mocking when possible
-- If a component requires a database session, use integration tests instead
+- Test simple, self-contained components (e.g., string validators, calculators).
+- Avoid mocking when possible.
+- If a component requires a database session, use integration tests instead.
 
-**Objective:** Ensure individual functions work correctly and prevent regressions
+**Objective:** Ensure individual functions work correctly and prevent regressions.
 
 ### Integration Tests
-**Runtime:** Seconds
-**Purpose:** Test business logic with real database connections
+**Runtime:** Seconds.
+**Purpose:** Test business logic with real database connections.
 
-- Test `service.py` and `repository.py` with actual database connections
-- Test `routes.py` using FastAPI's test client (no server required)
-- Mock only external dependencies (APIs, third-party services)
-- Verify both application logic and database state
-- Focus on error handling when external dependencies fail
+- Test `service.py` and `repository.py` with actual database connections.
+- Test `routes.py` using FastAPI's test client (no server required).
+- Mock only external dependencies (APIs and third-party services).
+- Verify both application logic and database state.
+- Focus on error handling when external dependencies fail.
 
-**Objective:** Ensure features work correctly end-to-end and maintain functional consistency
+**Objective:** Ensure features work correctly end-to-end and maintain functional consistency.
 
 ### End-to-End Tests
-**Runtime:** Seconds to minutes
-**Purpose:** Test complete user workflows from an external perspective
+**Runtime:** Seconds to minutes.
+**Purpose:** Test complete user workflows from an external perspective.
 
-- Treat the application as a black box (no access to internal state)
-- Database access allowed for verification only
-- No mocking
-- Cover complex, multi-step workflows requested by business stakeholders
-- Run after deployment to verify application integrity
+- Treat the application as a black box (no access to internal state).
+- Database access is allowed for verification only.
+- No mocking.
+- Cover complex, multi-step workflows requested by business stakeholders.
+- Run after deployment to verify application integrity.
 
-**Objective:** Ensure the application meets business requirements in production-like conditions
+**Objective:** Ensure the application meets business requirements in a production-like environment.
 
 ### Fuzzy Tests
-**Runtime:** Minutes
-**Purpose:** Test application robustness with random inputs
+**Runtime:** Minutes.
+**Purpose:** Test application robustness with random inputs.
 
-- Generate random inputs to explore multiple code paths
-- Useful when test cases are easy to generate programmatically
-- Focus on statistical properties rather than specific behaviors
-- Can be applied at any test level (unit, integration, or E2E), while respecting their requirements
+- Generate random inputs to explore multiple code paths.
+- Useful when test cases are easy to generate programmatically.
+- Focus on statistical properties rather than specific behaviours.
+- Can be applied at any test level (unit, integration, or E2E), while respecting their requirements.
 
-**Objective:** Discover edge cases and ensure system stability under unexpected inputs
+**Objective:** Discover edge cases and ensure system stability under unexpected inputs.
 
 ### Performance Tests
-**Runtime:** heavily dependent
-**Purpose:** Measure system performance under load and identify bottlenecks
+**Runtime:** Heavily dependent.
+**Purpose:** Measure system performance under load and identify bottlenecks.
 
-- Test response times, throughput, and resource utilization under various load conditions
-- Identify performance degradation points (e.g., database query optimization, caching needs)
-- Benchmark critical endpoints to establish performance baselines
-- Simulate realistic traffic patterns and concurrent user scenarios
-- Monitor memory usage, CPU utilization, and database connection pools
+- Test response times, throughput, and resource utilization under various load conditions.
+- Identify performance degradation points (e.g., database query optimisation and caching needs).
+- Benchmark critical endpoints to establish performance baselines.
+- Simulate realistic traffic patterns and concurrent user scenarios.
+- Monitor memory usage, CPU utilization, and database connection pools.
 
-**Objective:** Ensure the application meets performance requirements and scales appropriately under production load
-
-## AI Agents
-
-The `src/backend/agents/` folder contains AI agents and agentic workflows. Agents are autonomous components that can.
-
-In the future, dedicated folders may be added for AI models and datasets as the project scales.
-
-## External Service Integrations
-
-The `src/backend/clients/` folder contains wrappers for external services and libraries. These clients provide a clean abstraction layer for:
-
-- **Third-party APIs** - Payment processors, email services, SMS providers
-- **AI/ML services** - OpenAI, Anthropic
-- **Cloud services** - AWS S3, Google Cloud Storage, Azure services
-- **Other external dependencies** - Search engines, analytics platforms
-
-Clients encapsulate authentication, error handling, and retry logic, making external integrations easier to test and maintain.
-
-See `docs/clients.md` for detailed conventions and examples.
-
-## Database and Migrations
-
-This project uses **PostgreSQL** with **Alembic** for schema migrations and a **two-role security model**:
-
-- **`migrator_user`**: Owns the schema, runs migrations (DDL rights)
-- **`app_user`**: Runtime application user (DML only - no table creation/modification)
-
-### Key Principles
-
-- ✅ **All table management MUST be done through Alembic migrations**
-- ❌ Never use `Base.metadata.create_all()` in production
-- ❌ Never grant DDL rights to the runtime application user
-
-### Quick Migration Workflow
-
-1. Define your SQLAlchemy model in the relevant feature module, e.g. `src/backend/users/models.py`
-2. Ensure the model registry is updated by the model registry pre-commit hook
-3. Generate migration: `uv run alembic revision --autogenerate -m "description"`
-4. Review the generated file in `alembic/versions/`
-5. Apply migration: `uv run alembic upgrade head` (or restart Docker)
-
-See **`docs/database_migrations.md`** for complete documentation on:
-- Database architecture and security model
-- Configuration files (`.env`, `config.yaml`, `config.docker.yaml`)
-- Detailed migration workflows
-- Best practices and troubleshooting
-
-## Quick Start
-
-### Run a sample server
-```bash
-cp .env.example .env
-docker-compose up --build
-```
-
-The application will:
-1. Start PostgreSQL and create database roles
-2. Run Alembic migrations to create tables
-3. Start the FastAPI application on http://localhost:8000
-
-Visit http://localhost:8000/docs for API documentation.
-
-### Add new features
-
-See `docs/new_feature_workflow.md` for a complete guide on adding new features to the application.
+**Objective:** Ensure the application meets performance requirements and scales appropriately under production load.
